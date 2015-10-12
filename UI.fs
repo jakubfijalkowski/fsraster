@@ -144,7 +144,7 @@ type MainWindowController() =
         availableFigures
         |> List.map (fun f ->
             let mi = MenuItem()
-            mi.Header <- shortDescriptionOf f
+            mi.Header <- "_" + shortDescriptionOf f
             mi.Click.Add startBuildingFigure
             mi.Tag <- f
             mi)

@@ -35,8 +35,8 @@
         </Grid.ColumnDefinitions>
 
         <Menu Grid.ColumnSpan="4" Grid.Row="0">
-            <MenuItem x:Name="addMenu" Header="Add" />
-            <MenuItem x:Name="deleteMenu" Header="Delete" IsEnabled="False" />
+            <MenuItem x:Name="addMenu" Header="_Add" />
+            <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
         </Menu>
         <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="5">
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
