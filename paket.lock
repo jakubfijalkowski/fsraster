@@ -3,6 +3,5 @@ NUGET
   specs:
     Extended.Wpf.Toolkit (2.5.0) - framework: >= net46
     FSharp.Collections.ParallelSeq (1.0.2) - framework: >= net46
-    FSharp.ViewModule.Core (0.9.9.1) - framework: >= net46
     FsXaml.Wpf (0.9.9) - framework: >= net46
-    WriteableBitmapEx (1.5.0.0) - framework: >= net46
+    WriteableBitmapEx (1.5.0) - framework: >= net46
