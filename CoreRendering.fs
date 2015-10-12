@@ -41,6 +41,28 @@ let putPixel ctx x y c =
     let index = y * ctx.Width + x
     NativeInterop.NativePtr.set pixels index color
 
+// http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+let blendPixels r1 g1 b1 r2 g2 b2 a' =
+    let a = a' + 1
+    let inv_a = 256 - a'
+    let r' = (a * r2 + inv_a * r1) >>> 8
+    let g' = (a * g2 + inv_a * g1) >>> 8
+    let b' = (a * b2 + inv_a * b1) >>> 8
+    (0xff <<< 24) ||| (r' <<< 16) ||| (g' <<< 8) ||| b'
+
+let putPixelAlpha ctx x y (c : Color) =
+    let index = y * ctx.Width + x
+    let pixels = ctx.Context.Pixels
+    let color = NativeInterop.NativePtr.get pixels index : int
+    let b1 = color &&& 0xff
+    let g1 = (color >>> 8) &&& 0xff
+    let r1 = (color >>> 16) &&& 0xff
+    let b2 = int c.B
+    let g2 = int c.G
+    let r2 = int c.R
+    let a = int c.A
+    NativeInterop.NativePtr.set pixels index (blendPixels r1 g1 b1 r2 g2 b2 a)
+
 type IRenderer =
     inherit IDisposable
 
@@ -58,7 +80,7 @@ type BitmapRenderer(context : BitmapContext) =
         member this.Height = cachedContext.Height
 
         member this.Clear color = clearBitmap cachedContext color
-        member this.PutPixel x y color = putPixel cachedContext x y color
+        member this.PutPixel x y color = putPixelAlpha cachedContext x y color
 
     interface IDisposable with
         member x.Dispose() = context.Dispose()
