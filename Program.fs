@@ -10,5 +10,4 @@ open FsRaster.UI
 let main argv =
     let app = new Application()
     let wnd = new MainWindowController()
-    ignore (app.Run wnd.Window)
-    0
+    app.Run wnd.Window

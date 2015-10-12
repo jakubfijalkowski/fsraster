@@ -1,10 +1,11 @@
 ﻿module FsRaster.Figures
 
 open System
-
 open System.Windows.Media
 
 open FSharp.Collections.ParallelSeq
+
+open FsRaster.Utils
 
 type Point = int * int
 type Pixel = Point * Color
@@ -54,7 +55,11 @@ let private renderLine ((x1', y1'), (x2', y2'), c) =
         let incNE = 2 * (dy - dx)
         let rec build d x y =
             if x >= x2 then []
-            else (x, y) :: if d < 0 then build (d + incE) (x + 1) y else build (d + incNE) (x + 1) (y + 1)
+            else
+                (x, y) ::
+                if d < 0
+                then build (d + incE) (x + 1) y
+                else build (d + incNE) (x + 1) (y + 1)
         build d' x1 y1 |> List.toSeq
     let dx = x2' - x1'
     let dy = y2' - y1'
@@ -77,26 +82,22 @@ let replicateCirclePoints (x, y) = seq {
     yield (y, -x)
     yield (-y, -x) }
 
-let replicateCirclePointsWithColor ((x, y), c) = seq {
-    yield ((x, y), c)
-    yield ((-x, y), c)
-    yield ((x, -y), c)
-    yield ((-x, -y), c)
-    yield ((y, x), c)
-    yield ((-y, x), c)
-    yield ((y, -x), c)
-    yield ((-y, -x), c) }
+let replicateCirclePointsWithColor (p, c) = replicateCirclePoints p |> Seq.map (fun x -> (x, c))
 
-let private renderCircle ((sx, sy), r, c) =
+let private renderCircle (s, r, c) =
     let rec build d dE dSE x y =
         if y < x then []
-        else (x, y) :: if d < 0 then build (d + dE) (dE + 2) (dSE + 2) (x + 1) y else build (d + dSE) (dE + 2) (dSE + 4) (x + 1) (y - 1)
+        else
+            (x, y) ::
+            if d < 0
+            then build (d + dE) (dE + 2) (dSE + 2) (x + 1) y
+            else build (d + dSE) (dE + 2) (dSE + 4) (x + 1) (y - 1)
     build (1 - r) 3 (5 - 2 * r) 0 r
         |> PSeq.collect replicateCirclePoints
-        |> PSeq.map (fun (x, y) -> (x + sx, y + sy))
+        |> PSeq.map ((+~) s)
         |> colorize c
 
-let private renderAACircle ((sx, sy), r, c) =
+let private renderAACircle (s, r, c) =
     let dist a b = ceil (sqrt (a * a - b * b)) - sqrt (a * a - b * b)
     let rec build x y t =
         if x <= y + 1 then []
@@ -104,10 +105,12 @@ let private renderAACircle ((sx, sy), r, c) =
             let y' = y + 1
             let d = dist (float r) (float y')
             let x' = if d < t then x - 1 else x
-            ((x', y'), intensify c (1.0 - d)) :: ((x' - 1, y'), intensify c d) :: build x' y' d
+            ((x', y'), intensify c (1.0 - d)) ::
+                ((x' - 1, y'), intensify c d) ::
+                build x' y' d
     ((r, 0), c) :: build r 0 0.0
         |> PSeq.collect replicateCirclePointsWithColor
-        |> PSeq.map (fun ((x, y), c) -> ((x + sx, y + sy), c))
+        |> PSeq.map (first ((+~) s))
 
 let renderSingleFigure = function
     | Point  p    -> renderPoint p

@@ -5,6 +5,9 @@ open System.Collections
 open System.Windows.Controls
 open System.Windows.Media
 
+let first f (a, b) = (f a, b)
+let second f (a, b) = (a, f b)
+
 module ConsList =
     type ConsList<'a> =
         | ConsList of Generic.IList<'a> * int

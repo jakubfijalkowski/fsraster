@@ -8,7 +8,7 @@ open FSharp.Collections.ParallelSeq
 
 open FsRaster.Figures
 
-// Required to fight thread access exceptions, if I think of using multithreaded environment
+// Required to fight thread access exceptions
 type CachedBitmapContext = {
     Context : BitmapContext;
     Width : int;
