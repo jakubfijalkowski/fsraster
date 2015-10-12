@@ -1,281 +1,168 @@
-﻿module FsRaster.UI
+﻿namespace FsRaster.UI
 
 open System
 open System.Collections
 open System.Collections.ObjectModel
 
 open System.Windows
+open System.Windows.Data
 open System.Windows.Controls
 open System.Windows.Media
 open System.Windows.Media.Imaging
 
-open Xceed.Wpf.Toolkit
+open FsXaml
 
 open FsRaster.Utils
 open FsRaster.Figures
 open FsRaster.CoreRendering
 
-// This, probably, should not be let-functions, as they introduce side effects all the time
-module Control =
-    let positionIn (g : Grid) c x y =
-        Grid.SetColumn(c, x)
-        Grid.SetRow(c, y)
-        g.Children.Add c |> ignore
+type MainWindow = XAML<"MainWindow.xaml", true>
 
-    let prepare' (f : unit -> 'a when 'a :> FrameworkElement) m : 'a =
-        let c = f ()
-        c.Margin <- Thickness(m)
-        c
+type FigureNameConverter() =
+    interface IValueConverter with
+        member this.Convert(value, _, _, _) = longDescriptionOf (value :?> Figure) :> obj
+        member this.ConvertBack(_, _, _, _) = failwith "Operation not supported."
 
-    let prepare(f : unit -> 'a when 'a :> FrameworkElement) : 'a = prepare' f 5.0
+type MainWindowController() =
+    let window = MainWindow()
 
-    let addMenuItem (m : Menu) (mi : MenuItem) header handler =
-        mi.Header <- header
-        mi.Click.Add handler
-        m.Items.Add mi |> ignore
-
-    let newMenuItem handler header =
-        let mi = MenuItem()
-        mi.Header <- header
-        mi.Click.Add handler
-        mi
-
-    let prepareColorBox _ =
-        let cb = prepare ComboBox
-        cb.DisplayMemberPath <- "Name"
-        cb.SelectedValuePath <- "Color"
-        cb.ItemsSource <- UIColors.allColors
-        cb.SelectedValue <- Colors.Black
-        cb
-
-
-let whichFigureWasHit pt figures =
-    let rec isFigHit i = function
-        | ListCons (x, xs) -> if isFigureHit pt x then i else isFigHit (i + 1) xs
-        | ListNil          -> -1
-    isFigHit 0 (ConsList.ofList figures)
-
-type FigureAction =
-    | FigureModified of int
-    | FigureAdded
-    | FigureRemoved  of int
-
-type MainWindow() =
-    inherit Window()
-
-    let mainImage = Image()
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
-    let figureList : ListView = Control.prepare ListView
-    let figureDescriptions : ObservableCollection<string> = ObservableCollection()
-    let colorSelector : ComboBox = Control.prepareColorBox ()
 
-    let gridColor : ComboBox = Control.prepareColorBox ()
-    let gridCheckBox : CheckBox = Control.prepare CheckBox
-    let gridSpacing : IntegerUpDown = Control.prepare IntegerUpDown
-
-    let backgroundColor : ComboBox = Control.prepareColorBox ()
-
-    let deleteButton : MenuItem = Control.prepare' MenuItem 2.0
-    let addButton : MenuItem = Control.prepare' MenuItem 2.0
-
-    let figures : Collections.Generic.List<Figure> = Collections.Generic.List()
+    let figures : Generic.IList<Figure> = ObservableCollection() :> Generic.IList<Figure>
     
     let mutable figureBuilder : FigureBuilder option = None
-    let mutable moveStartPoint : Point option = None
-    let mutable movedFigure : int option = None
 
-    let rerender _ =
-        let bgColor = backgroundColor.SelectedValue :?> Color
-        let gridColor = gridColor.SelectedValue :?> Color
-        let figColor = colorSelector.SelectedValue :?> Color
+    let mutable moveData : (Point * int) option = None
 
-        use context = new BitmapRenderer(mainCanvas.GetBitmapContext(ReadWriteMode.ReadWrite)) :> IRenderer
+    let getPosition (e : Input.MouseEventArgs) =
+        let pos = e.GetPosition(window.imageContainer)
+        (int pos.X, int pos.Y)
+
+    let selectHitFigure pt =
+        let rec isFigHit i = function
+            | ListCons (x, xs) -> if isFigureHit pt x then i else isFigHit (i + 1) xs
+            | ListNil          -> -1
+        isFigHit 0 (ConsList.ofList figures)
+
+    let getBuilderPreview color =
+        let pos = Input.Mouse.GetPosition(window.imageContainer)
+        let pt = (int pos.X, int pos.Y)
+        match figureBuilder with
+        | Some b -> previewFigure b pt color
+        | None   -> Seq.empty
+
+    let render _ =
+        let bgColor = window.backgroundColor.SelectedValue :?> Color
+        let gridColor = window.gridColor.SelectedValue :?> Color
+        let figColor = window.figureColor.SelectedValue :?> Color
+
+        use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
         context.Clear bgColor
-        if gridCheckBox.IsChecked.Value then renderGrid context gridSpacing.Value.Value gridColor
-        let prevFig =
-            let pos = Input.Mouse.GetPosition(mainImage)
-            let pt = (int pos.X, int pos.Y)
-            match figureBuilder with
-            | Some f -> previewFigure f pt figColor
-            | None   -> Seq.empty
-        renderFigures context (Seq.append figures prevFig)
 
-    let updateFigure action =
-        rerender ()
-        match action with
-        | FigureModified i ->
-            figureDescriptions.[i] <- longDescriptionOf figures.[i]
-            figureList.SelectedIndex <- i
-        | FigureAdded      ->
-            figureDescriptions.Add(longDescriptionOf <| figures.[figures.Count - 1])
-        | FigureRemoved  i ->
-            figureDescriptions.RemoveAt(i)
+        if window.gridCheckBox.IsChecked.Value
+        then renderGrid context window.gridSpacing.Value.Value gridColor
 
-    let onSizeChanged (e : SizeChangedEventArgs) =
+        renderFigures context (Seq.append figures (getBuilderPreview figColor))
+
+    let changeImageSize (e : SizeChangedEventArgs) =
         mainCanvas <- BitmapFactory.New(int e.NewSize.Width, int e.NewSize.Height)
-        mainImage.Source <- mainCanvas
-        rerender ()
+        window.mainImage.Source <- mainCanvas
+        render ()
 
-    let onSelectionChanged (e : SelectionChangedEventArgs) =
-        let idx = figureList.SelectedIndex
-        deleteButton.IsEnabled <- idx > -1
-        if idx > -1 then colorSelector.SelectedValue <- getFigureColor figures.[idx]
+    let updateSelectedFigure (e : SelectionChangedEventArgs) =
+        let idx = window.figureList.SelectedIndex
+        window.deleteMenu.IsEnabled <- idx > -1
+        if idx > -1 then window.figureColor.SelectedValue <- getFigureColor figures.[idx]
 
     let deleteFigure _ =
-        let idx = figureList.SelectedIndex
-        figures.RemoveAt(idx)
-        updateFigure (FigureRemoved idx)
-        ()
+        let idx = window.figureList.SelectedIndex
+        if idx > -1 then
+            figures.RemoveAt idx
+            render ()
+
+    let updateFigureColor (e : SelectionChangedEventArgs) =
+        let color = (e.AddedItems.[0] :?> UIColors.UIColor).Color
+        let idx = window.figureList.SelectedIndex
+        if idx > -1 then
+            figures.[idx] <- updateFigureColor color figures.[idx]
+            window.figureList.SelectedIndex <- idx
+            render ()
 
     let startBuildingFigure (e : RoutedEventArgs) =
         let figure = (e.Source :?> MenuItem).Tag :?> Figure
         figureBuilder <- Some (getFigureBuilder figure)
-        ()
 
-    let imageMouseDown (e : Input.MouseButtonEventArgs) =
-        let pos = e.GetPosition mainImage
-        let pt = (int pos.X, int pos.Y)
-        match figureBuilder with
-        | None ->
-            let idx = whichFigureWasHit pt figures
-            figureList.SelectedIndex <- whichFigureWasHit pt figures
-            moveStartPoint <- if idx > -1 then Some pt else None
-            movedFigure <- if idx > -1 then Some idx else None
-            Input.Mouse.Capture mainImage |> ignore
-        | Some _ -> ()
+    let selectFigure (e : Input.MouseEventArgs) =
+        let pos = getPosition e
+        let idx = selectHitFigure pos
+        window.figureList.SelectedIndex <- idx
+        moveData <- if idx > -1 then Some (pos, idx) else None
 
-    let imageMouseMove (e : Input.MouseEventArgs) = 
-        let pos = e.GetPosition mainImage
-        let pt = (int pos.X, int pos.Y)
-        match (movedFigure, moveStartPoint) with
-        | (Some idx, Some s) ->
-            figures.[idx] <- moveFigure (pt -~ s) figures.[idx]
-            updateFigure (FigureModified idx)
-            moveStartPoint <- Some pt
-        | _ -> ()
-        match figureBuilder with
-        | Some _ -> rerender ()
-        | None   -> ()
+    let tryMoveFigure (e : Input.MouseEventArgs) =
+        match moveData with
+        | Some (s, idx) ->
+            let pos = getPosition e
+            figures.[idx] <- moveFigure (pos -~ s) figures.[idx]
+            moveData <- Some (pos, idx)
+            true
+        | None -> false
 
-    let imageMouseUp (e : Input.MouseButtonEventArgs) =
-        let pos = e.GetPosition mainImage
-        let pt = (int pos.X, int pos.Y)
-        let color = colorSelector.SelectedValue :?> Color
+    let tryProcessFigure (e : Input.MouseEventArgs) =
         match figureBuilder with
-        | Some b -> match processBuildingFigure b pt color with
-                    | Choice1Of2 f ->
-                        figures.Add f
-                        updateFigure FigureAdded
-                        figureBuilder <- None
-                    | Choice2Of2 b -> figureBuilder <- Some b
-        | None -> ()
-        moveStartPoint <- None
-        movedFigure <- None
+        | Some b ->
+            let color = window.figureColor.SelectedValue :?> Color
+            match processBuildingFigure b (getPosition e) color with
+            | Choice1Of2 f ->
+                figures.Add f
+                figureBuilder <- None
+            | Choice2Of2 b -> figureBuilder <- Some b
+            true
+        | _ -> false
+
+    let onImageMouseDown e =
+        Input.Mouse.Capture window.imageContainer |> ignore
+        selectFigure e
+
+    let onImageMouseMove e =
+        if tryMoveFigure e || Option.isSome figureBuilder then render ()
+
+    let onImageMouseUp e =
+        if tryProcessFigure e then render ()
+        let idx = window.figureList.SelectedIndex
+        moveData <- None
         Input.Mouse.Capture null |> ignore
+        printf "%d" idx
 
-    let updateFigureColor (e : SelectionChangedEventArgs) =
-        let color = (e.AddedItems.[0] :?> UIColors.UIColor).Color
-        let idx = figureList.SelectedIndex
-        if idx > -1
-        then
-            figures.[idx] <- updateFigureColor color figures.[idx]
-            updateFigure (FigureModified idx)
-        else ()
-    
     do
-       base.Title <- "My fancy test window"
-       base.WindowStartupLocation <- WindowStartupLocation.CenterScreen
-       base.Width <- 1024.0
-       base.Height <- 768.0
-       
-       let mainGrid = Grid()
-       [1..6] |> List.map (fun _ -> RowDefinition()) |> List.iter mainGrid.RowDefinitions.Add
-       [1..4] |> List.map (fun _ -> ColumnDefinition()) |> List.iter mainGrid.ColumnDefinitions.Add
-       mainGrid.RowDefinitions.[0].Height <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.RowDefinitions.[1].Height <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.RowDefinitions.[3].Height <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.RowDefinitions.[4].Height <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.RowDefinitions.[5].Height <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.ColumnDefinitions.[1].Width <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.ColumnDefinitions.[2].Width <- GridLength(1.0, GridUnitType.Auto)
-       mainGrid.ColumnDefinitions.[3].Width <- GridLength(1.0, GridUnitType.Auto)
+        Control.prepareColorBox window.backgroundColor
+        Control.prepareColorBox window.figureColor
+        Control.prepareColorBox window.gridColor
+        window.backgroundColor.SelectedValue <- Colors.White
 
-       let infoColumnSpan = 3
+        window.figureList.ItemsSource <- figures
 
-       let imageContainer = Control.prepare Grid
-       imageContainer.SizeChanged.Add onSizeChanged
-       imageContainer.Children.Add mainImage |> ignore
-       Grid.SetRowSpan(imageContainer, 5)
-       mainImage.HorizontalAlignment <- HorizontalAlignment.Stretch
-       mainImage.VerticalAlignment <- VerticalAlignment.Stretch
-       mainImage.MouseDown.Add imageMouseDown
-       mainImage.MouseMove.Add imageMouseMove
-       mainImage.MouseUp.Add imageMouseUp
-       Control.positionIn mainGrid imageContainer 0 1
-       
-       let figLabel = Control.prepare TextBlock
-       figLabel.Text <- "Figures:"
-       Grid.SetColumnSpan(figLabel, infoColumnSpan)
-       Control.positionIn mainGrid figLabel 1 1
+        availableFigures
+        |> List.map (fun f ->
+            let mi = MenuItem()
+            mi.Header <- shortDescriptionOf f
+            mi.Click.Add startBuildingFigure
+            mi.Tag <- f
+            mi)
+        |> List.iter (window.addMenu.Items.Add >> ignore)
 
-       figureList.Width <- 250.0
-       figureList.SelectionChanged.Add onSelectionChanged
-       figureList.ItemsSource <- figureDescriptions
-       Grid.SetColumnSpan(figureList, infoColumnSpan)
-       Control.positionIn mainGrid figureList 1 2
+        window.imageContainer.SizeChanged.Add changeImageSize
+        window.imageContainer.MouseDown.Add onImageMouseDown
+        window.imageContainer.MouseMove.Add onImageMouseMove
+        window.imageContainer.MouseUp.Add onImageMouseUp
 
-       let figColor = Control.prepare TextBlock
-       figColor.VerticalAlignment <- VerticalAlignment.Center
-       figColor.Text <- "Color:"
-       Control.positionIn mainGrid figColor 1 3
+        window.figureList.SelectionChanged.Add updateSelectedFigure
+        window.figureColor.SelectionChanged.Add updateFigureColor
+        window.gridCheckBox.Checked.Add render
+        window.gridCheckBox.Unchecked.Add render
+        window.gridSpacing.ValueChanged.Add render
+        window.gridColor.SelectionChanged.Add render
+        window.backgroundColor.SelectionChanged.Add render
 
-       colorSelector.SelectionChanged.Add updateFigureColor
-       Grid.SetColumnSpan(colorSelector, infoColumnSpan - 1)
-       Control.positionIn mainGrid colorSelector 2 3
+        window.deleteMenu.Click.Add deleteFigure
 
-       gridCheckBox.Content <- "Grid"
-       gridCheckBox.VerticalAlignment <- VerticalAlignment.Center
-       gridCheckBox.Unchecked.Add rerender
-       gridCheckBox.Checked.Add rerender
-       Control.positionIn mainGrid gridCheckBox 1 4
-
-       gridSpacing.Width <- 80.0
-       gridSpacing.Value <- Nullable(100)
-       gridSpacing.Minimum <- Nullable(5)
-       gridSpacing.Maximum <- Nullable(1000)
-       gridSpacing.ValueChanged.Add rerender
-       Control.positionIn mainGrid gridSpacing 2 4
-
-       gridColor.Width <- 80.0
-       gridColor.HorizontalAlignment <- HorizontalAlignment.Right
-       gridColor.SelectionChanged.Add rerender
-       Control.positionIn mainGrid gridColor 3 4
-
-       let bgColorLabel = Control.prepare TextBlock
-       bgColorLabel.Text <- "Background:"
-       bgColorLabel.VerticalAlignment <- VerticalAlignment.Center
-       Control.positionIn mainGrid bgColorLabel 1 5
-
-       backgroundColor.SelectedValue <- Colors.White
-       backgroundColor.SelectionChanged.Add rerender
-       Grid.SetColumnSpan(backgroundColor, 2)
-       Control.positionIn mainGrid backgroundColor 2 5
-
-       let mainMenu = Menu()
-       Grid.SetColumnSpan(mainMenu, infoColumnSpan + 1)
-
-       availableFigures
-           |> List.zip (availableFigures |> List.map shortDescriptionOf)
-           |> List.map (fun (f, d) ->
-               let mi = Control.newMenuItem startBuildingFigure f
-               mi.Tag <- d
-               mi)
-           |> List.iter (addButton.Items.Add >> ignore)
-       Control.addMenuItem mainMenu addButton "Add" ignore
-
-       deleteButton.IsEnabled <- false
-       Control.addMenuItem mainMenu deleteButton "Delete" deleteFigure
-
-       Control.positionIn mainGrid mainMenu 0 0
-
-       base.Content <- mainGrid
+    member this.Window with get() = window.Root

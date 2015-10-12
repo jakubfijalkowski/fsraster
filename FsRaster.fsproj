@@ -60,6 +60,7 @@
     <Compile Include="Utils.fs" />
     <Compile Include="Figures.fs" />
     <Compile Include="CoreRendering.fs" />
+    <Resource Include="MainWindow.xaml" />
     <Compile Include="UI.fs" />
     <Compile Include="Program.fs" />
     <None Include="Scripts\load-references.fsx" />
@@ -129,6 +130,25 @@
         <Reference Include="FSharp.Collections.ParallelSeq">
           <HintPath>packages\FSharp.Collections.ParallelSeq\lib\net40\FSharp.Collections.ParallelSeq.dll</HintPath>
           <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6'">
+      <ItemGroup>
+        <Reference Include="FsXaml.Wpf.TypeProvider">
+          <HintPath>packages\FsXaml.Wpf\lib\net45\FsXaml.Wpf.TypeProvider.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="FsXaml.Wpf">
+          <HintPath>packages\FsXaml.Wpf\lib\net45\FsXaml.Wpf.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="System.Xml">
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>

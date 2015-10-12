@@ -9,6 +9,6 @@ open FsRaster.UI
 [<STAThread>]
 let main argv =
     let app = new Application()
-    let wnd = new MainWindow()
-    ignore (app.Run wnd)
+    let wnd = new MainWindowController()
+    ignore (app.Run wnd.Window)
     0

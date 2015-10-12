@@ -16,3 +16,6 @@
 #r "../packages/Extended.Wpf.Toolkit/lib/net40/Xceed.Wpf.AvalonDock.Themes.VS2010.dll"
 #r "../packages/Extended.Wpf.Toolkit/lib/net40/Xceed.Wpf.DataGrid.dll"
 #r "../packages/Extended.Wpf.Toolkit/lib/net40/Xceed.Wpf.Toolkit.dll"
+#r "../packages/FsXaml.Wpf/lib/net45/FsXaml.Wpf.dll"
+#r "../packages/FsXaml.Wpf/lib/net45/FsXaml.Wpf.TypeProvider.dll"
+#r "System.Xml.dll"

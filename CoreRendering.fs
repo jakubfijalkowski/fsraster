@@ -17,7 +17,7 @@ type CachedBitmapContext = {
 
 #nowarn "9"
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L79-L105
-let clearBitmap ctx c =    
+let clearBitmap ctx c =
     let color = WriteableBitmapExtensions.ConvertColor(c)
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
