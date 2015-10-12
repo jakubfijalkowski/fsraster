@@ -88,7 +88,8 @@ let renderFigureList figs = PSeq.map renderSingleFigure figs
 type FigureBuilder = {
     Builder : Color -> Point list -> Figure;
     PointsLeft : int;
-    Points : Point list
+    Points : Point list;
+    Preview : Point list -> Color -> Figure seq
 }
 
 let private buildPoint c = function
@@ -103,16 +104,27 @@ let private buildCircle c = function
     | [p1; p2] -> Circle (p1, distance p1 p2, c)
     | _        -> failwith "Invalid number of points."
 
+let private previewLine pts c =
+    match pts with
+    | [p1; p2] -> Seq.singleton (buildLine c pts)
+    | _        -> Seq.empty
+let private previewCircle pts c =
+    match pts with
+    | [p1; p2] -> Seq.singleton (Circle (p1, distance p1 p2, c))
+    | _        -> Seq.empty
+
 let getFigureBuilder = function
-    | Point _  -> { Builder = buildPoint; PointsLeft = 1; Points = [] }
-    | Line _   -> { Builder = buildLine; PointsLeft = 2; Points = [] }
-    | Circle _ -> { Builder = buildCircle; PointsLeft = 2; Points = [] }
+    | Point _  -> { Builder = buildPoint; PointsLeft = 1; Points = []; Preview = fun _ _ -> Seq.empty }
+    | Line _   -> { Builder = buildLine; PointsLeft = 2; Points = []; Preview = previewLine }
+    | Circle _ -> { Builder = buildCircle; PointsLeft = 2; Points = []; Preview = previewCircle }
 
 let processBuildingFigure builder pt c =
     let points = builder.Points @ [pt]
     if builder.PointsLeft = 1
     then Choice1Of2 (builder.Builder c points)
     else Choice2Of2 { builder with Points = points; PointsLeft = builder.PointsLeft - 1 }
+
+let previewFigure ({ Preview = prev; Points = pts } as builder) pt c = prev (pts @ [pt]) c
 
 let private isPointHit (p1, _) p2 = distance p1 p2 < 10
 let private isLineHit (x, y) (((x1, y1) as p1), ((x2, y2) as p2), _) =

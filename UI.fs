@@ -85,10 +85,20 @@ type MainWindow() =
     let mutable movedFigure : int option = None
 
     let rerender _ =
+        let bgColor = backgroundColor.SelectedValue :?> Color
+        let gridColor = gridColor.SelectedValue :?> Color
+        let figColor = colorSelector.SelectedValue :?> Color
+
         use context = new BitmapRenderer(mainCanvas.GetBitmapContext(ReadWriteMode.ReadWrite)) :> IRenderer
-        context.Clear (backgroundColor.SelectedValue :?> Color)
-        if gridCheckBox.IsChecked.Value then renderGrid context gridSpacing.Value.Value (gridColor.SelectedValue :?> Color)
-        renderFigures context figures
+        context.Clear bgColor
+        if gridCheckBox.IsChecked.Value then renderGrid context gridSpacing.Value.Value gridColor
+        let prevFig =
+            let pos = Input.Mouse.GetPosition(mainImage)
+            let pt = (int pos.X, int pos.Y)
+            match figureBuilder with
+            | Some f -> previewFigure f pt figColor
+            | None   -> Seq.empty
+        renderFigures context (Seq.append figures prevFig)
 
     let updateFigure action =
         rerender ()
@@ -143,6 +153,9 @@ type MainWindow() =
             updateFigure (FigureModified idx)
             moveStartPoint <- Some pt
         | _ -> ()
+        match figureBuilder with
+        | Some _ -> rerender ()
+        | None   -> ()
 
     let imageMouseUp (e : Input.MouseButtonEventArgs) =
         let pos = e.GetPosition mainImage
