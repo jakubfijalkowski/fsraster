@@ -88,14 +88,14 @@ type BitmapRenderer(context : BitmapContext) =
 let renderFigures (renderer : IRenderer) figures =
     let pixels = renderFigureList figures
     pixels
-        |> PSeq.map (PSeq.filter (fun ((x, y), _) -> x >= 0 && y >= 0 && x < renderer.Width && y < renderer.Height))
-        |> Seq.iter (PSeq.iter (fun ((x, y), c) -> renderer.PutPixel x y c))
+        |> List.map (PSeq.filter (fun ((x, y), _) -> x >= 0 && y >= 0 && x < renderer.Width && y < renderer.Height))
+        |> List.iter (PSeq.iter (fun ((x, y), c) -> renderer.PutPixel x y c))
 
 let renderGrid (renderer : IRenderer) spacing color =
     let xs = [spacing .. spacing .. renderer.Width - 1]
     let ys = [spacing .. spacing .. renderer.Height - 1]
     let colYs = [0 .. renderer.Height - 1]
     let rowXs = [0 .. renderer.Width - 1]
-    xs |> List.map (fun x -> colYs |> PSeq.iter (fun y -> renderer.PutPixel x y color)) |> ignore
-    ys |> List.map (fun y -> rowXs |> PSeq.iter (fun x -> renderer.PutPixel x y color)) |> ignore
+    xs |> List.map (fun x -> colYs |> Seq.iter (fun y -> renderer.PutPixel x y color)) |> ignore
+    ys |> List.map (fun y -> rowXs |> Seq.iter (fun x -> renderer.PutPixel x y color)) |> ignore
    

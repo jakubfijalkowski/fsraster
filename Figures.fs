@@ -118,7 +118,7 @@ let renderSingleFigure = function
     | Circle c    -> renderCircle c
     | AntialiasedCircle c -> renderAACircle c
 
-let renderFigureList figs = PSeq.map renderSingleFigure figs
+let renderFigureList figs = PSeq.ordered figs |> PSeq.map renderSingleFigure |> PSeq.toList
 
 type FigureBuilder = {
     Builder : Color -> Point list -> Figure;
