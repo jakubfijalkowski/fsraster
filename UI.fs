@@ -137,14 +137,19 @@ type MainWindowController() =
 
     let addRandomFigures _ =
         let rnd = System.Random(0xB15B00B5)
+        let genFig t p1 p2 c =
+            match t with
+            | 0 -> Point (p1, c)
+            | 1 -> Line (p1, p2, c)
+            | 2 -> Circle (p1, distance p1 p2, c)
+            | _ -> AntialiasedCircle (p1, distance p1 p2, c)
         [1 .. 200]
-            |> List.map (fun _ -> (rnd.Next(4), rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height), rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height), UIColors.allColors.[rnd.Next(UIColors.allColors.Length)]))
-            |> List.map (fun (t, x1, y1, x2, y2, c) ->
-                match t with
-                | 0 -> Point ((x1, y1), c.Color)
-                | 1 -> Line ((x1, y1), (x2, y2), c.Color)
-                | 2 -> Circle ((x1, y1), distance (x1, y1) (x2, y2), c.Color)
-                | _ -> AntialiasedCircle ((x1, y1), distance (x1, y1) (x2, y2), c.Color)
+            |> List.map (fun _ ->
+                let t = rnd.Next(4)
+                let p1 = (rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height))
+                let p2 = (rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height))
+                let c = UIColors.allColors.[rnd.Next(UIColors.allColors.Length)]
+                genFig t p1 p2 c.Color
                 )
             |> List.iter figures.Add
         render ()

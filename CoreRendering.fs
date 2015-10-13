@@ -3,6 +3,7 @@
 open System
 open System.Windows.Media
 open System.Windows.Media.Imaging
+open System.Diagnostics.CodeAnalysis
 
 open FSharp.Collections.ParallelSeq
 
@@ -16,6 +17,7 @@ type CachedBitmapContext = {
 }
 
 #nowarn "9"
+
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L79-L105
 let clearBitmap ctx c =
     let color = WriteableBitmapExtensions.ConvertColor(c)
@@ -42,6 +44,7 @@ let putPixel ctx x y c =
     NativeInterop.NativePtr.set pixels index color
 
 // http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
 let blendPixels r1 g1 b1 r2 g2 b2 a' =
     let a = a' + 1
     let inv_a = 256 - a'
