@@ -43,7 +43,7 @@
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
         <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3">Figures:</TextBlock>
-        <ListView x:Name="figureList" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Width="250">
+        <ListView x:Name="figureList" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Width="250" SelectionMode="Single">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Converter={StaticResource figureConverter}}" />
