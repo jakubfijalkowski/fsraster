@@ -169,10 +169,16 @@ let processBuildingFigure builder pt c =
 
 let previewFigure ({ Preview = prev; Points = pts } as builder) pt c = prev (pts @ [pt]) c
 
-let private isPointHit (p1, _) p2 = distance p1 p2 < 10
+let private isPointHit (p1, _) p2 = 
+    let d = distance p1 p2
+    if d < 10 then Some d else None
 let private isLineHit (x, y) (((x1, y1) as p1), ((x2, y2) as p2), _) =
-    (abs ((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1)) / distance p1 p2 < 10
-let private isCircleHit pt (s, r, _) = distance s pt <= r
+    let d = (abs ((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1)) / distance p1 p2
+    let isOutside = x < x1 || x > x2 || y < (min y1 y2) || y > (max y1 y2)
+    if d < 10 && not isOutside then Some d else None
+let private isCircleHit pt (s, r, _) =
+    let d = distance s pt
+    if d <= r then Some (r - d) else None
 
 let isFigureHit pt = function
     | Point p  -> isPointHit p pt

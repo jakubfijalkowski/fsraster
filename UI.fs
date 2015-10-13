@@ -39,10 +39,12 @@ type MainWindowController() =
         (int pos.X, int pos.Y)
 
     let selectHitFigure pt =
-        let rec isFigHit i = function
-            | ListCons (x, xs) -> if isFigureHit pt x then i else isFigHit (i + 1) xs
-            | ListNil          -> -1
-        isFigHit 0 (ConsList.ofList figures)
+        figures
+            |> Seq.mapi (fun i f -> (i, isFigureHit pt f))
+            |> Seq.filter (snd >> Option.isSome)
+            |> Seq.append (seq { yield (-1, Some Int32.MaxValue) })
+            |> Seq.minBy snd
+            |> fst
 
     let getBuilderPreview color =
         let pos = Input.Mouse.GetPosition(window.imageContainer)
