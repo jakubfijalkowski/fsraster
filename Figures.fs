@@ -53,14 +53,14 @@ let private renderLine ((x1', y1'), (x2', y2'), c) =
         let d' = 2 * dy - dx
         let incE = 2 * dy
         let incNE = 2 * (dy - dx)
-        let rec build d x y =
-            if x >= x2 then []
+        let rec build acc d x y =
+            if x >= x2 then acc
             else
-                (x, y) ::
+                let acc' = (x, y) :: acc
                 if d < 0
-                then build (d + incE) (x + 1) y
-                else build (d + incNE) (x + 1) (y + 1)
-        build d' x1 y1 |> List.toSeq
+                then build acc' (d + incE) (x + 1) y
+                else build acc' (d + incNE) (x + 1) (y + 1)
+        build [] d' x1 y1 |> List.toSeq
     let dx = x2' - x1'
     let dy = y2' - y1'
     let result =
@@ -85,30 +85,30 @@ let replicateCirclePoints (x, y) = seq {
 let replicateCirclePointsWithColor (p, c) = replicateCirclePoints p |> Seq.map (fun x -> (x, c))
 
 let private renderCircle (s, r, c) =
-    let rec build d dE dSE x y =
-        if y < x then []
+    let rec build acc d dE dSE x y =
+        if y < x then acc
         else
-            (x, y) ::
+            let acc' = (x, y) :: acc
             if d < 0
-            then build (d + dE) (dE + 2) (dSE + 2) (x + 1) y
-            else build (d + dSE) (dE + 2) (dSE + 4) (x + 1) (y - 1)
-    build (1 - r) 3 (5 - 2 * r) 0 r
+            then build acc' (d + dE) (dE + 2) (dSE + 2) (x + 1) y
+            else build acc' (d + dSE) (dE + 2) (dSE + 4) (x + 1) (y - 1)
+    build [] (1 - r) 3 (5 - 2 * r) 0 r
         |> PSeq.collect replicateCirclePoints
         |> PSeq.map ((+~) s)
         |> colorize c
 
 let private renderAACircle (s, r, c) =
     let dist a b = ceil (sqrt (a * a - b * b)) - sqrt (a * a - b * b)
-    let rec build x y t =
-        if x <= y + 1 then []
+    let rec build acc x y t =
+        if x <= y + 1 then acc
         else
             let y' = y + 1
             let d = dist (float r) (float y')
             let x' = if d < t then x - 1 else x
-            ((x', y'), intensify c (1.0 - d)) ::
-                ((x' - 1, y'), intensify c d) ::
-                build x' y' d
-    ((r, 0), c) :: build r 0 0.0
+            let p1 = ((x', y'), intensify c (1.0 - d))
+            let p2 = ((x' - 1, y'), intensify c d)
+            build (p1 :: p2 :: acc) x' y' d
+    build [((r, 0), c)] r 0 0.0
         |> PSeq.collect replicateCirclePointsWithColor
         |> PSeq.map (first ((+~) s))
 
