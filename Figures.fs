@@ -37,7 +37,7 @@ let shortDescriptionOf fig = fig.GetType().Name.ToLower()
 let longDescriptionOf fig = sprintf "%A" fig
 
 let private colorize c lst = PSeq.map (fun a -> (a, c)) lst
-let private distance ((x1, y1) : Point) ((x2, y2) : Point) =
+let distance ((x1, y1) : Point) ((x2, y2) : Point) =
     let x = x2 - x1
     let y = y2 - y1
     int <| Math.Sqrt (float (x * x + y * y))

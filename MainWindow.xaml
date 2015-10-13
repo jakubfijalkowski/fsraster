@@ -37,6 +37,7 @@
         <Menu Grid.ColumnSpan="4" Grid.Row="0">
             <MenuItem x:Name="addMenu" Header="_Add" />
             <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
+            <MenuItem x:Name="addRandomMenu" Header="_Random" />
         </Menu>
         <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="5">
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />

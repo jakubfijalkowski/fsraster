@@ -133,6 +133,20 @@ type MainWindowController() =
         Input.Mouse.Capture null |> ignore
         printf "%d" idx
 
+    let addRandomFigures _ =
+        let rnd = System.Random(0xB15B00B5)
+        [1 .. 200]
+            |> List.map (fun _ -> (rnd.Next(4), rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height), rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height), UIColors.allColors.[rnd.Next(UIColors.allColors.Length)]))
+            |> List.map (fun (t, x1, y1, x2, y2, c) ->
+                match t with
+                | 0 -> Point ((x1, y1), c.Color)
+                | 1 -> Line ((x1, y1), (x2, y2), c.Color)
+                | 2 -> Circle ((x1, y1), distance (x1, y1) (x2, y2), c.Color)
+                | _ -> AntialiasedCircle ((x1, y1), distance (x1, y1) (x2, y2), c.Color)
+                )
+            |> List.iter figures.Add
+        render ()
+
     do
         Control.prepareColorBox window.backgroundColor
         Control.prepareColorBox window.figureColor
@@ -164,5 +178,6 @@ type MainWindowController() =
         window.backgroundColor.SelectionChanged.Add render
 
         window.deleteMenu.Click.Add deleteFigure
+        window.addRandomMenu.Click.Add addRandomFigures
 
     member this.Window with get() = window.Root
