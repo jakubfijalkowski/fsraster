@@ -53,7 +53,9 @@ type MainWindowController() =
         | Some b -> previewFigure b pt color
         | None   -> Seq.empty
 
-    let render _ =
+
+
+    let render' _ =
         let bgColor = window.backgroundColor.SelectedValue :?> Color
         let gridColor = window.gridColor.SelectedValue :?> Color
         let figColor = window.figureColor.SelectedValue :?> Color
@@ -65,6 +67,17 @@ type MainWindowController() =
         then renderGrid context window.gridSpacing.Value.Value gridColor
 
         renderFigures context (Seq.append figures (getBuilderPreview figColor))
+
+    let render _ =
+        #if DEBUG || PROFILE_RENDERING
+        let sw = Diagnostics.Stopwatch()
+        sw.Start()
+        render' ()
+        sw.Stop()
+        window.Root.Title <- "Render time: " + sw.ElapsedMilliseconds.ToString() + " ms"
+        #else
+        render' ()
+        #endif
 
     let changeImageSize (e : SizeChangedEventArgs) =
         mainCanvas <- BitmapFactory.New(int e.NewSize.Width, int e.NewSize.Height)
