@@ -56,9 +56,9 @@ type MainWindowController() =
 
 
     let render' _ =
-        let bgColor = window.backgroundColor.SelectedValue :?> Color
-        let gridColor = window.gridColor.SelectedValue :?> Color
-        let figColor = window.figureColor.SelectedValue :?> Color
+        let bgColor = window.backgroundColor.SelectedColor.Value
+        let gridColor = window.gridColor.SelectedColor.Value
+        let figColor = window.figureColor.SelectedColor.Value
 
         use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
         context.Clear bgColor
@@ -87,7 +87,7 @@ type MainWindowController() =
     let updateSelectedFigure (e : SelectionChangedEventArgs) =
         let idx = window.figureList.SelectedIndex
         window.deleteMenu.IsEnabled <- idx > -1
-        if idx > -1 then window.figureColor.SelectedValue <- getFigureColor figures.[idx]
+        if idx > -1 then window.figureColor.SelectedColor <- Nullable (getFigureColor figures.[idx])
 
     let deleteFigure _ =
         let idx = window.figureList.SelectedIndex
@@ -95,8 +95,8 @@ type MainWindowController() =
             figures.RemoveAt idx
             render ()
 
-    let updateFigureColor (e : SelectionChangedEventArgs) =
-        let color = (e.AddedItems.[0] :?> UIColors.UIColor).Color
+    let updateFigureColor (e : RoutedPropertyChangedEventArgs<Nullable<Color>>) =
+        let color = e.NewValue.Value
         let idx = window.figureList.SelectedIndex
         if idx > -1 then
             figures.[idx] <- updateFigureColor color figures.[idx]
@@ -125,7 +125,7 @@ type MainWindowController() =
     let tryProcessFigure (e : Input.MouseEventArgs) =
         match figureBuilder with
         | Some b ->
-            let color = window.figureColor.SelectedValue :?> Color
+            let color = window.figureColor.SelectedColor.Value
             match processBuildingFigure b (getPosition e) color with
             | Choice1Of2 f ->
                 figures.Add f
@@ -168,10 +168,9 @@ type MainWindowController() =
         render ()
 
     do
-        Control.prepareColorBox window.backgroundColor
-        Control.prepareColorBox window.figureColor
-        Control.prepareColorBox window.gridColor
-        window.backgroundColor.SelectedValue <- Colors.White
+        window.backgroundColor.SelectedColor <- Nullable Colors.White
+        window.figureColor.SelectedColor <- Nullable Colors.Black
+        window.gridColor.SelectedColor <- Nullable Colors.Black
 
         window.figureList.ItemsSource <- figures
 
@@ -190,12 +189,12 @@ type MainWindowController() =
         window.imageContainer.MouseUp.Add onImageMouseUp
 
         window.figureList.SelectionChanged.Add updateSelectedFigure
-        window.figureColor.SelectionChanged.Add updateFigureColor
+        window.figureColor.SelectedColorChanged.Add updateFigureColor
         window.gridCheckBox.Checked.Add render
         window.gridCheckBox.Unchecked.Add render
         window.gridSpacing.ValueChanged.Add render
-        window.gridColor.SelectionChanged.Add render
-        window.backgroundColor.SelectionChanged.Add render
+        window.gridColor.SelectedColorChanged.Add render
+        window.backgroundColor.SelectedColorChanged.Add render
 
         window.deleteMenu.Click.Add deleteFigure
         window.addRandomMenu.Click.Add addRandomFigures

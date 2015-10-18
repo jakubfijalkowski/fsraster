@@ -52,13 +52,13 @@
         </ListView>
 
         <TextBlock Grid.Row="3" Grid.Column="1" VerticalAlignment="Center">Color:</TextBlock>
-        <ComboBox x:Name="figureColor" Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" />
+        <xctk:ColorPicker x:Name="figureColor" Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" />
 
         <CheckBox x:Name="gridCheckBox" Grid.Row="4" Grid.Column="1" VerticalAlignment="Center">Grid:</CheckBox>
         <xctk:IntegerUpDown x:Name="gridSpacing" Grid.Row="4" Grid.Column="2" Minimum="10" Maximum="1000" Value="100" />
-        <ComboBox x:Name="gridColor" Grid.Row="4" Grid.Column="3" />
+        <xctk:ColorPicker x:Name="gridColor" Grid.Row="4" Grid.Column="3" />
 
         <TextBlock Grid.Row="5" Grid.Column="1" VerticalAlignment="Center">Background:</TextBlock>
-        <ComboBox x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" />
+        <xctk:ColorPicker x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" />
     </Grid>
 </Window>

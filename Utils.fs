@@ -23,10 +23,3 @@ module UIColors =
     let allColors =
         typeof<Colors>.GetProperties()
         |> Array.map (fun p -> { Color = p.GetValue(null) :?> Color; Name = p.Name })
-
-module Control =
-    let prepareColorBox (cb : ComboBox) =
-        cb.DisplayMemberPath <- "Name"
-        cb.SelectedValuePath <- "Color"
-        cb.ItemsSource <- UIColors.allColors
-        cb.SelectedValue <- Colors.Black
