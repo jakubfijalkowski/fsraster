@@ -174,8 +174,8 @@ let private isPointHit (p1, _) p2 =
     if d < 10 then Some d else None
 let private isLineHit (x, y) (((x1, y1) as p1), ((x2, y2) as p2), _) =
     let d = (abs ((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1)) / distance p1 p2
-    let isOutside = x < x1 || x > x2 || y < (min y1 y2) || y > (max y1 y2)
-    if d < 10 && not isOutside then Some d else None
+    let isInside = x >= x1 && x <= x2 && y >= (min y1 y2) && y <= (max y1 y2)
+    if d < 20 && isInside then Some d else None
 let private isCircleHit pt (s, r, _) =
     let d = distance s pt
     if d <= r then Some (r - d) else None
