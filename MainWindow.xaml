@@ -16,6 +16,9 @@
         <Style TargetType="xctk:IntegerUpDown">
             <Setter Property="Margin" Value="3" />
         </Style>
+        <Style TargetType="xctk:ColorPicker">
+            <Setter Property="Margin" Value="3" />
+        </Style>
         <local:FigureNameConverter x:Key="figureConverter" />
     </Window.Resources>
     <Grid>
@@ -23,6 +26,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -39,7 +43,7 @@
             <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
             <MenuItem x:Name="addRandomMenu" Header="_Random" />
         </Menu>
-        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="5">
+        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="6">
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
         <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3">Figures:</TextBlock>
@@ -60,5 +64,8 @@
 
         <TextBlock Grid.Row="5" Grid.Column="1" VerticalAlignment="Center">Background:</TextBlock>
         <xctk:ColorPicker x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" />
+
+        <TextBlock Grid.Row="6" Grid.Column="1" VerticalAlignment="Center">Thickness:</TextBlock>
+        <xctk:IntegerUpDown x:Name="figureThickness" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2" Minimum="1" Maximum="100" Value="6" />
     </Grid>
 </Window>

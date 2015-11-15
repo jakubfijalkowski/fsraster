@@ -53,7 +53,8 @@ type MainWindowController() =
         | Some b -> previewFigure b pt color
         | None   -> Seq.empty
 
-
+    let getBuildInfo _ =
+        { Color = window.figureColor.SelectedColor.Value; Thickness = window.figureThickness.Value.Value }
 
     let render' _ =
         let bgColor = window.backgroundColor.SelectedColor.Value
@@ -66,7 +67,7 @@ type MainWindowController() =
         if window.gridCheckBox.IsChecked.Value
         then renderGrid context window.gridSpacing.Value.Value gridColor
 
-        renderFigures context (Seq.append figures (getBuilderPreview figColor))
+        renderFigures context (Seq.append figures (getBuilderPreview (getBuildInfo ())))
 
     let render _ =
         #if DEBUG || PROFILE_RENDERING
@@ -87,7 +88,10 @@ type MainWindowController() =
     let updateSelectedFigure (e : SelectionChangedEventArgs) =
         let idx = window.figureList.SelectedIndex
         window.deleteMenu.IsEnabled <- idx > -1
-        if idx > -1 then window.figureColor.SelectedColor <- Nullable (getFigureColor figures.[idx])
+        if idx > -1 then
+            let info = getFigureInfo figures.[idx]
+            window.figureColor.SelectedColor <- Nullable info.Color
+            window.figureThickness.Value <- Nullable info.Thickness
 
     let deleteFigure _ =
         let idx = window.figureList.SelectedIndex
@@ -95,11 +99,10 @@ type MainWindowController() =
             figures.RemoveAt idx
             render ()
 
-    let updateFigureColor (e : RoutedPropertyChangedEventArgs<Nullable<Color>>) =
-        let color = e.NewValue.Value
+    let updateFigureInfo e =
         let idx = window.figureList.SelectedIndex
         if idx > -1 then
-            figures.[idx] <- updateFigureColor color figures.[idx]
+            figures.[idx] <- updateFigure (getBuildInfo ()) figures.[idx]
             window.figureList.SelectedIndex <- idx
             render ()
 
@@ -125,8 +128,8 @@ type MainWindowController() =
     let tryProcessFigure (e : Input.MouseEventArgs) =
         match figureBuilder with
         | Some b ->
-            let color = window.figureColor.SelectedColor.Value
-            match processBuildingFigure b (getPosition e) color with
+            let info = getBuildInfo ()
+            match processBuildingFigure b (getPosition e) info with
             | Choice1Of2 f ->
                 figures.Add f
                 figureBuilder <- None
@@ -189,7 +192,8 @@ type MainWindowController() =
         window.imageContainer.MouseUp.Add onImageMouseUp
 
         window.figureList.SelectionChanged.Add updateSelectedFigure
-        window.figureColor.SelectedColorChanged.Add updateFigureColor
+        window.figureColor.SelectedColorChanged.Add updateFigureInfo
+        window.figureThickness.ValueChanged.Add updateFigureInfo
         window.gridCheckBox.Checked.Add render
         window.gridCheckBox.Unchecked.Add render
         window.gridSpacing.ValueChanged.Add render
