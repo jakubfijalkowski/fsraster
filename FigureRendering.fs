@@ -116,13 +116,18 @@ let private renderCircleLine =
     let intRenderCircle t s = renderCircle' s (int (ceil (float t / 2.0))) |> Seq.toList
     renderRepeatedLine intRenderCircle
 
+let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (sortPairOfPoints >> uncurry renderLine') |> colorize c
+let private renderPolygon (pts, c) = renderPolyline (pts @ [List.head pts], c)
+
 let renderSingleFigure = function
-    | Point  p    -> renderPoint p
-    | Line   a    -> renderLine a
-    | Circle c    -> renderCircle c
+    | Point  p            -> renderPoint p
+    | Line   a            -> renderLine a
+    | Circle c            -> renderCircle c
     | AntialiasedCircle c -> renderAACircle c
-    | SquareLine s -> renderSquareLine s
-    | DiamondLine s -> renderDiamondLine s
-    | CircleLine s -> renderCircleLine s
+    | SquareLine s        -> renderSquareLine s
+    | DiamondLine s       -> renderDiamondLine s
+    | CircleLine s        -> renderCircleLine s
+    | Polyline p          -> renderPolyline p
+    | Polygon p           -> renderPolygon p
 
 let renderFigureList figs = PSeq.ordered figs |> PSeq.map renderSingleFigure |> PSeq.toList

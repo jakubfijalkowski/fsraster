@@ -140,19 +140,29 @@ type MainWindowController() =
             true
         | _ -> false
 
+    let finishCurrentFigure _ =
+        match figureBuilder with
+        | Some b ->
+            let info = getBuildInfo ()
+            Option.map (figures.Add) (forceFinishFigure b info) |> ignore
+            figureBuilder <- None
+            render ()
+        | _ -> ()
+
     let onImageMouseDown e =
         Input.Mouse.Capture window.imageContainer |> ignore
-        selectFigure e
+        if Option.isNone figureBuilder then selectFigure e
 
     let onImageMouseMove e =
         if tryMoveFigure e || Option.isSome figureBuilder then render ()
 
     let onImageMouseUp e =
         if tryProcessFigure e then render ()
-        let idx = window.figureList.SelectedIndex
         moveData <- None
         Input.Mouse.Capture null |> ignore
-        printf "%d" idx
+
+    let onKeyUp (e : Input.KeyEventArgs) =
+        if e.Key = Input.Key.F then finishCurrentFigure ()
 
     let addRandomFigures _ =
         let rnd = System.Random(0xB15B00B5)
@@ -205,5 +215,7 @@ type MainWindowController() =
 
         window.deleteMenu.Click.Add deleteFigure
         window.addRandomMenu.Click.Add addRandomFigures
+
+        window.Root.KeyUp.Add onKeyUp
 
     member this.Window with get() = window.Root

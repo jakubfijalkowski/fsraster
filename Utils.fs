@@ -7,6 +7,8 @@ open System.Windows.Media
 
 let first f (a, b) = (f a, b)
 let second f (a, b) = (a, f b)
+let curry f a b = f (a, b)
+let uncurry f (a, b) = f a b
 
 module ConsList =
     type ConsList<'a> =
