@@ -8,6 +8,7 @@ open System.Diagnostics.CodeAnalysis
 open FSharp.Collections.ParallelSeq
 
 open FsRaster.Figures
+open FsRaster.FigureRendering
 
 // Required to fight thread access exceptions
 type CachedBitmapContext = {

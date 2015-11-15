@@ -59,6 +59,9 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Figures.fs" />
+    <Compile Include="FigureRendering.fs" />
+    <Compile Include="FigureBuilding.fs" />
+    <Compile Include="FigureHitTests.fs" />
     <Compile Include="CoreRendering.fs" />
     <Resource Include="MainWindow.xaml" />
     <Compile Include="UI.fs" />

@@ -14,6 +14,9 @@ open FsXaml
 
 open FsRaster.Utils
 open FsRaster.Figures
+open FsRaster.FigureRendering
+open FsRaster.FigureBuilding
+open FsRaster.FigureHitTests
 open FsRaster.CoreRendering
 
 type MainWindow = XAML<"MainWindow.xaml", true>
