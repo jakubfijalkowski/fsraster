@@ -256,7 +256,7 @@ type MainWindowController() =
         cancelAllActions ()
         let bColor = window.boundaryColor.SelectedColor.Value
         let fColor = window.fillColor.SelectedColor.Value
-        fillAction <- Some (boundaryFill4 bColor fColor)
+        fillAction <- Some (boundaryFill8 bColor fColor)
 
     let updateMouseCursor (e : Input.MouseEventArgs) =
         let pos = getPosition e
