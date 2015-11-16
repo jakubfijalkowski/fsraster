@@ -24,7 +24,7 @@ let private withAtLeast2 e f = function
     | _                  -> e "Invalid number of elements."
 let private withAtLeast2' f pts = withAtLeast2 failwith f pts
 
-let private buildLine' c             = sortPoints >> withPair' (fun p1 p2 -> (p1, p2, c.Color))
+let private buildLine' c             = withPair' (fun p1 p2 -> (p1, p2, c.Color))
 let private buildPoint c             = withSingle' (fun p -> Point (p, c.Color))
 let private buildLine c              = buildLine' c >> Line
 let private buildCircle c            = withPair' (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color))

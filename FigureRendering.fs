@@ -35,11 +35,16 @@ let private renderLine' (x1', y1') (x2', y2') =
         let dx = x2' - x1'
         let dy = y2' - y1'
         let result =
-            match (dx, dy) with
-            | (a, b) when dy < 0 && -dy <= dx -> renderOctant x1' -y1' x2' -y2' |> Seq.map (fun (x, y) -> (x, -y)) 
-            | (a, b) when dy < 0 && -dy > dx  -> renderOctant -y1' x1' -y2' x2' |> Seq.map (fun (y, x) -> (x, -y))
-            | (a, b) when dy > dx             -> renderOctant y1' x1' y2' x2'   |> Seq.map (fun (y, x) -> (x, y))
-            | _                               -> renderOctant x1' y1' x2' y2'
+            match (x2' - x1', y2' - y1') with
+            | dx, dy when            dy >= 0 &&  dx >=  dy -> renderOctant  x1'  y1'  x2'  y2'
+            | dx, dy when dx >= 0 &&             dy >   dx -> renderOctant  y1'  x1'  y2'  x2' |> Seq.map (fun (x, y) -> ( y,  x))
+            | dx, dy when dx <  0 && dy >= 0 && -dx >=  dy -> renderOctant -x1'  y1' -x2'  y2' |> Seq.map (fun (x, y) -> (-x,  y))
+            | dx, dy when dx <  0 &&             dy >  -dx -> renderOctant  y1' -x1'  y2' -x2' |> Seq.map (fun (x, y) -> (-y,  x))
+            | dx, dy when dx <  0 && dy <  0 && -dx >= -dy -> renderOctant -x1' -y1' -x2' -y2' |> Seq.map (fun (x, y) -> (-x, -y))
+            | dx, dy when dx <  0 && dy <  0 && -dy >  -dx -> renderOctant -y1' -x1' -y2' -x2' |> Seq.map (fun (x, y) -> (-y, -x))
+            | dx, dy when dx >= 0 && dy <  0 && -dy >=  dx -> renderOctant -y1'  x1' -y2'  x2' |> Seq.map (fun (x, y) -> ( y, -x))
+            | dx, dy when dx >  0 && dy <  0 &&  dx >  -dy -> renderOctant  x1' -y1'  x2' -y2' |> Seq.map (fun (x, y) -> ( x, -y))
+            | _ -> Seq.empty
         result
 let private renderLine (p1, p2, c) = renderLine' p1 p2 |> colorize c
 
@@ -117,7 +122,7 @@ let private renderCircleLine =
     let intRenderCircle t s = renderCircle' s (int (ceil (float t / 2.0))) |> Seq.toList
     renderRepeatedLine intRenderCircle
 
-let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (sortPairOfPoints >> uncurry renderLine') |> colorize c
+let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (uncurry renderLine') |> colorize c
 let private renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
 
 type ActiveEdge = int * double * double

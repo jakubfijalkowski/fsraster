@@ -60,10 +60,6 @@ let distance ((x1, y1) : Point) ((x2, y2) : Point) =
     let y = y2 - y1
     int <| Math.Sqrt (float (x * x + y * y))
 
-let sortPoints (pts : Point list) = List.sortBy fst pts
-let sortPairOfPoints (p1, p2) : Point * Point =
-    if fst p1 > fst p2 then (p2, p1) else (p1, p2)
-
 let updateFigure c = function
     | Point (p, _)                -> Point (p, c.Color)
     | Line (p1, p2, _)            -> Line (p1, p2, c.Color)

@@ -9,11 +9,11 @@ let private isPointHit (p1, _) p2 =
 
 let private isLineHit ((x, y) as p) (((x1, y1), (x2, y2)) as l) =
     let d = distanceFromLine p l
-    let isInside = x >= x1 && x <= x2 && y >= (min y1 y2) && y <= (max y1 y2)
+    let isInside = x >= (min x1 x2) && x <= (max x1 x2) && y >= (min y1 y2) && y <= (max y1 y2)
     if d < 20 && isInside then Some d else None
 
 let private isPolylineHit p pts =
-    pts |> List.pairwise |> List.map (sortPairOfPoints >> isLineHit p) |> List.choose id |> List.tryHead
+    pts |> List.pairwise |> List.map (isLineHit p) |> List.choose id |> List.tryHead
 
 // ignores case when line l contains one of the vertices
 let private isPolygonHit p pts =
