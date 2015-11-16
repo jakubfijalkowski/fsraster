@@ -112,4 +112,7 @@ let makeConnected = function
     | _                      -> []
 
 let moveRect (x, y) (left, top, right, bottom) = (left + x, top + y, right + x, bottom + y)
-let resizeRect (x, y) (left, top, right, bottom) = (left, top, right + x, bottom + y)
+let resizeRectMin m (x, y) (left, top, right, bottom) =
+    let width = max m (right + x - left)
+    let height = max m (bottom + y - top)
+    (left, top, left + width, top + height)

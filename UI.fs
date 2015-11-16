@@ -27,7 +27,13 @@ type FigureNameConverter() =
         member this.Convert(value, _, _, _) = longDescriptionOf (value :?> Figure) :> obj
         member this.ConvertBack(_, _, _, _) = failwith "Operation not supported."
 
+type MoveDataType = ClipRectMove | ClipRectResize | FigureMove
+
 type MainWindowController() =
+
+    [<Literal>]
+    let MatchDistance = 10
+
     let window = MainWindow()
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
@@ -36,13 +42,25 @@ type MainWindowController() =
     
     let mutable figureBuilder : FigureBuilder option = None
 
-    let mutable moveData : (Point * int) option = None
+    let mutable moveData : (MoveDataType * Point * int) option = None
 
     let mutable clipRect : Rectangle option = None
 
     let getPosition (e : Input.MouseEventArgs) =
         let pos = e.GetPosition(window.imageContainer)
         (int pos.X, int pos.Y)
+
+    let withMoveData t f =
+        match moveData with
+        | Some (dt, s, i) when dt = t ->
+            match f s i with
+            | Some n ->
+                moveData <- Some (dt, n, i)
+                true
+            | None ->
+                moveData <- None
+                false
+        | _ -> false
 
     let selectHitFigure pt =
         figures
@@ -121,21 +139,19 @@ type MainWindowController() =
         let figure = (e.Source :?> MenuItem).Tag :?> Figure
         figureBuilder <- Some (getFigureBuilder figure)
 
-    let selectFigure (e : Input.MouseEventArgs) =
+    let trySelectFigure (e : Input.MouseEventArgs) =
         let pos = getPosition e
         let idx = selectHitFigure pos
         window.figureList.SelectedIndex <- idx
-        moveData <- if idx > -1 then Some (pos, idx) else None
+        moveData <- if idx > -1 then Some (FigureMove, pos, idx) else None
         idx > -1
 
     let tryMoveFigure (e : Input.MouseEventArgs) =
-        match moveData with
-        | Some (s, idx) ->
+        withMoveData FigureMove (fun s idx ->
             let pos = getPosition e
             figures.[idx] <- moveFigure (pos -~ s) figures.[idx]
-            moveData <- Some (pos, idx)
-            true
-        | None -> false
+            Some pos
+        )
 
     let tryProcessFigure (e : Input.MouseEventArgs) =
         match figureBuilder with
@@ -172,41 +188,37 @@ type MainWindowController() =
         match clipRect with
         | Some (left, top, _, _) ->
             let pos = getPosition e
-            if distance pos (left, top) <= 10
+            if distance pos (left, top) <= MatchDistance
             then
-                moveData <- Some (pos, -1)
+                moveData <- Some (ClipRectMove, pos, 0)
                 true
             else false
         | None -> false
 
     let tryMoveClipping (e : Input.MouseEventArgs) =
-        match moveData with
-        | Some (s, -1) ->
+        withMoveData ClipRectMove (fun s _ ->
             let pos = getPosition e
             clipRect <- Option.map (moveRect (pos -~ s)) clipRect
-            moveData <- Some (pos, -1)
-            true
-        | _ -> false
+            Some pos
+        )
 
     let tryStartResizingClipping (e : Input.MouseEventArgs) =
         match clipRect with
         | Some (_, _, right, bottom) ->
             let pos = getPosition e
-            if distance pos (right, bottom) <= 10
+            if distance pos (right, bottom) <= MatchDistance
             then
-                moveData <- Some (pos, -2)
+                moveData <- Some (ClipRectResize, pos, 0)
                 true
             else false
         | None -> false
 
     let tryResizeClipping (e : Input.MouseEventArgs) =
-        match moveData with
-        | Some (s, -2) ->
+        withMoveData ClipRectResize (fun s _ ->
             let pos = getPosition e
-            clipRect <- Option.map (resizeRect (pos -~ s)) clipRect
-            moveData <- Some (pos, -2)
-            true
-        | _ -> false
+            clipRect <- Option.map (resizeRectMin (MatchDistance * 2) (pos -~ s)) clipRect
+            Some pos
+        )
 
     let disableClipping _ =
         clipRect <- None
@@ -216,9 +228,9 @@ type MainWindowController() =
         let pos = getPosition e
         let result =
             Option.bind (fun (left, top, right, bottom) ->
-                if distance pos (left, top) <= 10
+                if distance pos (left, top) <= MatchDistance
                 then Some Input.Cursors.SizeAll
-                else if distance pos (right, bottom) <= 10
+                else if distance pos (right, bottom) <= MatchDistance
                 then Some Input.Cursors.SizeNWSE
                 else None
             ) clipRect
@@ -227,7 +239,7 @@ type MainWindowController() =
     let onImageMouseDown e =
         Input.Mouse.Capture window.imageContainer |> ignore
         if Option.isNone figureBuilder
-        then (tryStartResizingClipping e || tryStartMovingClipping e || selectFigure e) |> ignore
+        then (tryStartResizingClipping e || tryStartMovingClipping e || trySelectFigure e) |> ignore
 
     let onImageMouseMove e =
         if tryResizeClipping e || tryMoveClipping e || tryMoveFigure e || Option.isSome figureBuilder
