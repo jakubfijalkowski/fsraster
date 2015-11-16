@@ -92,6 +92,7 @@ type MainWindowController() =
                 let spacing = window.gridSpacing.Value.GetValueOrDefault 10
                 generateGrid context.Width context.Height spacing gridColor
             else []
+        let grid = Option.fold clipFigures (grid :> Figure seq) clipRect
 
         let buildInfo = getBuildInfo ()
         let topMost = Seq.choose id
