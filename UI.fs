@@ -258,8 +258,8 @@ type MainWindowController() =
         let fColor = window.fillColor.SelectedColor.Value
         fillAction <- Some (boundaryFill8 bColor fColor)
 
-    let updateMouseCursor (e : Input.MouseEventArgs) =
-        let pos = getPosition e
+    let updateMouseCursor (e : Input.MouseEventArgs option) =
+        let pos = Option.fold (fun _ -> getPosition) (-999, -999) e
         let r1 = Option.map (fun _ -> loadCursorFile "bucket_cursor") fillAction
         let r2 = Option.map (fun _ -> Input.Cursors.Hand) figureBuilder
         let r3 =
@@ -283,9 +283,10 @@ type MainWindowController() =
             Input.Mouse.Capture window.imageContainer |> ignore
             if Option.isNone figureBuilder
             then (tryStartResizingClipping e || tryStartMovingClipping e || trySelectFigure e) |> ignore
+            updateMouseCursor (Some e)
 
     let onImageMouseMove e =
-        updateMouseCursor e
+        updateMouseCursor (Some e)
         if tryResizeClipping e || tryMoveClipping e || tryMoveFigure e || Option.isSome figureBuilder
         then render ()
 
@@ -293,9 +294,16 @@ type MainWindowController() =
         if tryProcessFigure e then render ()
         moveData <- None
         Input.Mouse.Capture null |> ignore
+        updateMouseCursor (Some e)
 
     let onKeyUp (e : Input.KeyEventArgs) =
-        if e.Key = Input.Key.F then finishCurrentFigure ()
+        match e.Key with
+        | Input.Key.F -> finishCurrentFigure ()
+        | Input.Key.Escape ->
+            cancelAllActions ()
+            updateMouseCursor None
+            Input.Mouse.Capture null |> ignore
+        | _ -> ()
 
     let addRandomFigures _ =
         let rnd = System.Random(0xB15B00B5)
