@@ -18,7 +18,9 @@ open FsRaster.FigureRendering
 open FsRaster.FigureBuilding
 open FsRaster.FigureHitTests
 open FsRaster.FigureClipping
+open FsRaster.Resources
 open FsRaster.CoreRendering
+open FsRaster.CoreAlgorithms
 
 type MainWindow = XAML<"MainWindow.xaml", true>
 
@@ -41,10 +43,9 @@ type MainWindowController() =
     let figures : Generic.IList<Figure> = ObservableCollection() :> Generic.IList<Figure>
     
     let mutable figureBuilder : FigureBuilder option = None
-
     let mutable moveData : (MoveDataType * Point * int) option = None
-
     let mutable clipRect : Rectangle option = None
+    let mutable fillAction : (int -> int -> IRenderer -> unit) option = None
 
     let getPosition (e : Input.MouseEventArgs) =
         let pos = e.GetPosition(window.imageContainer)
@@ -61,6 +62,11 @@ type MainWindowController() =
                 moveData <- None
                 false
         | _ -> false
+
+    let cancelAllActions _ =
+        moveData <- None
+        figureBuilder <- None
+        fillAction <- None
 
     let selectHitFigure pt =
         figures
@@ -141,6 +147,7 @@ type MainWindowController() =
             render ()
 
     let startBuildingFigure (e : RoutedEventArgs) =
+        cancelAllActions ()
         let figure = (e.Source :?> MenuItem).Tag :?> Figure
         figureBuilder <- Some (getFigureBuilder figure)
 
@@ -229,9 +236,39 @@ type MainWindowController() =
         clipRect <- None
         render ()
 
+    let tryFillingRenderer (e : Input.MouseEventArgs) =
+        match fillAction with
+        | Some action ->
+            let x, y = getPosition e
+            use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
+            action x y context
+            fillAction <- None
+            true
+        | None -> false
+
+    let startFilling4 _ =
+        cancelAllActions ()
+        let bColor = window.boundaryColor.SelectedColor.Value
+        let fColor = window.fillColor.SelectedColor.Value
+        fillAction <- Some (boundaryFill4 bColor fColor)
+
+    let startFilling8 _ =
+        cancelAllActions ()
+        let bColor = window.boundaryColor.SelectedColor.Value
+        let fColor = window.fillColor.SelectedColor.Value
+        fillAction <- Some (boundaryFill4 bColor fColor)
+
     let updateMouseCursor (e : Input.MouseEventArgs) =
         let pos = getPosition e
-        let result =
+        let r1 = Option.map (fun _ -> loadCursorFile "bucket_cursor") fillAction
+        let r2 = Option.map (fun _ -> Input.Cursors.Hand) figureBuilder
+        let r3 =
+            Option.bind (fun (t, _, _) ->
+                if t = FigureMove
+                then Some Input.Cursors.SizeAll
+                else None
+            ) moveData
+        let r4 =
             Option.bind (fun (left, top, right, bottom) ->
                 if distance pos (left, top) <= MatchDistance
                 then Some Input.Cursors.SizeAll
@@ -239,17 +276,18 @@ type MainWindowController() =
                 then Some Input.Cursors.SizeNWSE
                 else None
             ) clipRect
-        window.Root.Cursor <- Option.fold (fun _ c -> c) Input.Cursors.Arrow result
+        window.imageContainer.Cursor <- List.choose id [r1; r2; r3; r4; Some Input.Cursors.Arrow] |> List.head
 
     let onImageMouseDown e =
-        Input.Mouse.Capture window.imageContainer |> ignore
-        if Option.isNone figureBuilder
-        then (tryStartResizingClipping e || tryStartMovingClipping e || trySelectFigure e) |> ignore
+        if not (tryFillingRenderer e) then
+            Input.Mouse.Capture window.imageContainer |> ignore
+            if Option.isNone figureBuilder
+            then (tryStartResizingClipping e || tryStartMovingClipping e || trySelectFigure e) |> ignore
 
     let onImageMouseMove e =
+        updateMouseCursor e
         if tryResizeClipping e || tryMoveClipping e || tryMoveFigure e || Option.isSome figureBuilder
         then render ()
-        else updateMouseCursor e
 
     let onImageMouseUp e =
         if tryProcessFigure e then render ()
@@ -282,6 +320,8 @@ type MainWindowController() =
         window.backgroundColor.SelectedColor <- Nullable Colors.White
         window.figureColor.SelectedColor <- Nullable Colors.Black
         window.gridColor.SelectedColor <- Nullable Colors.Black
+        window.boundaryColor.SelectedColor <- Nullable Colors.Red
+        window.fillColor.SelectedColor <- Nullable Colors.Green
 
         window.figureList.ItemsSource <- figures
 
@@ -314,5 +354,8 @@ type MainWindowController() =
         window.Root.KeyUp.Add onKeyUp
         window.clipCheckBox.Checked.Add enableClipping
         window.clipCheckBox.Unchecked.Add disableClipping
+
+        window.fill4.Click.Add startFilling4
+        window.fill8.Click.Add startFilling8
 
     member this.Window with get() = window.Root

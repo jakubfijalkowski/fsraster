@@ -9,5 +9,7 @@
       "../FigureHitTests.fs"
       "../FigureClipping.fs"
       "../CoreRendering.fs"
+      "../CoreAlgorithms.fs"
+      "../Resources.fs"
       "../UI.fs"
       "../Program.fs"

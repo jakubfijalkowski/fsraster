@@ -19,6 +19,9 @@
         <Style TargetType="xctk:ColorPicker">
             <Setter Property="Margin" Value="3" />
         </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3" />
+        </Style>
         <local:FigureNameConverter x:Key="figureConverter" />
     </Window.Resources>
     <Grid>
@@ -26,6 +29,8 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -44,7 +49,7 @@
             <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
             <MenuItem x:Name="addRandomMenu" Header="_Random" />
         </Menu>
-        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="7">
+        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="9">
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
         <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3">Figures:</TextBlock>
@@ -70,5 +75,12 @@
         <xctk:IntegerUpDown x:Name="figureThickness" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2" Minimum="1" Maximum="100" Value="6" />
 
         <CheckBox x:Name="clipCheckBox" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center">Clipping</CheckBox>
+
+        <TextBlock Grid.Row="8" Grid.Column="1" VerticalAlignment="Center">Boundary:</TextBlock>
+        <xctk:ColorPicker x:Name="boundaryColor" Grid.Row="8" Grid.Column="2" />
+        <Button x:Name="fill4" Grid.Row="8" Grid.Column="3">4</Button>
+        <TextBlock Grid.Row="9" Grid.Column="1" VerticalAlignment="Center">Fill:</TextBlock>
+        <xctk:ColorPicker x:Name="fillColor" Grid.Row="9" Grid.Column="2" />
+        <Button x:Name="fill8" Grid.Row="9" Grid.Column="3">8</Button>
     </Grid>
 </Window>

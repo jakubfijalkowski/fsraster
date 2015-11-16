@@ -19,3 +19,4 @@
 #r "../packages/FsXaml.Wpf/lib/net45/FsXaml.Wpf.dll"
 #r "../packages/FsXaml.Wpf/lib/net45/FsXaml.Wpf.TypeProvider.dll"
 #r "System.Xml.dll"
+#r "System.Drawing.dll"
