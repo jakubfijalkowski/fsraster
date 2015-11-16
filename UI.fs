@@ -38,7 +38,7 @@ type MainWindowController() =
 
     let mutable moveData : (Point * int) option = None
 
-    let mutable clipRect : ClipRect option = None
+    let mutable clipRect : Rectangle option = None
 
     let getPosition (e : Input.MouseEventArgs) =
         let pos = e.GetPosition(window.imageContainer)
@@ -126,6 +126,7 @@ type MainWindowController() =
         let idx = selectHitFigure pos
         window.figureList.SelectedIndex <- idx
         moveData <- if idx > -1 then Some (pos, idx) else None
+        idx > -1
 
     let tryMoveFigure (e : Input.MouseEventArgs) =
         match moveData with
@@ -157,12 +158,81 @@ type MainWindowController() =
             render ()
         | _ -> ()
 
+    let enableClipping _ =
+        let w = window.imageContainer.ActualWidth
+        let h = window.imageContainer.ActualHeight
+        let left = int (w * 0.2)
+        let right = int (w * 0.8)
+        let top = int (h * 0.2)
+        let bottom = int (h * 0.8)
+        clipRect <- Some (left, top, right, bottom)
+        render ()
+
+    let tryStartMovingClipping (e : Input.MouseEventArgs) =
+        match clipRect with
+        | Some (left, top, _, _) ->
+            let pos = getPosition e
+            if distance pos (left, top) <= 10
+            then
+                moveData <- Some (pos, -1)
+                true
+            else false
+        | None -> false
+
+    let tryMoveClipping (e : Input.MouseEventArgs) =
+        match moveData with
+        | Some (s, -1) ->
+            let pos = getPosition e
+            clipRect <- Option.map (moveRect (pos -~ s)) clipRect
+            moveData <- Some (pos, -1)
+            true
+        | _ -> false
+
+    let tryStartResizingClipping (e : Input.MouseEventArgs) =
+        match clipRect with
+        | Some (_, _, right, bottom) ->
+            let pos = getPosition e
+            if distance pos (right, bottom) <= 10
+            then
+                moveData <- Some (pos, -2)
+                true
+            else false
+        | None -> false
+
+    let tryResizeClipping (e : Input.MouseEventArgs) =
+        match moveData with
+        | Some (s, -2) ->
+            let pos = getPosition e
+            clipRect <- Option.map (resizeRect (pos -~ s)) clipRect
+            moveData <- Some (pos, -2)
+            true
+        | _ -> false
+
+    let disableClipping _ =
+        clipRect <- None
+        render ()
+
+    let updateMouseCursor (e : Input.MouseEventArgs) =
+        let pos = getPosition e
+        let result =
+            Option.bind (fun (left, top, right, bottom) ->
+                if distance pos (left, top) <= 10
+                then Some Input.Cursors.SizeAll
+                else if distance pos (right, bottom) <= 10
+                then Some Input.Cursors.SizeNWSE
+                else None
+            ) clipRect
+        window.Root.Cursor <- Option.fold (fun _ c -> c) Input.Cursors.Arrow result
+
     let onImageMouseDown e =
         Input.Mouse.Capture window.imageContainer |> ignore
-        if Option.isNone figureBuilder then selectFigure e
+        if Option.isNone figureBuilder
+        then (tryStartResizingClipping e || tryStartMovingClipping e || selectFigure e) |> ignore
 
     let onImageMouseMove e =
-        if tryMoveFigure e || Option.isSome figureBuilder then render ()
+        if tryResizeClipping e || tryMoveClipping e || tryMoveFigure e || Option.isSome figureBuilder
+        then render ()
+        else updateMouseCursor e
 
     let onImageMouseUp e =
         if tryProcessFigure e then render ()
@@ -189,20 +259,6 @@ type MainWindowController() =
                 genFig t p1 p2 c.Color
                 )
             |> List.iter figures.Add
-        render ()
-
-    let enableClipping _ =
-        let w = window.imageContainer.ActualWidth
-        let h = window.imageContainer.ActualHeight
-        let left = int (w * 0.2)
-        let right = int (w * 0.8)
-        let top = int (h * 0.2)
-        let bottom = int (h * 0.8)
-        clipRect <- Some (ClipRect (left, top, right, bottom))
-        render ()
-
-    let disableClipping _ =
-        clipRect <- None
         render ()
 
     do

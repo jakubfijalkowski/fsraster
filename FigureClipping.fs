@@ -5,9 +5,7 @@ open FSharp.Collections.ParallelSeq
 open FsRaster.Utils
 open FsRaster.Figures
 
-type ClipRect = ClipRect of Rectangle
-
-let asPolygon c (ClipRect (x1, y1, x2, y2)) = Polygon ([(x1, y1); (x2, y1); (x2, y2); (x1, y2)], c)
+let asPolygon c (x1, y1, x2, y2) = Polygon ([(x1, y1); (x2, y1); (x2, y2); (x1, y2)], c)
 
 let private yPointOnLine x (x1, y1) (x2, y2) =
     let a = double (y2 - y1) / double (x2 - x1)
@@ -20,7 +18,7 @@ let private xPointOnLine y (x1, y1) (x2, y2) =
         let b = double y1 - a * double x1
         int ((double y - b) / a)
 
-let private clipPolygon pts (ClipRect (left, top, right, bottom)) =
+let private clipPolygon pts (left, top, right, bottom) =
     let testGeneric item crossPoint bound s n =
         match (item s, item n) with
         | (a, b) when a >= bound && b >= bound -> [n]

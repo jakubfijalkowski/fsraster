@@ -110,3 +110,6 @@ let distanceFromLine (x, y) (((x1, y1) as p1), ((x2, y2) as p2)) =
 let makeConnected = function
     | (p1 :: p2 :: _) as pts -> pts @ [p1]
     | _                      -> []
+
+let moveRect (x, y) (left, top, right, bottom) = (left + x, top + y, right + x, bottom + y)
+let resizeRect (x, y) (left, top, right, bottom) = (left, top, right + x, bottom + y)
