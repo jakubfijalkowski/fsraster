@@ -12,18 +12,17 @@ type Rectangle = int * int * int * int
 // "swim" operators - vector addition/subtraction
 let inline (+~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 + x2, y1 + y2)
 let inline (-~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 - x2, y1 - y2)
-let inline (~-.) (x, y) : Point = (-x, -y)
 
 type Figure =
-    | Point of (Point * Color)
-    | Line of (Point * Point * Color)
-    | Circle of (Point * int * Color)
+    | Point             of (Point * Color)
+    | Line              of (Point * Point * Color)
+    | Circle            of (Point * int * Color)
     | AntialiasedCircle of (Point * int * Color)
-    | SquareLine of (Point * Point * Color * int)
-    | DiamondLine of (Point * Point * Color * int)
-    | CircleLine of (Point * Point * Color * int)
-    | Polyline of (Point list * Color)
-    | Polygon of (Point list * Color)
+    | SquareLine        of (Point * Point * Color * int)
+    | DiamondLine       of (Point * Point * Color * int)
+    | CircleLine        of (Point * Point * Color * int)
+    | Polyline          of (Point list * Color)
+    | Polygon           of (Point list * Color)
 
 type FigureInfo = { Color : Color; Thickness: int }
 
@@ -102,8 +101,7 @@ let doLinesCross (p1, p2) (p3, p4) =
     match (d12, d34) with
     | (a, b) when a > 0 || b > 0 -> false
     | (a, b) when a < 0 || b < 0 -> true
-    | _                          ->
-        isOnRect p1 p3 p4 || isOnRect p2 p3 p4 || isOnRect p3 p1 p2 || isOnRect p4 p1 p2
+    | _ -> isOnRect p1 p3 p4 || isOnRect p2 p3 p4 || isOnRect p3 p1 p2 || isOnRect p4 p1 p2
 
 let distanceFromLine (x, y) (((x1, y1) as p1), ((x2, y2) as p2)) =
     let d' = max (distance p1 p2) 1

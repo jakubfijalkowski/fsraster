@@ -21,7 +21,7 @@ let private xPointOnLine y (x1, y1) (x2, y2) =
         int ((double y - b) / a)
 
 let private clipPolygon pts (ClipRect (left, top, right, bottom)) =
-    let testGeneric (item : Point -> int) (crossPoint : Point -> Point -> Point) (bound : int) (s : Point) (n : Point) =
+    let testGeneric item crossPoint bound s n =
         match (item s, item n) with
         | (a, b) when a >= bound && b >= bound -> [n]
         | (a, b) when a <  bound && b =  bound -> [n]
@@ -41,4 +41,4 @@ let clipFigure clipRect = function
     | Polygon (pts, c) -> Option.map (fun p -> Polygon (p, c)) (clipPolygon pts clipRect)
     | r -> Some r
 
-let clipFigures (figs : Figure seq) clipRect : Figure seq = Seq.choose (clipFigure clipRect) figs
+let clipFigures (figs : Figure seq) clipRect : Figure seq = PSeq.choose (clipFigure clipRect) figs |> PSeq.toList :> Figure seq
