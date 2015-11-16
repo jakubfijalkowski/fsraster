@@ -19,7 +19,14 @@ let private xPointOnLine y (x1, y1) (x2, y2) =
         let b = double y1 - a * double x1
         int <| round ((double y - b) / a)
 
-let private clipLine p1 p2 (left, top, right, bottom) =
+let prepareSutherlandHodgmanTests testGeneric (left, top, right, bottom) =
+    let testLeft = testGeneric fst (fun s n -> (left, yPointOnLine left s n)) left
+    let testRight = testGeneric (fst >> (~-)) (fun s n -> (right, yPointOnLine right s n)) -right
+    let testTop = testGeneric snd (fun s n -> (xPointOnLine top s n, top)) top
+    let testBottom = testGeneric (snd >> (~-)) (fun s n -> (xPointOnLine bottom s n, bottom)) -bottom
+    List.map uncurry [testLeft; testTop; testRight; testBottom]
+
+let private clipLine p1 p2 clipRect =
     let testGeneric item crossPoint bound s n =
         match (item s, item n) with
         | (a, b) when a <= bound && b <= bound -> []
@@ -27,15 +34,11 @@ let private clipLine p1 p2 (left, top, right, bottom) =
         | (a, b) when a <= bound && b >  bound -> [crossPoint s n; n]
         | (a, b) when a >  bound && b <= bound -> [s; crossPoint s n]
         | _ -> []
-    let testLeft = testGeneric fst (fun s n -> (left, yPointOnLine left s n)) left
-    let testRight = testGeneric (fst >> (~-)) (fun s n -> (right, yPointOnLine right s n)) -right
-    let testTop = testGeneric snd (fun s n -> (xPointOnLine top s n, top)) top
-    let testBottom = testGeneric (snd >> (~-)) (fun s n -> (xPointOnLine bottom s n, bottom)) -bottom
-    let tests = List.map uncurry [testLeft; testTop; testRight; testBottom]
+    let tests = prepareSutherlandHodgmanTests testGeneric clipRect
     let result = tests |> List.fold (fun pts t -> List.pairwise pts |> List.collect t) [p1; p2]
     if List.isEmpty result then None else Some (List.head result, List.last result)
 
-let private clipPolygon pts (left, top, right, bottom) =
+let private clipPolygon pts clipRect =
     let testGeneric item crossPoint bound s n =
         match (item s, item n) with
         | (a, b) when a >= bound && b >= bound -> [n]
@@ -44,11 +47,7 @@ let private clipPolygon pts (left, top, right, bottom) =
         | (a, b) when a <  bound && b >  bound -> [crossPoint s n; n]
         | (a, b) when a >  bound && b <  bound -> [crossPoint s n] 
         | _ -> []
-    let testLeft = testGeneric fst (fun s n -> (left, yPointOnLine left s n)) left
-    let testRight = testGeneric (fst >> (~-)) (fun s n -> (right, yPointOnLine right s n)) -right
-    let testTop = testGeneric snd (fun s n -> (xPointOnLine top s n, top)) top
-    let testBottom = testGeneric (snd >> (~-)) (fun s n -> (xPointOnLine bottom s n, bottom)) -bottom
-    let tests = List.map uncurry [testLeft; testTop; testRight; testBottom]
+    let tests = prepareSutherlandHodgmanTests testGeneric clipRect
     let result = tests |> List.fold (fun pts' t -> List.pairwise pts' |> List.collect t |> makeConnected) (makeConnected pts)
     if List.isEmpty result then None else Some (List.butLast result)
 
