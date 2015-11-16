@@ -38,3 +38,4 @@ let isFigureHit pt = function
     | CircleLine (p1, p2, c, _)  -> isLineHit pt (p1, p2)
     | Polyline (pts, _)          -> isPolylineHit pt pts
     | Polygon (pts, _)           -> isPolygonHit pt pts
+    | FilledPolygon (pts, _)     -> isPolygonHit pt pts

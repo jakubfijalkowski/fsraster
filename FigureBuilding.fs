@@ -24,16 +24,17 @@ let private withAtLeast2 e f = function
     | _                  -> e "Invalid number of elements."
 let private withAtLeast2' f pts = withAtLeast2 failwith f pts
 
-let private buildLine' c        = sortPoints >> withPair' (fun p1 p2 -> (p1, p2, c.Color))
-let private buildPoint c        = withSingle' (fun p -> Point (p, c.Color))
-let private buildLine c         = buildLine' c >> Line
-let private buildCircle c       = withPair' (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color))
-let private buildAACircle c     = withPair' (fun p1 p2 -> AntialiasedCircle (p1, distance p1 p2, c.Color))
-let private buildSquareLine c   = buildLine' c >> setThickness c >> SquareLine
-let private buildDiamondLine c  = buildLine' c >> setThickness c >> DiamondLine
-let private buildCircleLine c   = buildLine' c >> setThickness c >> CircleLine
-let private buildPolyline c pts = Polyline (pts, c.Color)
-let private buildPolygon c pts  = Polygon (pts, c.Color)
+let private buildLine' c             = sortPoints >> withPair' (fun p1 p2 -> (p1, p2, c.Color))
+let private buildPoint c             = withSingle' (fun p -> Point (p, c.Color))
+let private buildLine c              = buildLine' c >> Line
+let private buildCircle c            = withPair' (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color))
+let private buildAACircle c          = withPair' (fun p1 p2 -> AntialiasedCircle (p1, distance p1 p2, c.Color))
+let private buildSquareLine c        = buildLine' c >> setThickness c >> SquareLine
+let private buildDiamondLine c       = buildLine' c >> setThickness c >> DiamondLine
+let private buildCircleLine c        = buildLine' c >> setThickness c >> CircleLine
+let private buildPolyline c pts      = Polyline (pts, c.Color)
+let private buildPolygon c pts       = Polygon (pts, c.Color)
+let private buildFilledPolygon c pts = FilledPolygon (pts, c.Color)
 
 let private withPairOpt f pts      = withPair (fun _ -> None) (fun a -> f a >> Some) pts
 
@@ -43,15 +44,16 @@ let private previewAACircle pts c  = withPairOpt (fun p1 p2 -> AntialiasedCircle
 let private previewMultipointBuilder b pts c = withAtLeast2 (fun _ -> None) (b c >> Some) pts
 
 let getFigureBuilder = function
-    | Point _             -> { Builder = buildPoint;       PointsLeft = 1; Points = []; Preview = fun _ _ -> None                        }
-    | Line _              -> { Builder = buildLine;        PointsLeft = 2; Points = []; Preview = previewBuilder buildLine               }
-    | Circle _            -> { Builder = buildCircle;      PointsLeft = 2; Points = []; Preview = previewCircle                          }
-    | AntialiasedCircle _ -> { Builder = buildAACircle;    PointsLeft = 2; Points = []; Preview = previewAACircle                        }
-    | SquareLine _        -> { Builder = buildSquareLine;  PointsLeft = 2; Points = []; Preview = previewBuilder buildSquareLine         }
-    | DiamondLine _       -> { Builder = buildDiamondLine; PointsLeft = 2; Points = []; Preview = previewBuilder buildDiamondLine        }
-    | CircleLine _        -> { Builder = buildCircleLine;  PointsLeft = 2; Points = []; Preview = previewBuilder buildCircleLine         }
-    | Polyline _          -> { Builder = buildPolyline;    PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
-    | Polygon _           -> { Builder = buildPolygon;     PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
+    | Point _             -> { Builder = buildPoint;         PointsLeft = 1; Points = []; Preview = fun _ _ -> None                        }
+    | Line _              -> { Builder = buildLine;          PointsLeft = 2; Points = []; Preview = previewBuilder buildLine               }
+    | Circle _            -> { Builder = buildCircle;        PointsLeft = 2; Points = []; Preview = previewCircle                          }
+    | AntialiasedCircle _ -> { Builder = buildAACircle;      PointsLeft = 2; Points = []; Preview = previewAACircle                        }
+    | SquareLine _        -> { Builder = buildSquareLine;    PointsLeft = 2; Points = []; Preview = previewBuilder buildSquareLine         }
+    | DiamondLine _       -> { Builder = buildDiamondLine;   PointsLeft = 2; Points = []; Preview = previewBuilder buildDiamondLine        }
+    | CircleLine _        -> { Builder = buildCircleLine;    PointsLeft = 2; Points = []; Preview = previewBuilder buildCircleLine         }
+    | Polyline _          -> { Builder = buildPolyline;      PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
+    | Polygon _           -> { Builder = buildPolygon;       PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
+    | FilledPolygon _     -> { Builder = buildFilledPolygon; PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
 
 let processBuildingFigure builder pt c =
     let areTheSame = Option.fold (fun _ p2 -> pt = p2) false (List.tryLast builder.Points)

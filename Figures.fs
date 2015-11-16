@@ -23,6 +23,7 @@ type Figure =
     | CircleLine        of (Point * Point * Color * int)
     | Polyline          of (Point list * Color)
     | Polygon           of (Point list * Color)
+    | FilledPolygon     of (Point list * Color)
 
 type FigureInfo = { Color : Color; Thickness: int }
 
@@ -36,6 +37,7 @@ let getFigureInfo = function
     | CircleLine (_, _, c, t)     -> { Color = c; Thickness = t }
     | Polyline (_, c)             -> { Color = c; Thickness = 1 }
     | Polygon (_, c)              -> { Color = c; Thickness = 1 }
+    | FilledPolygon (_, c)        -> { Color = c; Thickness = 1 }
 
 let availableFigures = [
     Point ((0,0), Colors.Red)
@@ -46,7 +48,8 @@ let availableFigures = [
     DiamondLine ((0,0), (0,0), Colors.Red, 1);
     CircleLine ((0,0), (0,0), Colors.Red, 1);
     Polyline ([], Colors.Red);
-    Polygon ([], Colors.Red)
+    Polygon ([], Colors.Red);
+    FilledPolygon ([], Colors.Red)
 ]
 
 let shortDescriptionOf fig = fig.GetType().Name.ToLower()
@@ -71,6 +74,7 @@ let updateFigure c = function
     | CircleLine (p1, p2, _, _)   -> CircleLine (p1, p2, c.Color, c.Thickness)
     | Polyline (p, _)             -> Polyline (p, c.Color)
     | Polygon (p, _)              -> Polygon (p, c.Color)
+    | FilledPolygon (p, _)        -> FilledPolygon (p, c.Color)
 
 let moveFigure pt = function
     | Point (p, c)                -> Point (p +~ pt, c)
@@ -82,6 +86,7 @@ let moveFigure pt = function
     | CircleLine (p1, p2, c, t)   -> CircleLine (p1 +~ pt, p2 +~ pt, c, t)
     | Polyline (p, c)             -> Polyline (List.map ((+~) pt) p, c)
     | Polygon (p, c)              -> Polygon (List.map ((+~) pt) p, c)
+    | FilledPolygon (p, c)        -> FilledPolygon (List.map ((+~) pt) p, c)
 
 let crossProd (x1, y1) (x2, y2) = x1 * y2 - x2 * y1
 

@@ -1,5 +1,6 @@
 ﻿module FsRaster.FigureRendering
 
+open System.Collections.Generic
 open System.Windows.Media
 
 open FSharp.Collections.ParallelSeq
@@ -119,6 +120,47 @@ let private renderCircleLine =
 let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (sortPairOfPoints >> uncurry renderLine') |> colorize c
 let private renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
 
+type ActiveEdge = int * double * double
+
+
+let private getEdges (dict : Dictionary<int, ActiveEdge list>) e =
+    match dict.TryGetValue e with
+    | true, lst -> lst
+    | _         -> []
+
+let private withEdgeList (dict : Dictionary<int, ActiveEdge list>) e f =
+    let oldList = getEdges dict e
+    dict.[e] <- f oldList
+
+let private buildEdgeTable pts =
+    let edgeTable = new Dictionary<int, ActiveEdge list>()
+    let edges = List.pairwise (makeConnected pts) |> List.filter (fun ((_, y1), (_, y2)) -> y1 <> y2)
+    for ((sx, sy), (ex, ey)) in edges do
+        let xmin, ymin = if sy < ey then (sx, sy) else (ex, ey)
+        let ymax = max sy ey
+        let coeff = double (sx - ex) / double (sy - ey) 
+        withEdgeList edgeTable ymin (curry List.Cons (ymax, double xmin, coeff))
+    edgeTable
+
+let rec inPairs = function
+    | a :: b :: rest -> (a, b) :: inPairs rest
+    | _              -> []
+
+let private renderFilledPolygon (pts, c) =
+    let edgeTable = buildEdgeTable pts
+    let _, ymin = List.minBy snd pts
+    let _, ymax = List.maxBy snd pts
+    let processSingleScanline aet y =
+        let aet' = aet @ getEdges edgeTable y |> List.sortBy (fun (_, x, _) -> x)
+        let pixels = aet' |> inPairs |> List.collect (fun ((_, x1, _), (_, x2, _)) -> [ int (round x1) .. int (round x2) ])
+        let pixels' = pixels |> List.map (fun x -> (x, y))
+        let aet' = aet' |> List.filter (fun (ymax, _, _) -> ymax <> y + 1) |> List.map (fun (ymax, x, coeff) -> (ymax, x + coeff, coeff))
+        (pixels', aet')
+    let processSingle (pixels, aet) y =
+        let (pixels', aet') = processSingleScanline aet y
+        (Seq.append pixels pixels', aet')
+    [ ymin .. ymax ] |> List.fold processSingle (Seq.empty, []) |> fst |> colorize c
+
 let renderSingleFigure = function
     | Point  p            -> renderPoint p
     | Line   a            -> renderLine a
@@ -129,5 +171,6 @@ let renderSingleFigure = function
     | CircleLine s        -> renderCircleLine s
     | Polyline p          -> renderPolyline p
     | Polygon p           -> renderPolygon p
+    | FilledPolygon p     -> renderFilledPolygon p
 
 let renderFigureList figs = PSeq.ordered figs |> PSeq.map renderSingleFigure |> PSeq.toList
