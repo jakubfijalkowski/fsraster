@@ -52,9 +52,7 @@ type MainWindowController() =
     let getBuilderPreview color =
         let pos = Input.Mouse.GetPosition(window.imageContainer)
         let pt = (int pos.X, int pos.Y)
-        match figureBuilder with
-        | Some b -> previewFigure b pt color
-        | None   -> Seq.empty
+        Option.bind (previewFigure pt color) figureBuilder
 
     let getBuildInfo _ =
         { Color = window.figureColor.SelectedColor.Value; Thickness = window.figureThickness.Value.Value }
@@ -70,7 +68,11 @@ type MainWindowController() =
         if window.gridCheckBox.IsChecked.Value
         then renderGrid context window.gridSpacing.Value.Value gridColor
 
-        renderFigures context (Seq.append figures (getBuilderPreview (getBuildInfo ())))
+        let buildInfo = getBuildInfo ()
+        let topMost =
+            [ getBuilderPreview buildInfo ]
+
+        renderFigures context (Seq.append figures (Seq.choose id topMost))
 
     let render _ =
         #if DEBUG || PROFILE_RENDERING

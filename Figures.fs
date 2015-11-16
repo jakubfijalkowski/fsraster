@@ -81,3 +81,32 @@ let moveFigure pt = function
     | CircleLine (p1, p2, c, t)   -> CircleLine (p1 +~ pt, p2 +~ pt, c, t)
     | Polyline (p, c)             -> Polyline (List.map ((+~) pt) p, c)
     | Polygon (p, c)              -> Polygon (List.map ((+~) pt) p, c)
+
+let crossProd (x1, y1) (x2, y2) = x1 * y2 - x2 * y1
+
+let isOnRect (x, y) (x1, y1) (x2, y2) =
+    min x1 x2 <= x && x <= max x1 x2 &&
+    min y1 y2 <= y && y <= max y1 y2
+
+let isOnLine p (p1, p2) = distance p1 p + distance p p2 = distance p1 p2
+
+let doLinesCross (p1, p2) (p3, p4) =
+    let d1 = crossProd (p4 -~ p3) (p1 -~ p3)
+    let d2 = crossProd (p4 -~ p3) (p2 -~ p3)
+    let d3 = crossProd (p2 -~ p1) (p3 -~ p1)
+    let d4 = crossProd (p2 -~ p1) (p4 -~ p1)
+    let d12 = sign d1 * sign d2
+    let d34 = sign d3 * sign d4
+    match (d12, d34) with
+    | (a, b) when a > 0 || b > 0 -> false
+    | (a, b) when a < 0 || b < 0 -> true
+    | _                          ->
+        isOnRect p1 p3 p4 || isOnRect p2 p3 p4 || isOnRect p3 p1 p2 || isOnRect p4 p1 p2
+
+let distanceFromLine (x, y) (((x1, y1) as p1), ((x2, y2) as p2)) =
+    let d' = max (distance p1 p2) 1
+    (abs ((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1)) / d'
+
+let makeConnected = function
+    | (p1 :: p2 :: _) as pts -> pts @ [p1]
+    | _                      -> []

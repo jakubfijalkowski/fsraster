@@ -6,7 +6,7 @@ type FigureBuilder = {
     Builder : FigureInfo -> Point list -> Figure;
     PointsLeft : int;
     Points : Point list;
-    Preview : Point list -> FigureInfo -> Figure seq
+    Preview : Point list -> FigureInfo -> Figure option
 }
 
 let private setThickness i (p1, p2, c) = (p1, p2, c, i.Thickness)
@@ -35,15 +35,15 @@ let private buildCircleLine c   = buildLine' c >> setThickness c >> CircleLine
 let private buildPolyline c pts = Polyline (pts, c.Color)
 let private buildPolygon c pts  = Polygon (pts, c.Color)
 
-let private withPairSeq f pts      = withPair (fun _ -> Seq.empty) (fun a -> f a >> Seq.singleton) pts
+let private withPairOpt f pts      = withPair (fun _ -> None) (fun a -> f a >> Some) pts
 
-let private previewBuilder b pts c = withPairSeq (fun _ _ -> b c pts) pts
-let private previewCircle pts c    = withPairSeq (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color)) pts
-let private previewAACircle pts c  = withPairSeq (fun p1 p2 -> AntialiasedCircle (p1, distance p1 p2, c.Color)) pts
-let private previewMultipointBuilder b pts c = withAtLeast2 (fun _ -> Seq.empty) (b c >> Seq.singleton) pts
+let private previewBuilder b pts c = withPairOpt (fun _ _ -> b c pts) pts
+let private previewCircle pts c    = withPairOpt (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color)) pts
+let private previewAACircle pts c  = withPairOpt (fun p1 p2 -> AntialiasedCircle (p1, distance p1 p2, c.Color)) pts
+let private previewMultipointBuilder b pts c = withAtLeast2 (fun _ -> None) (b c >> Some) pts
 
 let getFigureBuilder = function
-    | Point _             -> { Builder = buildPoint;       PointsLeft = 1; Points = []; Preview = fun _ _ -> Seq.empty                   }
+    | Point _             -> { Builder = buildPoint;       PointsLeft = 1; Points = []; Preview = fun _ _ -> None                        }
     | Line _              -> { Builder = buildLine;        PointsLeft = 2; Points = []; Preview = previewBuilder buildLine               }
     | Circle _            -> { Builder = buildCircle;      PointsLeft = 2; Points = []; Preview = previewCircle                          }
     | AntialiasedCircle _ -> { Builder = buildAACircle;    PointsLeft = 2; Points = []; Preview = previewAACircle                        }
@@ -67,4 +67,4 @@ let forceFinishFigure builder c =
     then Some (builder.Builder c builder.Points)
     else None
 
-let previewFigure ({ Preview = prev; Points = pts } as builder) pt c = prev (pts @ [pt]) c
+let previewFigure pt c { Preview = prev; Points = pts } = prev (pts @ [pt]) c
