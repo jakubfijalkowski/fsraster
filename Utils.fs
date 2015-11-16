@@ -25,3 +25,11 @@ module UIColors =
     let allColors =
         typeof<Colors>.GetProperties()
         |> Array.map (fun p -> { Color = p.GetValue(null) :?> Color; Name = p.Name })
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module List =
+    let rec butLast = function
+        | []     -> []
+        | [a]    -> []
+        | a :: r -> a :: butLast r

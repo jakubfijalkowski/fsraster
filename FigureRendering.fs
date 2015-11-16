@@ -117,7 +117,7 @@ let private renderCircleLine =
     renderRepeatedLine intRenderCircle
 
 let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (sortPairOfPoints >> uncurry renderLine') |> colorize c
-let private renderPolygon (pts, c) = renderPolyline (pts @ [List.head pts], c)
+let private renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
 
 let renderSingleFigure = function
     | Point  p            -> renderPoint p

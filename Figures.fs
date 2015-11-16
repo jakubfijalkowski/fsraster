@@ -7,10 +7,12 @@ open FSharp.Collections.ParallelSeq
 
 type Point = int * int
 type Pixel = Point * Color
+type Rectangle = int * int * int * int
 
 // "swim" operators - vector addition/subtraction
 let inline (+~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 + x2, y1 + y2)
 let inline (-~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 - x2, y1 - y2)
+let inline (~-.) (x, y) : Point = (-x, -y)
 
 type Figure =
     | Point of (Point * Color)

@@ -7,6 +7,7 @@
       "../FigureRendering.fs"
       "../FigureBuilding.fs"
       "../FigureHitTests.fs"
+      "../FigureClipping.fs"
       "../CoreRendering.fs"
       "../UI.fs"
       "../Program.fs"

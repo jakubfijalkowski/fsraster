@@ -17,6 +17,7 @@ open FsRaster.Figures
 open FsRaster.FigureRendering
 open FsRaster.FigureBuilding
 open FsRaster.FigureHitTests
+open FsRaster.FigureClipping
 open FsRaster.CoreRendering
 
 type MainWindow = XAML<"MainWindow.xaml", true>
@@ -36,6 +37,8 @@ type MainWindowController() =
     let mutable figureBuilder : FigureBuilder option = None
 
     let mutable moveData : (Point * int) option = None
+
+    let mutable clipRect : ClipRect option = None
 
     let getPosition (e : Input.MouseEventArgs) =
         let pos = e.GetPosition(window.imageContainer)
@@ -70,9 +73,12 @@ type MainWindowController() =
 
         let buildInfo = getBuildInfo ()
         let topMost =
-            [ getBuilderPreview buildInfo ]
+            [ getBuilderPreview buildInfo
+            ; Option.map (asPolygon Colors.Red) clipRect ]
 
-        renderFigures context (Seq.append figures (Seq.choose id topMost))
+        let figs = Option.fold clipFigures (figures :> Figure seq) clipRect
+
+        renderFigures context (Seq.append figs (Seq.choose id topMost))
 
     let render _ =
         #if DEBUG || PROFILE_RENDERING
@@ -185,6 +191,20 @@ type MainWindowController() =
             |> List.iter figures.Add
         render ()
 
+    let enableClipping _ =
+        let w = window.imageContainer.ActualWidth
+        let h = window.imageContainer.ActualHeight
+        let left = int (w * 0.2)
+        let right = int (w * 0.8)
+        let top = int (h * 0.2)
+        let bottom = int (h * 0.8)
+        clipRect <- Some (ClipRect (left, top, right, bottom))
+        render ()
+
+    let disableClipping _ =
+        clipRect <- None
+        render ()
+
     do
         window.backgroundColor.SelectedColor <- Nullable Colors.White
         window.figureColor.SelectedColor <- Nullable Colors.Black
@@ -219,5 +239,7 @@ type MainWindowController() =
         window.addRandomMenu.Click.Add addRandomFigures
 
         window.Root.KeyUp.Add onKeyUp
+        window.clipCheckBox.Checked.Add enableClipping
+        window.clipCheckBox.Unchecked.Add disableClipping
 
     member this.Window with get() = window.Root

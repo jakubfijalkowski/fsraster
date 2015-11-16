@@ -30,6 +30,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
@@ -43,7 +44,7 @@
             <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
             <MenuItem x:Name="addRandomMenu" Header="_Random" />
         </Menu>
-        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="6">
+        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="7">
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
         <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3">Figures:</TextBlock>
@@ -67,5 +68,7 @@
 
         <TextBlock Grid.Row="6" Grid.Column="1" VerticalAlignment="Center">Thickness:</TextBlock>
         <xctk:IntegerUpDown x:Name="figureThickness" Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2" Minimum="1" Maximum="100" Value="6" />
+
+        <CheckBox x:Name="clipCheckBox" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center">Clipping</CheckBox>
     </Grid>
 </Window>
