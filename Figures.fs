@@ -116,3 +116,8 @@ let resizeRectMin m (x, y) (left, top, right, bottom) =
     let width = max m (right + x - left)
     let height = max m (bottom + y - top)
     (left, top, left + width, top + height)
+
+let generateGrid width height spacing color =
+    let xs = [ spacing .. spacing .. width - 1 ]
+    let ys = [ spacing .. spacing .. height - 1 ]
+    [ for x in xs -> Line ((x, 0), (x, height), color) ] @ [ for y in ys -> Line ((0, y), (width, y), color) ]

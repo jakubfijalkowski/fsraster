@@ -86,17 +86,21 @@ type MainWindowController() =
         use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
         context.Clear bgColor
 
-        if window.gridCheckBox.IsChecked.Value
-        then renderGrid context window.gridSpacing.Value.Value gridColor
+        let grid =
+            if window.gridCheckBox.IsChecked.Value
+            then
+                let spacing = window.gridSpacing.Value.GetValueOrDefault 10
+                generateGrid context.Width context.Height spacing gridColor
+            else []
 
         let buildInfo = getBuildInfo ()
-        let topMost =
-            [ getBuilderPreview buildInfo
-            ; Option.map (asPolygon Colors.Red) clipRect ]
+        let topMost = Seq.choose id
+                        [ getBuilderPreview buildInfo
+                        ; Option.map (asPolygon Colors.Red) clipRect ]
 
         let figs = Option.fold clipFigures (figures :> Figure seq) clipRect
 
-        renderFigures context (Seq.append figs (Seq.choose id topMost))
+        renderFigures context (seq { yield! grid; yield! figs; yield! topMost })
 
     let render _ =
         #if DEBUG || PROFILE_RENDERING
