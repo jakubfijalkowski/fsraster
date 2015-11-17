@@ -157,6 +157,7 @@
     <None Include="Scripts\load-project.fsx" />
     <Content Include="paket.references" />
     <EmbeddedResource Include="Resources.resx" />
+    <Content Include="bucket_cursor.cur" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
