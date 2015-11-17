@@ -8,12 +8,13 @@ open FSharp.Collections.ParallelSeq
 open FsRaster.Utils
 open FsRaster.Figures
 
-let private colorize c lst = PSeq.map (fun a -> (a, c)) lst
+let private toColorPixels c lst = PSeq.map (fun a -> PrimPixel (a, c)) lst
+
 let private withAlpha (c : Color) (i : float) =
     let clamp i = byte (max (min 255.0 i) 0.0)
     Color.FromArgb(byte (i * 255.0), c.R, c.G, c.B)
 
-let private renderPoint (p, c) = PSeq.singleton (p, c)
+let private renderPoint (p, c) = PSeq.singleton (PrimPixel (p, c))
 
 let private renderLine' (x1', y1') (x2', y2') =
     if x1' = x2' && y1' = y2' then Seq.singleton (x1', y1')
@@ -46,7 +47,7 @@ let private renderLine' (x1', y1') (x2', y2') =
             | dx, dy when dx >  0 && dy <  0 &&  dx >  -dy -> renderOctant  x1' -y1'  x2' -y2' |> Seq.map (fun (x, y) -> ( x, -y))
             | _ -> Seq.empty
         result
-let private renderLine (p1, p2, c) = renderLine' p1 p2 |> colorize c
+let private renderLine (p1, p2, c) = renderLine' p1 p2 |> toColorPixels c
 
 let replicateCirclePoints (x, y) = seq {
     yield (x, y)
@@ -72,7 +73,7 @@ let private renderCircle' s r =
         |> PSeq.collect replicateCirclePoints
         |> PSeq.map ((+~) s)
 
-let private renderCircle (s, r, c) = renderCircle' s r |> colorize c
+let private renderCircle (s, r, c) = renderCircle' s r |> toColorPixels c
 
 let private renderAACircle (s, r, c) =
     let dist a b = ceil (sqrt (a * a - b * b)) - sqrt (a * a - b * b)
@@ -87,7 +88,7 @@ let private renderAACircle (s, r, c) =
             build (p1 :: p2 :: acc) x' y' d
     build [((r, 0), c)] r 0 0.0
         |> PSeq.collect replicateCirclePointsWithColor
-        |> PSeq.map (first ((+~) s))
+        |> PSeq.map (fun (p, c) -> PrimPixel (p +~ s, c))
 
 let private renderRepeatedLine f (p1, p2, c, t) =
     if t < 3 then renderLine (p1, p2, c)
@@ -100,7 +101,7 @@ let private renderRepeatedLine f (p1, p2, c, t) =
             | -1, -1 -> f t (x2 + 1, y2)
             | _ -> []
         let line = renderLine' p1 p2 |> Seq.toList
-        PSeq.append (line |> PSeq.collect (f t)) (line |> List.pairwise |> PSeq.collect addFix) |> colorize c
+        PSeq.append (line |> PSeq.collect (f t)) (line |> List.pairwise |> PSeq.collect addFix) |> toColorPixels c
 
 let private renderSquareLine =
     let renderSquare t (cx, cy) =
@@ -122,11 +123,10 @@ let private renderCircleLine =
     let intRenderCircle t s = renderCircle' s (int (ceil (float t / 2.0))) |> Seq.toList
     renderRepeatedLine intRenderCircle
 
-let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (uncurry renderLine') |> colorize c
+let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (uncurry renderLine') |> toColorPixels c
 let private renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
 
 type ActiveEdge = int * double * double
-
 
 let private getEdges (dict : Dictionary<int, ActiveEdge list>) e =
     match dict.TryGetValue e with
@@ -157,14 +157,13 @@ let private renderFilledPolygon (pts, c) =
     let _, ymax = List.maxBy snd pts
     let processSingleScanline aet y =
         let aet' = aet @ getEdges edgeTable y |> List.sortBy (fun (_, x, _) -> x)
-        let pixels = aet' |> inPairs |> List.collect (fun ((_, x1, _), (_, x2, _)) -> [ int (round x1) .. int (round x2) ])
-        let pixels' = pixels |> List.map (fun x -> (x, y))
+        let pixels' = aet' |> inPairs |> List.map (fun ((_, x1, _), (_, x2, _)) -> PrimLine (int (round x1), y, int (round x2), c) )
         let aet' = aet' |> List.filter (fun (ymax, _, _) -> ymax <> y + 1) |> List.map (fun (ymax, x, coeff) -> (ymax, x + coeff, coeff))
         (pixels', aet')
     let processSingle (pixels, aet) y =
         let (pixels', aet') = processSingleScanline aet y
-        (Seq.append pixels pixels', aet')
-    [ ymin .. ymax ] |> List.fold processSingle (Seq.empty, []) |> fst |> colorize c
+        (pixels' @ pixels, aet')
+    [ ymin .. ymax ] |> List.fold processSingle ([], []) |> fst |> PSeq.ofList
 
 let renderSingleFigure = function
     | Point  p            -> renderPoint p

@@ -6,7 +6,9 @@ open System.Windows.Media
 open FSharp.Collections.ParallelSeq
 
 type Point = int * int
-type Pixel = Point * Color
+type RenderPrimitive =
+    | PrimPixel of Point * Color
+    | PrimLine  of (int * int * int * Color)
 type Rectangle = int * int * int * int
 
 // "swim" operators - vector addition/subtraction
