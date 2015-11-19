@@ -2,6 +2,7 @@
 
 open System.Collections.Generic
 open System.Windows.Media
+open System.Diagnostics.CodeAnalysis
 
 open FSharp.Collections.ParallelSeq
 
@@ -16,6 +17,7 @@ let private withAlpha (c : Color) (i : float) =
 
 let private renderPoint (p, c) = PSeq.singleton (PrimPixel (p, c))
 
+[<SuppressMessage("CyclomaticComplexity", "*")>]
 let private renderLine' (x1', y1') (x2', y2') =
     if x1' = x2' && y1' = y2' then Seq.singleton (x1', y1')
     else
@@ -61,6 +63,7 @@ let replicateCirclePoints (x, y) = seq {
 
 let replicateCirclePointsWithColor (p, c) = replicateCirclePoints p |> Seq.map (fun x -> (x, c))
 
+[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
 let private renderCircle' s r =
     let rec build acc d dE dSE x y =
         if y < x then acc

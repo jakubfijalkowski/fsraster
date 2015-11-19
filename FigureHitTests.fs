@@ -9,7 +9,7 @@ let private isPointHit (p1, _) p2 =
 
 let private isLineHit ((x, y) as p) (((x1, y1), (x2, y2)) as l) =
     let d = distanceFromLine p l
-    let isInside = x >= (min x1 x2) && x <= (max x1 x2) && y >= (min y1 y2) && y <= (max y1 y2)
+    let isInside = (abs (x1 - x2) = 0 || x >= (min x1 x2) && x <= (max x1 x2)) && (abs (y1 - y2) = 0 || y >= (min y1 y2) && y <= (max y1 y2))
     if d < 20 && isInside then Some d else None
 
 let private isPolylineHit p pts =
@@ -22,7 +22,7 @@ let private isPolygonHit p pts =
         pts @ [List.head pts]
         |> List.pairwise
         |> List.choose (fun l2 -> if doLinesCross l l2 then Some (distanceFromLine p l2) else None)
-    if List.length crossings % 2 = 0 then None else Some (List.min crossings)
+    if List.length crossings % 2 = 0 then None else Some 0
 
 let private isCircleHit pt (s, r, _) =
     let d = distance s pt

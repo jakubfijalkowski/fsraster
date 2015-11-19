@@ -10,16 +10,20 @@ let second f (a, b) = (a, f b)
 let curry f a b = f (a, b)
 let uncurry f (a, b) = f a b
 
-module ConsList =
-    type ConsList<'a> =
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module ConsIList =
+    type ConsIList<'a> =
         | ConsList of Generic.IList<'a> * int
 
     let ofList list = ConsList (list, 0)
     let isEmpty (ConsList (list, idx)) = list.Count = idx
     let nextElement (ConsList (list, idx)) = (list.[idx], ConsList(list, idx + 1))
 
-let (|ListNil|ListCons|) lst = if ConsList.isEmpty lst then ListNil else ListCons (ConsList.nextElement lst)
+let (|ListNil|ListCons|) lst = if ConsIList.isEmpty lst then ListNil else ListCons (ConsIList.nextElement lst)
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
 module UIColors =
     type UIColor = { Color : Color; Name : string }
     let allColors =

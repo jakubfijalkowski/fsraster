@@ -73,6 +73,7 @@ type MainWindowController() =
             |> Seq.mapi (fun i f -> (i, isFigureHit pt f))
             |> Seq.filter (snd >> Option.isSome)
             |> Seq.append (seq { yield (-1, Some Int32.MaxValue) })
+            |> Seq.rev
             |> Seq.minBy snd
             |> fst
 
