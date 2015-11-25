@@ -8,6 +8,7 @@ open Microsoft.Win32
 open FsXaml
 
 open FsRaster
+open FsRaster.Utils
 open FsRaster.Figures
 
 type FigureInfoPicker = XAML<"UI.FigureInfoPicker.xaml", true>
@@ -18,7 +19,7 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
 
     let mutable duringUpdate = false
 
-    let mutable currentInfo = { Color = FigureColor.fromColor Colors.Black; Thickness = 1 }
+    let mutable currentInfo = { Color = FigureColor.fromColor Colors.Black; Thickness = 1; Filled = None }
 
     let triggerChanged () =
         if not duringUpdate then infoChanged.Trigger currentInfo
@@ -53,6 +54,11 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
         else
             if shouldRollBack then rollBackToColor ()
 
+    let updateFigureFillType _ =
+        let value = control.isFigureFilled.IsChecked.GetValueOrDefault false
+        currentInfo <- { currentInfo with Filled = Some value }
+        triggerChanged ()
+
     let onTypeChanged _ =
         if not duringUpdate then
             if control.useFigureColor.IsChecked.GetValueOrDefault true
@@ -76,6 +82,9 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
 
         control.figureThickness.ValueChanged.Add updateThickness
 
+        control.isFigureFilled.Checked.Add updateFigureFillType
+        control.isFigureFilled.Unchecked.Add updateFigureFillType
+
     member x.UpdateSelectedFigure figOpt =
         duringUpdate <- true
 
@@ -89,8 +98,12 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
                 control.useFigureColor.IsChecked <- Nullable true
             | FigureColor.BitmapPattern _ ->
                 control.useFigureTexture.IsChecked <- Nullable true
+
+            control.isFigureFilled.IsEnabled <- Option.isSome info.Filled
+            control.isFigureFilled.IsChecked <- Nullable (Option.opt false info.Filled)
         | None ->
             control.useFigureColor.IsChecked <- Nullable true
+            control.isFigureFilled.IsEnabled <- false
 
         duringUpdate <- false
 

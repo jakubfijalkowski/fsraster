@@ -37,6 +37,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid Grid.ColumnSpan="3">
             <Grid.ColumnDefinitions>
@@ -55,6 +56,8 @@
 
         <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center">Thickness:</TextBlock>
         <xctk:IntegerUpDown x:Name="figureThickness" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Minimum="1" Maximum="100" Value="6" />
+
+        <CheckBox x:Name="isFigureFilled" Grid.Row="2" Grid.ColumnSpan="3" IsEnabled="false" IsChecked="false">Filled</CheckBox>
     </Grid>
 
 </UserControl>

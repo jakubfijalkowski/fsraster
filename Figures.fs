@@ -29,21 +29,21 @@ type Figure =
     | Brush             of (Point list * FigureColor.Color)
     | FilledBrush       of (Point list * FigureColor.Color)
 
-type FigureInfo = { Color : FigureColor.Color; Thickness: int }
+type FigureInfo = { Color : FigureColor.Color; Thickness: int; Filled: bool option }
 
 let getFigureInfo = function
-    | Point (_, c)                -> { Color = c; Thickness = 1 }
-    | Line (_, _, c)              -> { Color = c; Thickness = 1 }
-    | Circle (_, _, c)            -> { Color = c; Thickness = 1 }
-    | AntialiasedCircle (_, _, c) -> { Color = c; Thickness = 1 }
-    | SquareLine (_, _, c, t)     -> { Color = c; Thickness = t }
-    | DiamondLine (_, _, c, t)    -> { Color = c; Thickness = t }
-    | CircleLine (_, _, c, t)     -> { Color = c; Thickness = t }
-    | Polyline (_, c)             -> { Color = c; Thickness = 1 }
-    | Polygon (_, c)              -> { Color = c; Thickness = 1 }
-    | FilledPolygon (_, c)        -> { Color = c; Thickness = 1 }
-    | Brush (_, c)                -> { Color = c; Thickness = 1 }
-    | FilledBrush (_, c)          -> { Color = c; Thickness = 1 }
+    | Point (_, c)                -> { Color = c; Thickness = 1; Filled = None       }
+    | Line (_, _, c)              -> { Color = c; Thickness = 1; Filled = None       }
+    | Circle (_, _, c)            -> { Color = c; Thickness = 1; Filled = None       }
+    | AntialiasedCircle (_, _, c) -> { Color = c; Thickness = 1; Filled = None       }
+    | SquareLine (_, _, c, t)     -> { Color = c; Thickness = t; Filled = None       }
+    | DiamondLine (_, _, c, t)    -> { Color = c; Thickness = t; Filled = None       }
+    | CircleLine (_, _, c, t)     -> { Color = c; Thickness = t; Filled = None       }
+    | Polyline (_, c)             -> { Color = c; Thickness = 1; Filled = None       }
+    | Polygon (_, c)              -> { Color = c; Thickness = 1; Filled = Some false }
+    | FilledPolygon (_, c)        -> { Color = c; Thickness = 1; Filled = Some true  }
+    | Brush (_, c)                -> { Color = c; Thickness = 1; Filled = Some false }
+    | FilledBrush (_, c)          -> { Color = c; Thickness = 1; Filled = Some true  }
 
 let availableFigures = [
     Point ((0,0), FigureColor.fromColor Colors.Red)
@@ -65,7 +65,11 @@ let distance ((x1, y1) : Point) ((x2, y2) : Point) =
     let y = y2 - y1
     int <| Math.Sqrt (float (x * x + y * y))
 
-let updateFigure c = function
+let updateFigure c fig =
+    let filled = Option.fold (fun _ -> id) false c.Filled
+    let polygon = if filled then FilledPolygon else Polygon
+    let brush = if filled then FilledBrush else Brush
+    match fig with
     | Point (p, _)                -> Point (p, c.Color)
     | Line (p1, p2, _)            -> Line (p1, p2, c.Color)
     | Circle (s, r, _)            -> Circle (s, r, c.Color)
@@ -74,10 +78,10 @@ let updateFigure c = function
     | DiamondLine (p1, p2, _, _)  -> DiamondLine (p1, p2, c.Color, c.Thickness)
     | CircleLine (p1, p2, _, _)   -> CircleLine (p1, p2, c.Color, c.Thickness)
     | Polyline (p, _)             -> Polyline (p, c.Color)
-    | Polygon (p, _)              -> Polygon (p, c.Color)
-    | FilledPolygon (p, _)        -> FilledPolygon (p, c.Color)
-    | Brush (p, _)                -> Brush (p, c.Color)
-    | FilledBrush (p, _)          -> FilledBrush (p, c.Color)
+    | Polygon (p, _)              -> polygon (p, c.Color)
+    | FilledPolygon (p, _)        -> polygon (p, c.Color)
+    | Brush (p, _)                -> brush (p, c.Color)
+    | FilledBrush (p, _)          -> brush (p, c.Color)
 
 let moveFigure pt = function
     | Point (p, c)                -> Point (p +~ pt, c)

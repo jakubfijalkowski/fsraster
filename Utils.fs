@@ -37,3 +37,8 @@ module List =
         | []     -> []
         | [a]    -> []
         | a :: r -> a :: butLast r
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module Option =
+    let opt def o = Option.fold (fun _ -> id) def o
