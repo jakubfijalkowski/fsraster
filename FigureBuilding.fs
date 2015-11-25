@@ -1,5 +1,6 @@
 ﻿module FsRaster.FigureBuilding
 
+open FsRaster.Utils
 open FsRaster.Figures
 
 type FigureBuilder = {
@@ -69,7 +70,7 @@ let getFigureBuilder = function
     | FilledBrush _       -> { Builder = buildFilledBrush;   PointsLeft = 1; Points = []; Preview = previewBuilderSingle buildFilledBrush  }
 
 let processBuildingFigure builder pt c =
-    let areTheSame = Option.fold (fun _ p2 -> pt = p2) false (List.tryLast builder.Points)
+    let areTheSame = Option.withOpt ((=) pt) false (List.tryLast builder.Points)
     if areTheSame then Choice2Of2 builder
     else
         let points = builder.Points @ [pt]

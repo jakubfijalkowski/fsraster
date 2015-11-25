@@ -5,6 +5,8 @@ open System.Windows.Media
 
 open FSharp.Collections.ParallelSeq
 
+open FsRaster.Utils
+
 type Point = int * int
 type RenderPrimitive =
     | PrimPixel of Point * Color
@@ -66,7 +68,7 @@ let distance ((x1, y1) : Point) ((x2, y2) : Point) =
     int <| Math.Sqrt (float (x * x + y * y))
 
 let updateFigure c fig =
-    let filled = Option.fold (fun _ -> id) false c.Filled
+    let filled = Option.opt false c.Filled
     let polygon = if filled then FilledPolygon else Polygon
     let brush = if filled then FilledBrush else Brush
     match fig with

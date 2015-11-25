@@ -42,3 +42,4 @@ module List =
 [<RequireQualifiedAccess>]
 module Option =
     let opt def o = Option.fold (fun _ -> id) def o
+    let withOpt f def o = Option.fold (fun _ s -> f s) def o

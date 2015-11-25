@@ -272,7 +272,7 @@ type MainWindowController() =
     // MOUSE CURSOR
 
     let updateMouseCursor (e : Input.MouseEventArgs option) =
-        let pos = Option.fold (fun _ -> getPosition) (-999, -999) e
+        let pos = Option.withOpt getPosition (-999, -999) e
         let r1 = Option.map (fun _ -> loadCursorFile "bucket_cursor") fillAction
         let r2 = Option.map (fun _ -> Input.Cursors.Hand) figureBuilder
         let r3 =
