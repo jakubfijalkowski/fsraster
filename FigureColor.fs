@@ -22,6 +22,10 @@ let getPatternSize = function
 
 let fromColor = Color
 
+let isTexture = function
+    | BitmapPattern _ -> true
+    | _ -> false
+
 #nowarn "9"
 let fromImage imgPath =
     let source = new BitmapImage(new Uri(imgPath, UriKind.Absolute))

@@ -42,15 +42,17 @@ let private buildCircleLine c        = buildLine' c >> setThickness c >> CircleL
 let private buildPolyline c pts      = Polyline (pts, c.Color)
 let private buildPolygon c pts       = Polygon (pts, c.Color)
 let private buildFilledPolygon c pts = FilledPolygon (pts, c.Color)
-let private buildBrush c pts         = Polygon (brushPoints 40 |> List.map ((+~) (List.head pts)), c.Color)
-let private buildFilledBrush c pts   = FilledPolygon (brushPoints 40 |> List.map ((+~) (List.head pts)), c.Color)
+let private buildBrush c pts         = Brush (brushPoints 40 |> List.map ((+~) (List.head pts)), c.Color)
+let private buildFilledBrush c pts   = FilledBrush (brushPoints 40 |> List.map ((+~) (List.head pts)), c.Color)
 
 let private withPairOpt f pts      = withPair (fun _ -> None) (fun a -> f a >> Some) pts
 
-let private previewBuilder b pts c = withPairOpt (fun _ _ -> b c pts) pts
-let private previewCircle pts c    = withPairOpt (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color)) pts
-let private previewAACircle pts c  = withPairOpt (fun p1 p2 -> AntialiasedCircle (p1, distance p1 p2, c.Color)) pts
+let private previewBuilder b pts c           = withPairOpt (fun _ _ -> b c pts) pts
+let private previewBuilderSingle b pts c     = withSingle (fun _ -> None) (fun _ -> Some <| b c pts) pts
 let private previewMultipointBuilder b pts c = withAtLeast2 (fun _ -> None) (b c >> Some) pts
+
+let private previewCircle pts c          = withPairOpt (fun p1 p2 -> Circle (p1, distance p1 p2, c.Color)) pts
+let private previewAACircle pts c        = withPairOpt (fun p1 p2 -> AntialiasedCircle (p1, distance p1 p2, c.Color)) pts
 
 let getFigureBuilder = function
     | Point _             -> { Builder = buildPoint;         PointsLeft = 1; Points = []; Preview = fun _ _ -> None                        }
@@ -63,8 +65,8 @@ let getFigureBuilder = function
     | Polyline _          -> { Builder = buildPolyline;      PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
     | Polygon _           -> { Builder = buildPolygon;       PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
     | FilledPolygon _     -> { Builder = buildFilledPolygon; PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
-    | Brush _             -> { Builder = buildBrush;         PointsLeft = 1; Points = []; Preview = previewBuilder buildBrush              }
-    | FilledBrush _       -> { Builder = buildFilledBrush;   PointsLeft = 1; Points = []; Preview = previewBuilder buildFilledBrush        }
+    | Brush _             -> { Builder = buildBrush;         PointsLeft = 1; Points = []; Preview = previewBuilderSingle buildBrush        }
+    | FilledBrush _       -> { Builder = buildFilledBrush;   PointsLeft = 1; Points = []; Preview = previewBuilderSingle buildFilledBrush  }
 
 let processBuildingFigure builder pt c =
     let areTheSame = Option.fold (fun _ p2 -> pt = p2) false (List.tryLast builder.Points)

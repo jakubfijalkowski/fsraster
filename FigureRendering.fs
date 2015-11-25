@@ -151,7 +151,23 @@ let private buildEdgeTable pts =
         withEdgeList edgeTable ymin (curry List.Cons (ymax, double xmin, coeff))
     edgeTable
 
-let private renderFilledPolygon (pts, figColor) =
+let private renderFilledPolygonSolid pts figColor = 
+    let baseX, baseY = List.head pts
+    let edgeTable = buildEdgeTable pts
+    let _, ymin = List.minBy snd pts
+    let _, ymax = List.maxBy snd pts
+    let c = FigureColor.getColor figColor
+    let processSingleScanline aet y =
+        let aet' = aet @ getEdges edgeTable y |> List.sortBy (fun (_, x, _) -> x)
+        let pixels' = aet' |> inPairs |> List.map (fun ((_, x1, _), (_, x2, _)) -> PrimLine (int (round x1), y, int (round x2), c) )
+        let aet' = aet' |> List.filter (fun (ymax, _, _) -> ymax <> y + 1) |> List.map (fun (ymax, x, coeff) -> (ymax, x + coeff, coeff))
+        (pixels', aet')
+    let processSingle (pixels, aet) y =
+        let (pixels', aet') = processSingleScanline aet y
+        (pixels' @ pixels, aet')
+    [ ymin .. ymax ] |> List.fold processSingle ([], []) |> fst |> PSeq.ofList
+
+let private renderFilledPolygonTextured pts figColor =
     let baseX, baseY = List.head pts
     let texW, texH = FigureColor.getPatternSize figColor
     let edgeTable = buildEdgeTable pts
@@ -173,6 +189,14 @@ let private renderFilledPolygon (pts, figColor) =
         (pixels' @ pixels, aet')
     [ ymin .. ymax ] |> List.fold processSingle ([], []) |> fst |> PSeq.ofList
 
+let private renderFilledPolygon (pts, figColor) =
+    if FigureColor.isTexture figColor
+    then renderFilledPolygonTextured pts figColor
+    else renderFilledPolygonSolid pts figColor
+
+let private renderBrush = renderPolygon
+let private renderFilledBrush = renderFilledPolygon
+
 let renderSingleFigure = function
     | Point  p            -> renderPoint p
     | Line   a            -> renderLine a
@@ -184,7 +208,7 @@ let renderSingleFigure = function
     | Polyline p          -> renderPolyline p
     | Polygon p           -> renderPolygon p
     | FilledPolygon p     -> renderFilledPolygon p
-    | Brush p             -> PSeq.empty
-    | FilledBrush p       -> PSeq.empty
+    | Brush p             -> renderBrush p
+    | FilledBrush p       -> renderFilledBrush p
 
 let renderFigureList figs = PSeq.ordered figs |> PSeq.map renderSingleFigure |> PSeq.toList

@@ -23,6 +23,7 @@ open FsRaster.FigureClipping
 open FsRaster.Resources
 open FsRaster.CoreRendering
 open FsRaster.CoreAlgorithms
+open FsRaster.UIUtils
 
 type MainWindow = XAML<"MainWindow.xaml", true>
 
@@ -348,7 +349,7 @@ type MainWindowController() =
         availableFigures
         |> List.map (fun f ->
             let mi = MenuItem()
-            mi.Header <- "_" + shortDescriptionOf f
+            mi.Header <- "_" + UIUtils.shortDescriptionOf f
             mi.Click.Add startBuildingFigure
             mi.Tag <- f
             mi)

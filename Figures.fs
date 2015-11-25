@@ -26,8 +26,8 @@ type Figure =
     | Polyline          of (Point list * FigureColor.Color)
     | Polygon           of (Point list * FigureColor.Color)
     | FilledPolygon     of (Point list * FigureColor.Color)
-    | Brush             of (FigureColor.Color) // Stub - always produces Polyline/Polygon
-    | FilledBrush       of (FigureColor.Color) // Stub - always produces Polyline/Polygon
+    | Brush             of (Point list * FigureColor.Color)
+    | FilledBrush       of (Point list * FigureColor.Color)
 
 type FigureInfo = { Color : FigureColor.Color; Thickness: int }
 
@@ -42,8 +42,8 @@ let getFigureInfo = function
     | Polyline (_, c)             -> { Color = c; Thickness = 1 }
     | Polygon (_, c)              -> { Color = c; Thickness = 1 }
     | FilledPolygon (_, c)        -> { Color = c; Thickness = 1 }
-    | Brush c                     -> { Color = c; Thickness = 1 }
-    | FilledBrush c               -> { Color = c; Thickness = 1 }
+    | Brush (_, c)                -> { Color = c; Thickness = 1 }
+    | FilledBrush (_, c)          -> { Color = c; Thickness = 1 }
 
 let availableFigures = [
     Point ((0,0), FigureColor.fromColor Colors.Red)
@@ -56,12 +56,9 @@ let availableFigures = [
     Polyline ([], FigureColor.fromColor Colors.Red);
     Polygon ([], FigureColor.fromColor Colors.Red);
     FilledPolygon ([], FigureColor.fromColor Colors.Red);
-    Brush (FigureColor.fromColor Colors.Red);
-    FilledBrush (FigureColor.fromColor Colors.Red)
+    Brush ([], FigureColor.fromColor Colors.Red);
+    FilledBrush ([], FigureColor.fromColor Colors.Red)
 ]
-
-let shortDescriptionOf fig = fig.GetType().Name.ToLower()
-let longDescriptionOf fig = sprintf "%A" fig
 
 let distance ((x1, y1) : Point) ((x2, y2) : Point) =
     let x = x2 - x1
@@ -79,8 +76,8 @@ let updateFigure c = function
     | Polyline (p, _)             -> Polyline (p, c.Color)
     | Polygon (p, _)              -> Polygon (p, c.Color)
     | FilledPolygon (p, _)        -> FilledPolygon (p, c.Color)
-    | Brush _                     -> Brush c.Color
-    | FilledBrush _               -> FilledBrush c.Color
+    | Brush (p, _)                -> Brush (p, c.Color)
+    | FilledBrush (p, _)          -> FilledBrush (p, c.Color)
 
 let moveFigure pt = function
     | Point (p, c)                -> Point (p +~ pt, c)
@@ -93,8 +90,8 @@ let moveFigure pt = function
     | Polyline (p, c)             -> Polyline (List.map ((+~) pt) p, c)
     | Polygon (p, c)              -> Polygon (List.map ((+~) pt) p, c)
     | FilledPolygon (p, c)        -> FilledPolygon (List.map ((+~) pt) p, c)
-    | Brush c                     -> Brush c
-    | FilledBrush c               -> FilledBrush c
+    | Brush (p, c)                -> Brush (List.map ((+~) pt) p, c)
+    | FilledBrush (p, c)          -> FilledBrush (List.map ((+~) pt) p, c)
 
 let crossProd (x1, y1) (x2, y2) = x1 * y2 - x2 * y1
 

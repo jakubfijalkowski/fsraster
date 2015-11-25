@@ -54,6 +54,7 @@ let private clipPolygon pts clipRect =
 let clipFigure clipRect = function
     | Line (p1, p2, c) -> Option.map (fun (p1', p2') -> Line (p1', p2', c)) (clipLine p1 p2 clipRect)
     | Polygon (pts, c) -> Option.map (fun p -> Polygon (p, c)) (clipPolygon pts clipRect)
+    | Brush (pts, c)   -> Option.map (fun p -> Brush (p, c)) (clipPolygon pts clipRect)
     | r -> Some r
 
 let clipFigures (figs : Figure seq) clipRect : Figure seq = PSeq.choose (clipFigure clipRect) figs |> PSeq.toList :> Figure seq
