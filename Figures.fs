@@ -5,8 +5,6 @@ open System.Windows.Media
 
 open FSharp.Collections.ParallelSeq
 
-open FsRaster.FigureColor
-
 type Point = int * int
 type RenderPrimitive =
     | PrimPixel of Point * Color
@@ -18,20 +16,20 @@ let inline (+~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 + x2, y1 + y2)
 let inline (-~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 - x2, y1 - y2)
 
 type Figure =
-    | Point             of (Point * FigureColor)
-    | Line              of (Point * Point * FigureColor)
-    | Circle            of (Point * int * FigureColor)
-    | AntialiasedCircle of (Point * int * FigureColor)
-    | SquareLine        of (Point * Point * FigureColor * int)
-    | DiamondLine       of (Point * Point * FigureColor * int)
-    | CircleLine        of (Point * Point * FigureColor * int)
-    | Polyline          of (Point list * FigureColor)
-    | Polygon           of (Point list * FigureColor)
-    | FilledPolygon     of (Point list * FigureColor)
-    | Brush             of (FigureColor) // Stub - always produces Polyline/Polygon
-    | FilledBrush       of (FigureColor) // Stub - always produces Polyline/Polygon
+    | Point             of (Point * FigureColor.Color)
+    | Line              of (Point * Point * FigureColor.Color)
+    | Circle            of (Point * int * FigureColor.Color)
+    | AntialiasedCircle of (Point * int * FigureColor.Color)
+    | SquareLine        of (Point * Point * FigureColor.Color * int)
+    | DiamondLine       of (Point * Point * FigureColor.Color * int)
+    | CircleLine        of (Point * Point * FigureColor.Color * int)
+    | Polyline          of (Point list * FigureColor.Color)
+    | Polygon           of (Point list * FigureColor.Color)
+    | FilledPolygon     of (Point list * FigureColor.Color)
+    | Brush             of (FigureColor.Color) // Stub - always produces Polyline/Polygon
+    | FilledBrush       of (FigureColor.Color) // Stub - always produces Polyline/Polygon
 
-type FigureInfo = { Color : FigureColor; Thickness: int }
+type FigureInfo = { Color : FigureColor.Color; Thickness: int }
 
 let getFigureInfo = function
     | Point (_, c)                -> { Color = c; Thickness = 1 }
@@ -48,18 +46,18 @@ let getFigureInfo = function
     | FilledBrush c               -> { Color = c; Thickness = 1 }
 
 let availableFigures = [
-    Point ((0,0), fromColor Colors.Red)
-    Line ((0,0), (0,0), fromColor Colors.Red);
-    Circle ((0,0), 0, fromColor Colors.Red);
-    AntialiasedCircle ((0,0), 0, fromColor Colors.Red);
-    SquareLine ((0,0), (0,0), fromColor Colors.Red, 1);
-    DiamondLine ((0,0), (0,0), fromColor Colors.Red, 1);
-    CircleLine ((0,0), (0,0), fromColor Colors.Red, 1);
-    Polyline ([], fromColor Colors.Red);
-    Polygon ([], fromColor Colors.Red);
-    FilledPolygon ([], fromColor Colors.Red);
-    Brush (fromColor Colors.Red);
-    FilledBrush (fromColor Colors.Red)
+    Point ((0,0), FigureColor.fromColor Colors.Red)
+    Line ((0,0), (0,0), FigureColor.fromColor Colors.Red);
+    Circle ((0,0), 0, FigureColor.fromColor Colors.Red);
+    AntialiasedCircle ((0,0), 0, FigureColor.fromColor Colors.Red);
+    SquareLine ((0,0), (0,0), FigureColor.fromColor Colors.Red, 1);
+    DiamondLine ((0,0), (0,0), FigureColor.fromColor Colors.Red, 1);
+    CircleLine ((0,0), (0,0), FigureColor.fromColor Colors.Red, 1);
+    Polyline ([], FigureColor.fromColor Colors.Red);
+    Polygon ([], FigureColor.fromColor Colors.Red);
+    FilledPolygon ([], FigureColor.fromColor Colors.Red);
+    Brush (FigureColor.fromColor Colors.Red);
+    FilledBrush (FigureColor.fromColor Colors.Red)
 ]
 
 let shortDescriptionOf fig = fig.GetType().Name.ToLower()
@@ -135,7 +133,8 @@ let resizeRectMin m (x, y) (left, top, right, bottom) =
 let generateGrid width height spacing color =
     let xs = [ spacing .. spacing .. width - 1 ]
     let ys = [ spacing .. spacing .. height - 1 ]
-    [ for x in xs -> Line ((x, 0), (x, height), fromColor color) ] @ [ for y in ys -> Line ((0, y), (width, y), fromColor color) ]
+    [ for x in xs -> Line ((x, 0), (x, height), FigureColor.fromColor color) ] @
+    [ for y in ys -> Line ((0, y), (width, y), FigureColor.fromColor color) ]
     
 let rec inPairs = function
     | a :: b :: rest -> (a, b) :: inPairs rest

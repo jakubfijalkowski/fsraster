@@ -1,9 +1,10 @@
-﻿module FsRaster.FigureColor
+﻿[<RequireQualifiedAccess>]
+module FsRaster.FigureColor
 
 open System
 open System.Windows.Media.Imaging
 
-type FigureColor = 
+type Color = 
     | Color         of System.Windows.Media.Color
     | BitmapPattern of int * int * System.Windows.Media.Color []
 
