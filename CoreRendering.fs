@@ -97,7 +97,7 @@ let putSolidLine ctx x1' y x2' color =
         let mutable index = (startIdx + initialBlockSize) * 4
         let mutable block = initialBlockSize * 4
         while index <= endIndex do
-            BitmapContext.BlockCopy(ctx.Context, startIdx', ctx.Context, index, min block (endIndex - index))
+            BitmapContext.BlockCopy(ctx.Context, startIdx', ctx.Context, index, min block (endIndex - index + 4))
             index <- index + block
             block <- block * 2
 
