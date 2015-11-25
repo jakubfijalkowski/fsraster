@@ -318,25 +318,6 @@ type MainWindowController() =
                 render ()
             ()
 
-    let addRandomFigures _ =
-        let rnd = System.Random(0xB15B00B5)
-        let genFig t p1 p2 c =
-            match t with
-            | 0 -> Point (p1, c)
-            | 1 -> Line (p1, p2, c)
-            | 2 -> Circle (p1, distance p1 p2, c)
-            | _ -> AntialiasedCircle (p1, distance p1 p2, c)
-        [1 .. 200]
-            |> List.map (fun _ ->
-                let t = rnd.Next(4)
-                let p1 = (rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height))
-                let p2 = (rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height))
-                let c = UIColors.allColors.[rnd.Next(UIColors.allColors.Length)]
-                genFig t p1 p2 (FigureColor.fromColor c.Color)
-                )
-            |> List.iter figures.Add
-        render ()
-
     do
         window.backgroundColor.SelectedColor <- Nullable Colors.White
         window.figureColor.SelectedColor <- Nullable Colors.Black
@@ -370,7 +351,6 @@ type MainWindowController() =
         window.backgroundColor.SelectedColorChanged.Add render
 
         window.deleteMenu.Click.Add deleteFigure
-        window.addRandomMenu.Click.Add addRandomFigures
 
         window.Root.KeyUp.Add onKeyUp
         window.clipCheckBox.Checked.Add enableClipping
