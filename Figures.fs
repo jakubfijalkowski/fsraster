@@ -5,6 +5,8 @@ open System.Windows.Media
 
 open FSharp.Collections.ParallelSeq
 
+open FsRaster.FigureColor
+
 type Point = int * int
 type RenderPrimitive =
     | PrimPixel of Point * Color
@@ -16,18 +18,20 @@ let inline (+~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 + x2, y1 + y2)
 let inline (-~) ((x1, y1) : Point) ((x2, y2) : Point) = (x1 - x2, y1 - y2)
 
 type Figure =
-    | Point             of (Point * Color)
-    | Line              of (Point * Point * Color)
-    | Circle            of (Point * int * Color)
-    | AntialiasedCircle of (Point * int * Color)
-    | SquareLine        of (Point * Point * Color * int)
-    | DiamondLine       of (Point * Point * Color * int)
-    | CircleLine        of (Point * Point * Color * int)
-    | Polyline          of (Point list * Color)
-    | Polygon           of (Point list * Color)
-    | FilledPolygon     of (Point list * Color)
+    | Point             of (Point * FigureColor)
+    | Line              of (Point * Point * FigureColor)
+    | Circle            of (Point * int * FigureColor)
+    | AntialiasedCircle of (Point * int * FigureColor)
+    | SquareLine        of (Point * Point * FigureColor * int)
+    | DiamondLine       of (Point * Point * FigureColor * int)
+    | CircleLine        of (Point * Point * FigureColor * int)
+    | Polyline          of (Point list * FigureColor)
+    | Polygon           of (Point list * FigureColor)
+    | FilledPolygon     of (Point list * FigureColor)
+    | Brush             of (FigureColor) // Stub - always produces Polyline/Polygon
+    | FilledBrush       of (FigureColor) // Stub - always produces Polyline/Polygon
 
-type FigureInfo = { Color : Color; Thickness: int }
+type FigureInfo = { Color : FigureColor; Thickness: int }
 
 let getFigureInfo = function
     | Point (_, c)                -> { Color = c; Thickness = 1 }
@@ -40,18 +44,22 @@ let getFigureInfo = function
     | Polyline (_, c)             -> { Color = c; Thickness = 1 }
     | Polygon (_, c)              -> { Color = c; Thickness = 1 }
     | FilledPolygon (_, c)        -> { Color = c; Thickness = 1 }
+    | Brush c                     -> { Color = c; Thickness = 1 }
+    | FilledBrush c               -> { Color = c; Thickness = 1 }
 
 let availableFigures = [
-    Point ((0,0), Colors.Red)
-    Line ((0,0), (0,0), Colors.Red);
-    Circle ((0,0), 0, Colors.Red);
-    AntialiasedCircle ((0,0), 0, Colors.Red);
-    SquareLine ((0,0), (0,0), Colors.Red, 1);
-    DiamondLine ((0,0), (0,0), Colors.Red, 1);
-    CircleLine ((0,0), (0,0), Colors.Red, 1);
-    Polyline ([], Colors.Red);
-    Polygon ([], Colors.Red);
-    FilledPolygon ([], Colors.Red)
+    Point ((0,0), fromColor Colors.Red)
+    Line ((0,0), (0,0), fromColor Colors.Red);
+    Circle ((0,0), 0, fromColor Colors.Red);
+    AntialiasedCircle ((0,0), 0, fromColor Colors.Red);
+    SquareLine ((0,0), (0,0), fromColor Colors.Red, 1);
+    DiamondLine ((0,0), (0,0), fromColor Colors.Red, 1);
+    CircleLine ((0,0), (0,0), fromColor Colors.Red, 1);
+    Polyline ([], fromColor Colors.Red);
+    Polygon ([], fromColor Colors.Red);
+    FilledPolygon ([], fromColor Colors.Red);
+    Brush (fromColor Colors.Red);
+    FilledBrush (fromColor Colors.Red)
 ]
 
 let shortDescriptionOf fig = fig.GetType().Name.ToLower()
@@ -73,6 +81,8 @@ let updateFigure c = function
     | Polyline (p, _)             -> Polyline (p, c.Color)
     | Polygon (p, _)              -> Polygon (p, c.Color)
     | FilledPolygon (p, _)        -> FilledPolygon (p, c.Color)
+    | Brush _                     -> Brush c.Color
+    | FilledBrush _               -> FilledBrush c.Color
 
 let moveFigure pt = function
     | Point (p, c)                -> Point (p +~ pt, c)
@@ -85,6 +95,8 @@ let moveFigure pt = function
     | Polyline (p, c)             -> Polyline (List.map ((+~) pt) p, c)
     | Polygon (p, c)              -> Polygon (List.map ((+~) pt) p, c)
     | FilledPolygon (p, c)        -> FilledPolygon (List.map ((+~) pt) p, c)
+    | Brush c                     -> Brush c
+    | FilledBrush c               -> FilledBrush c
 
 let crossProd (x1, y1) (x2, y2) = x1 * y2 - x2 * y1
 
@@ -123,4 +135,8 @@ let resizeRectMin m (x, y) (left, top, right, bottom) =
 let generateGrid width height spacing color =
     let xs = [ spacing .. spacing .. width - 1 ]
     let ys = [ spacing .. spacing .. height - 1 ]
-    [ for x in xs -> Line ((x, 0), (x, height), color) ] @ [ for y in ys -> Line ((0, y), (width, y), color) ]
+    [ for x in xs -> Line ((x, 0), (x, height), fromColor color) ] @ [ for y in ys -> Line ((0, y), (width, y), fromColor color) ]
+    
+let rec inPairs = function
+    | a :: b :: rest -> (a, b) :: inPairs rest
+    | _              -> []

@@ -24,6 +24,13 @@ let private withAtLeast2 e f = function
     | _                  -> e "Invalid number of elements."
 let private withAtLeast2' f pts = withAtLeast2 failwith f pts
 
+let private brushPoints count' =
+    let count = max count' 2 
+    let xdist = 200.0 / (double count)
+    let xs = [ 0.0 .. xdist .. 200.0 ]
+    let verts = xs |> inPairs |> List.collect (fun (x1, x2) -> [ (int (round x1), 0); (int (round x2), 90) ])
+    verts @ [ (200, 0); (200, 100); (0, 100) ]
+
 let private buildLine' c             = withPair' (fun p1 p2 -> (p1, p2, c.Color))
 let private buildPoint c             = withSingle' (fun p -> Point (p, c.Color))
 let private buildLine c              = buildLine' c >> Line
@@ -35,6 +42,8 @@ let private buildCircleLine c        = buildLine' c >> setThickness c >> CircleL
 let private buildPolyline c pts      = Polyline (pts, c.Color)
 let private buildPolygon c pts       = Polygon (pts, c.Color)
 let private buildFilledPolygon c pts = FilledPolygon (pts, c.Color)
+let private buildBrush c pts         = Polygon (brushPoints 40 |> List.map ((+~) (List.head pts)), c.Color)
+let private buildFilledBrush c pts   = FilledPolygon (brushPoints 40 |> List.map ((+~) (List.head pts)), c.Color)
 
 let private withPairOpt f pts      = withPair (fun _ -> None) (fun a -> f a >> Some) pts
 
@@ -54,6 +63,8 @@ let getFigureBuilder = function
     | Polyline _          -> { Builder = buildPolyline;      PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
     | Polygon _           -> { Builder = buildPolygon;       PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
     | FilledPolygon _     -> { Builder = buildFilledPolygon; PointsLeft = 0; Points = []; Preview = previewMultipointBuilder buildPolyline }
+    | Brush _             -> { Builder = buildBrush;         PointsLeft = 1; Points = []; Preview = previewBuilder buildBrush              }
+    | FilledBrush _       -> { Builder = buildFilledBrush;   PointsLeft = 1; Points = []; Preview = previewBuilder buildFilledBrush        }
 
 let processBuildingFigure builder pt c =
     let areTheSame = Option.fold (fun _ p2 -> pt = p2) false (List.tryLast builder.Points)

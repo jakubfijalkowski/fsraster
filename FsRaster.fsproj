@@ -153,6 +153,7 @@
     <None Include="App.config" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="FigureColor.fs" />
     <Compile Include="Figures.fs" />
     <Compile Include="FigureRendering.fs" />
     <Compile Include="FigureBuilding.fs" />
@@ -162,6 +163,7 @@
     <Compile Include="CoreAlgorithms.fs" />
     <Compile Include="Resources.fs" />
     <Resource Include="MainWindow.xaml" />
+    <Compile Include="UI.Utils.fs" />
     <Compile Include="UI.fs" />
     <Compile Include="Program.fs" />
     <None Include="Scripts\load-references.fsx" />

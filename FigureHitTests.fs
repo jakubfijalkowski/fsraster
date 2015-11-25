@@ -39,3 +39,5 @@ let isFigureHit pt = function
     | Polyline (pts, _)          -> isPolylineHit pt pts
     | Polygon (pts, _)           -> isPolygonHit pt pts
     | FilledPolygon (pts, _)     -> isPolygonHit pt pts
+    | Brush _                    -> None
+    | FilledBrush _              -> None

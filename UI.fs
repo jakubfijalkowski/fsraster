@@ -1,4 +1,4 @@
-﻿namespace FsRaster.UI
+﻿module FsRaster.UI
 
 open System
 open System.Collections
@@ -9,6 +9,8 @@ open System.Windows.Data
 open System.Windows.Controls
 open System.Windows.Media
 open System.Windows.Media.Imaging
+
+open Microsoft.Win32
 
 open FsXaml
 
@@ -23,11 +25,6 @@ open FsRaster.CoreRendering
 open FsRaster.CoreAlgorithms
 
 type MainWindow = XAML<"MainWindow.xaml", true>
-
-type FigureNameConverter() =
-    interface IValueConverter with
-        member this.Convert(value, _, _, _) = longDescriptionOf (value :?> Figure) :> obj
-        member this.ConvertBack(_, _, _, _) = failwith "Operation not supported."
 
 type MoveDataType = ClipRectMove | ClipRectResize | FigureMove
 
@@ -83,7 +80,7 @@ type MainWindowController() =
         Option.bind (previewFigure pt color) figureBuilder
 
     let getBuildInfo _ =
-        { Color = window.figureColor.SelectedColor.Value; Thickness = window.figureThickness.Value.Value }
+        { Color = FigureColor.fromColor window.figureColor.SelectedColor.Value; Thickness = window.figureThickness.Value.Value }
 
     let render' _ =
         let bgColor = window.backgroundColor.SelectedColor.Value
@@ -129,9 +126,10 @@ type MainWindowController() =
     let updateSelectedFigure (e : SelectionChangedEventArgs) =
         let idx = window.figureList.SelectedIndex
         window.deleteMenu.IsEnabled <- idx > -1
+        window.selectTexture.IsEnabled <- idx > -1
         if idx > -1 then
             let info = getFigureInfo figures.[idx]
-            window.figureColor.SelectedColor <- Nullable info.Color
+            window.figureColor.SelectedColor <- Nullable (FigureColor.getColor info.Color)
             window.figureThickness.Value <- Nullable info.Thickness
 
     let deleteFigure _ =
@@ -143,7 +141,7 @@ type MainWindowController() =
     let updateFigureInfo e =
         let idx = window.figureList.SelectedIndex
         if idx > -1 then
-            figures.[idx] <- updateFigure (getBuildInfo ()) figures.[idx]
+            //figures.[idx] <- updateFigure (getBuildInfo ()) figures.[idx]
             window.figureList.SelectedIndex <- idx
             render ()
 
@@ -229,7 +227,7 @@ type MainWindowController() =
     let tryResizeClipping (e : Input.MouseEventArgs) =
         withMoveData ClipRectResize (fun s _ ->
             let pos = getPosition e
-            clipRect <- Option.map (resizeRectMin (MatchDistance * 2) (pos -~ s)) clipRect
+            clipRect <- Option.map (resizeRectMin 3 (pos -~ s)) clipRect
             Some pos
         )
 
@@ -306,6 +304,19 @@ type MainWindowController() =
             Input.Mouse.Capture null |> ignore
         | _ -> ()
 
+    let selectTexture _ =
+        let idx = window.figureList.SelectedIndex
+        if idx > -1 then
+            let picker = new OpenFileDialog()
+            picker.CheckFileExists <- true
+            if picker.ShowDialog().GetValueOrDefault(false) then
+                let path = System.IO.Path.GetFullPath(picker.FileName)
+                let tex = FigureColor.fromImage path
+                let buildInfo = { Color = tex; Thickness = 1 }
+                figures.[idx] <- updateFigure buildInfo figures.[idx]
+                render ()
+            ()
+
     let addRandomFigures _ =
         let rnd = System.Random(0xB15B00B5)
         let genFig t p1 p2 c =
@@ -320,7 +331,7 @@ type MainWindowController() =
                 let p1 = (rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height))
                 let p2 = (rnd.Next(int mainCanvas.Width), rnd.Next(int mainCanvas.Height))
                 let c = UIColors.allColors.[rnd.Next(UIColors.allColors.Length)]
-                genFig t p1 p2 c.Color
+                genFig t p1 p2 (FigureColor.fromColor c.Color)
                 )
             |> List.iter figures.Add
         render ()
@@ -366,5 +377,7 @@ type MainWindowController() =
 
         window.fill4.Click.Add startFilling4
         window.fill8.Click.Add startFilling8
+
+        window.selectTexture.Click.Add selectTexture
 
     member this.Window with get() = window.Root
