@@ -1,4 +1,4 @@
-﻿namespace FsRaster.UIUtils
+﻿namespace FsRaster.UI.Utils
 
 open System.Windows
 open System.Windows.Data

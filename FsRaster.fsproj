@@ -162,9 +162,11 @@
     <Compile Include="CoreRendering.fs" />
     <Compile Include="CoreAlgorithms.fs" />
     <Compile Include="Resources.fs" />
-    <Resource Include="MainWindow.xaml" />
     <Compile Include="UI.Utils.fs" />
-    <Compile Include="UI.fs" />
+    <Resource Include="UI.FigureInfoPicker.xaml" />
+    <Compile Include="UI.FigureInfoPicker.fs" />
+    <Resource Include="UI.MainWindow.xaml" />
+    <Compile Include="UI.MainWindow.fs" />
     <Compile Include="Program.fs" />
     <None Include="Scripts\load-references.fsx" />
     <None Include="Scripts\load-project.fsx" />

@@ -1,0 +1,87 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:utils="clr-namespace:FsRaster.UI.Utils;assembly=FsRaster"
+        xmlns:ui="clr-namespace:FsRaster.UI;assembly=FsRaster"
+        xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+        MinWidth="800" MinHeight="600">
+    <Window.Resources>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="xctk:IntegerUpDown">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="xctk:ColorPicker">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <utils:FigureNameConverter x:Key="figureConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="85" />
+            <ColumnDefinition Width="85" />
+            <ColumnDefinition Width="85" />
+        </Grid.ColumnDefinitions>
+
+        <Menu Grid.ColumnSpan="4" Grid.Row="0">
+            <MenuItem x:Name="addMenu" Header="_Add" />
+            <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
+        </Menu>
+        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="9">
+            <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        </Grid>
+        <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3">Figures:</TextBlock>
+        <ListView x:Name="figureList" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Width="255" SelectionMode="Single">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Converter={StaticResource figureConverter}}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <ui:FigureInfoPicker x:Name="figureInfoPicker" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" />
+
+        <CheckBox x:Name="gridCheckBox" Grid.Row="4" Grid.Column="1" VerticalAlignment="Center">Grid:</CheckBox>
+        <xctk:IntegerUpDown x:Name="gridSpacing" Grid.Row="4" Grid.Column="2" Minimum="10" Maximum="1000" Value="100" />
+        <xctk:ColorPicker x:Name="gridColor" Grid.Row="4" Grid.Column="3" />
+
+        <TextBlock Grid.Row="5" Grid.Column="1" VerticalAlignment="Center">Background:</TextBlock>
+        <xctk:ColorPicker x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" />
+
+        <CheckBox x:Name="clipCheckBox" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center">Clipping</CheckBox>
+
+        <TextBlock Grid.Row="8" Grid.Column="1" VerticalAlignment="Center">Boundary:</TextBlock>
+        <xctk:ColorPicker x:Name="boundaryColor" Grid.Row="8" Grid.Column="2" />
+        <Button x:Name="fill4" Grid.Row="8" Grid.Column="3">4</Button>
+
+        <TextBlock Grid.Row="9" Grid.Column="1" VerticalAlignment="Center">Fill:</TextBlock>
+        <xctk:ColorPicker x:Name="fillColor" Grid.Row="9" Grid.Column="2" />
+        <Button x:Name="fill8" Grid.Row="9" Grid.Column="3">8</Button>
+
+    </Grid>
+</Window>
