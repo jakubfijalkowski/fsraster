@@ -33,11 +33,9 @@ type MoveDataType = ClipRectMove | ClipRectResize | FigureMove
 
 type MainWindowController() =
 
-    [<Literal>]
-    let MatchDistance = 10
-
     let window = MainWindow()
     let figureInfoPicker = FigureInfoPickerController(window.figureInfoPicker :?> FigureInfoPicker)
+    let clippingRectangle = ClippingRectangleController(window.imageContainer)
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -45,7 +43,6 @@ type MainWindowController() =
     
     let mutable figureBuilder : FigureBuilder option = None
     let mutable moveData : (MoveDataType * Point * int) option = None
-    let mutable clipRect : Rectangle option = None
     let mutable fillAction : (int -> int -> IRenderer -> unit) option = None
 
     let mutable selectedColor = FigureColor.fromColor Colors.Black
@@ -96,6 +93,8 @@ type MainWindowController() =
 
         use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
         context.Clear bgColor
+
+        let clipRect = clippingRectangle.ClipRect
 
         let grid =
             if window.gridCheckBox.IsChecked.Value
@@ -195,54 +194,8 @@ type MainWindowController() =
 
     // CLIPPING
 
-    let enableClipping _ =
-        let w = window.imageContainer.ActualWidth
-        let h = window.imageContainer.ActualHeight
-        let left = int (w * 0.2)
-        let right = int (w * 0.8)
-        let top = int (h * 0.2)
-        let bottom = int (h * 0.8)
-        clipRect <- Some (left, top, right, bottom)
-        render ()
-
-    let tryStartMovingClipping (e : Input.MouseEventArgs) =
-        match clipRect with
-        | Some (left, top, _, _) ->
-            let pos = getPosition e
-            if distance pos (left, top) <= MatchDistance
-            then
-                moveData <- Some (ClipRectMove, pos, 0)
-                true
-            else false
-        | None -> false
-
-    let tryMoveClipping (e : Input.MouseEventArgs) =
-        withMoveData ClipRectMove (fun s _ ->
-            let pos = getPosition e
-            clipRect <- Option.map (moveRect (pos -~ s)) clipRect
-            Some pos
-        )
-
-    let tryStartResizingClipping (e : Input.MouseEventArgs) =
-        match clipRect with
-        | Some (_, _, right, bottom) ->
-            let pos = getPosition e
-            if distance pos (right, bottom) <= MatchDistance
-            then
-                moveData <- Some (ClipRectResize, pos, 0)
-                true
-            else false
-        | None -> false
-
-    let tryResizeClipping (e : Input.MouseEventArgs) =
-        withMoveData ClipRectResize (fun s _ ->
-            let pos = getPosition e
-            clipRect <- Option.map (resizeRectMin 3 (pos -~ s)) clipRect
-            Some pos
-        )
-
-    let disableClipping _ =
-        clipRect <- None
+    let toggleClipping _ =
+        clippingRectangle.IsEnabled <- window.clipCheckBox.IsChecked.GetValueOrDefault false
         render ()
 
     // FILLING
@@ -281,15 +234,7 @@ type MainWindowController() =
                 then Some Input.Cursors.SizeAll
                 else None
             ) moveData
-        let r4 =
-            Option.bind (fun (left, top, right, bottom) ->
-                if distance pos (left, top) <= MatchDistance
-                then Some Input.Cursors.SizeAll
-                else if distance pos (right, bottom) <= MatchDistance
-                then Some Input.Cursors.SizeNWSE
-                else None
-            ) clipRect
-        window.imageContainer.Cursor <- List.choose id [r1; r2; r3; r4; Some Input.Cursors.Arrow] |> List.head
+        window.imageContainer.Cursor <- List.choose id [r1; r2; r3; Some Input.Cursors.Arrow] |> List.head
 
     // EVENTS
 
@@ -297,12 +242,12 @@ type MainWindowController() =
         if not (tryFillingRenderer e) then
             Input.Mouse.Capture window.imageContainer |> ignore
             if Option.isNone figureBuilder
-            then (tryStartResizingClipping e || tryStartMovingClipping e || trySelectFigure e) |> ignore
+            then (trySelectFigure e) |> ignore
             updateMouseCursor (Some e)
 
     let onImageMouseMove e =
         updateMouseCursor (Some e)
-        if tryResizeClipping e || tryMoveClipping e || tryMoveFigure e || Option.isSome figureBuilder
+        if tryMoveFigure e || Option.isSome figureBuilder
         then render ()
 
     let onImageMouseUp e =
@@ -359,10 +304,13 @@ type MainWindowController() =
         window.deleteMenu.Click.Add deleteFigure
 
         window.Root.KeyUp.Add onKeyUp
-        window.clipCheckBox.Checked.Add enableClipping
-        window.clipCheckBox.Unchecked.Add disableClipping
+        window.clipCheckBox.Checked.Add toggleClipping
+        window.clipCheckBox.Unchecked.Add toggleClipping
 
         window.fill4.Click.Add startFilling4
         window.fill8.Click.Add startFilling8
+
+        clippingRectangle.IsEnabled <- false
+        clippingRectangle.RequestRender.Add render
 
     member this.Window with get() = window.Root

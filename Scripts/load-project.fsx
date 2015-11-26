@@ -13,6 +13,7 @@
       "../CoreAlgorithms.fs"
       "../Resources.fs"
       "../UI.Utils.fs"
+      "../UI.ClippingRectangle.fs"
       "../UI.FigureInfoPicker.fs"
       "../UI.MainWindow.fs"
       "../Program.fs"
