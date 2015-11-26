@@ -38,8 +38,19 @@ module List =
         | [a]    -> []
         | a :: r -> a :: butLast r
 
+    let rec takeWhileState f s lst =
+        match lst with
+        | x :: xs ->
+            let s', r = f s x
+            if r then x :: takeWhileState f s' xs else []
+        | [] -> []
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
 module Option =
     let opt def o = Option.fold (fun _ -> id) def o
+    let optFunc def = function
+    | Some o -> o
+    | None   -> def ()
     let withOpt f def o = Option.fold (fun _ s -> f s) def o
+    let fromSome = function | Some o -> o | _ -> failwith "Invalid argumen - None passed"

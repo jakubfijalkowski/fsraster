@@ -153,6 +153,7 @@
     <None Include="App.config" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="OctTree.fs" />
     <Compile Include="FigureColor.fs" />
     <Compile Include="Figures.fs" />
     <Compile Include="FigureRendering.fs" />

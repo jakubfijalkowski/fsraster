@@ -38,7 +38,8 @@ module UIUtils =
 
     let private colorName = function
         | FsRaster.FigureColor.Color c -> sprintf "%A" c
-        | FsRaster.FigureColor.BitmapPattern _ -> "Textured"
+        | FsRaster.FigureColor.Texture _ -> "Textured"
+        | FsRaster.FigureColor.ReducedTexture _ -> "Textured-Reduced"
 
     let private figureName fig = fig.GetType().Name
     let shortDescriptionOf fig = (figureName fig).ToLower()
