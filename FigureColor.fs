@@ -26,6 +26,8 @@ let isTexture = function
     | BitmapPattern _ -> true
     | _ -> false
 
+let forceColor = getColor >> Color
+
 #nowarn "9"
 let fromImage imgPath =
     let source = new BitmapImage(new Uri(imgPath, UriKind.Absolute))

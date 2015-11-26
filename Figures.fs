@@ -71,19 +71,20 @@ let updateFigure c fig =
     let filled = Option.opt false c.Filled
     let polygon = if filled then FilledPolygon else Polygon
     let brush = if filled then FilledBrush else Brush
+    let color = if not filled then FigureColor.forceColor c.Color else c.Color
     match fig with
-    | Point (p, _)                -> Point (p, c.Color)
-    | Line (p1, p2, _)            -> Line (p1, p2, c.Color)
-    | Circle (s, r, _)            -> Circle (s, r, c.Color)
-    | AntialiasedCircle (s, r, _) -> AntialiasedCircle (s, r, c.Color)
-    | SquareLine (p1, p2, _, _)   -> SquareLine (p1, p2, c.Color, c.Thickness)
-    | DiamondLine (p1, p2, _, _)  -> DiamondLine (p1, p2, c.Color, c.Thickness)
-    | CircleLine (p1, p2, _, _)   -> CircleLine (p1, p2, c.Color, c.Thickness)
-    | Polyline (p, _)             -> Polyline (p, c.Color)
-    | Polygon (p, _)              -> polygon (p, c.Color)
-    | FilledPolygon (p, _)        -> polygon (p, c.Color)
-    | Brush (p, _)                -> brush (p, c.Color)
-    | FilledBrush (p, _)          -> brush (p, c.Color)
+    | Point (p, _)                -> Point (p, color)
+    | Line (p1, p2, _)            -> Line (p1, p2, color)
+    | Circle (s, r, _)            -> Circle (s, r, color)
+    | AntialiasedCircle (s, r, _) -> AntialiasedCircle (s, r, color)
+    | SquareLine (p1, p2, _, _)   -> SquareLine (p1, p2, color, c.Thickness)
+    | DiamondLine (p1, p2, _, _)  -> DiamondLine (p1, p2, color, c.Thickness)
+    | CircleLine (p1, p2, _, _)   -> CircleLine (p1, p2, color, c.Thickness)
+    | Polyline (p, _)             -> Polyline (p, color)
+    | Polygon (p, _)              -> polygon (p, color)
+    | FilledPolygon (p, _)        -> polygon (p, color)
+    | Brush (p, _)                -> brush (p, color)
+    | FilledBrush (p, _)          -> brush (p, color)
 
 let moveFigure pt = function
     | Point (p, c)                -> Point (p +~ pt, c)

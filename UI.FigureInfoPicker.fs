@@ -59,6 +59,19 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
         currentInfo <- { currentInfo with Filled = Some value }
         triggerChanged ()
 
+    let decideColorTypeForFigure info =
+        let mayHaveTexture = Option.opt false info.Filled
+        let hasTexture = FigureColor.isTexture info.Color
+        let reallyHasTexture = mayHaveTexture && hasTexture
+
+        control.useFigureTexture.IsEnabled <- mayHaveTexture
+        control.selectTextureButton.IsEnabled <- mayHaveTexture
+        control.useFigureColor.IsChecked <- Nullable (not reallyHasTexture)
+        control.useFigureTexture.IsChecked <- Nullable reallyHasTexture
+
+        if not reallyHasTexture then
+            control.figureColor.SelectedColor <- Nullable (FigureColor.getColor info.Color)
+
     let onTypeChanged _ =
         if not duringUpdate then
             if control.useFigureColor.IsChecked.GetValueOrDefault true
@@ -91,17 +104,13 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
         match figOpt with
         | Some fig ->
             let info = getFigureInfo fig
+            decideColorTypeForFigure info
             control.figureThickness.Value <- Nullable info.Thickness
-            match info.Color with
-            | FigureColor.Color c ->
-                control.figureColor.SelectedColor <- Nullable c
-                control.useFigureColor.IsChecked <- Nullable true
-            | FigureColor.BitmapPattern _ ->
-                control.useFigureTexture.IsChecked <- Nullable true
-
             control.isFigureFilled.IsEnabled <- Option.isSome info.Filled
             control.isFigureFilled.IsChecked <- Nullable (Option.opt false info.Filled)
         | None ->
+            currentInfo <- { currentInfo with Color = currentColor () }
+            control.useFigureTexture.IsEnabled <- true
             control.useFigureColor.IsChecked <- Nullable true
             control.isFigureFilled.IsEnabled <- false
 
