@@ -44,7 +44,9 @@ type ClippingRectangleController(control : FrameworkElement) =
                 then Some (ClipResize, pos)
                 else None
             ) clipRect
-        e.Handled <- Option.isSome moveData
+        if Option.isSome moveData then
+            e.Handled <- true
+            Input.Mouse.Capture control |> ignore
 
     let onMouseMove (e : Input.MouseEventArgs) =
         moveData <-
@@ -71,10 +73,12 @@ type ClippingRectangleController(control : FrameworkElement) =
                 else None
             ) clipRect
         e.Handled <- Option.isSome cursor
-        control.Cursor <- Option.opt Input.Cursors.Arrow cursor
+        control.Cursor <- Option.opt null cursor
 
     let onMouseUp (e : Input.MouseEventArgs) =
-        e.Handled <- Option.isSome moveData
+        if Option.isSome moveData then
+            e.Handled <- true
+            if Input.Mouse.Captured = (control :> IInputElement) then Input.Mouse.Capture null |> ignore
         moveData <- None
 
     do

@@ -35,7 +35,7 @@ type MainWindowController() =
 
     let window = MainWindow()
     let figureInfoPicker = FigureInfoPickerController(window.figureInfoPicker :?> FigureInfoPicker)
-    let clippingRectangle = ClippingRectangleController(window.imageContainer)
+    let clippingRectangle = ClippingRectangleController(window.clipOverlayMouse)
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
