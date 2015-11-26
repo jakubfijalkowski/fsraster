@@ -5,7 +5,10 @@ open FsRaster.Utils
 type Color = System.Windows.Media.Color
 
 // This really isn't the most functional way, but otherwise I wouldn't know how to make it fast-ish
-type RGBTree = { mutable IsLeaf : bool; mutable Color : Color; Frequency: int; mutable Children: RGBTree option array }
+type RGBTree = { mutable IsLeaf : bool; mutable Color : Color; mutable Frequency: int; mutable Children: RGBTree option array }
+
+let rec deepCopyTree tree =
+    { IsLeaf = tree.IsLeaf; Color = tree.Color; Frequency = tree.Frequency; Children = Array.map (Option.map deepCopyTree) tree.Children }
 
 let getColorIndex pos (color : Color) =
     let r = int color.R
@@ -32,14 +35,22 @@ let prepareRGBtreeNode leaf color =
 
 let addColor tree color =
     let rec addColor' (node : RGBTree) pos color =
-        if pos = 8 then { node with Frequency = node.Frequency + 1 }
+        if pos = 8
+        then
+            node.Frequency <- node.Frequency + 1
         else
             let colorIdx = getColorIndex pos color
-            let newNode _ = prepareRGBtreeNode (pos = 7) (mixColor node.Color pos colorIdx)
-            let childNode = Option.optFunc newNode node.Children.[colorIdx]
-            node.Children.[colorIdx] <- Some <| addColor' childNode (pos + 1) color
-            { node with Frequency = node.Frequency + 1 }
+            let childNode =
+                match node.Children.[colorIdx] with
+                | Some n -> n
+                | None   ->
+                    let newNode = prepareRGBtreeNode (pos = 7) (mixColor node.Color pos colorIdx)
+                    node.Children.[colorIdx] <- Some newNode
+                    newNode
+            node.Frequency <- node.Frequency + 1
+            addColor' childNode (pos + 1) color
     addColor' tree 0 color
+    tree
 
 let rec getLevel level tree =
     match level with
@@ -93,12 +104,18 @@ let reduceSingleLevel (tree, count) level =
         let tree' = List.fold reduceNode tree nodes
         (tree', count - nodesReduced + nodes.Length)
 
-let reducePalette colors targetCount =
+let prepareReductionTree colors =
     let root = (prepareRGBtreeNode false System.Windows.Media.Colors.Black)
     let tree = Array.fold addColor root colors
     let totalColors = calculateTotalColors tree
+    (tree, totalColors)
+
+let reducePalette colors (tree, totalColors) targetCount =
     let colorsToDelete = totalColors - targetCount
     let levels = [ 7 .. -1 .. 0 ]
-    let finaltree = List.fold reduceSingleLevel (tree, colorsToDelete) levels |> fst
-    colors |> Array.map (getColorSubstitute finaltree)
+    if colorsToDelete <= 0 then colors
+    else
+        let tree' = deepCopyTree tree
+        let finaltree = List.fold reduceSingleLevel (tree', colorsToDelete) levels |> fst
+        colors |> Array.map (getColorSubstitute finaltree)
 

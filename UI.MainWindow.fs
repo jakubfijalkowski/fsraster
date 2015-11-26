@@ -29,8 +29,6 @@ open FsRaster.CoreAlgorithms
 
 type MainWindow = XAML<"UI.MainWindow.xaml", true>
 
-type MoveDataType = ClipRectMove | ClipRectResize | FigureMove
-
 type MainWindowController() =
 
     let window = MainWindow()
@@ -42,10 +40,12 @@ type MainWindowController() =
     let figures : Generic.IList<Figure> = ObservableCollection() :> Generic.IList<Figure>
     
     let mutable figureBuilder : FigureBuilder option = None
-    let mutable moveData : (MoveDataType * Point * int) option = None
+    let mutable moveData : (Point * int) option = None
     let mutable fillAction : (int -> int -> IRenderer -> unit) option = None
 
     let mutable selectedColor = FigureColor.fromColor Colors.Black
+
+    let mutable duringFigureUpdate = false
 
     // HELPERS
 
@@ -53,12 +53,12 @@ type MainWindowController() =
         let pos = e.GetPosition(window.imageContainer)
         (int pos.X, int pos.Y)
 
-    let withMoveData t f =
+    let withMoveData f =
         match moveData with
-        | Some (dt, s, i) when dt = t ->
+        | Some (s, i) ->
             match f s i with
             | Some n ->
-                moveData <- Some (dt, n, i)
+                moveData <- Some (n, i)
                 true
             | None ->
                 moveData <- None
@@ -133,21 +133,24 @@ type MainWindowController() =
             render ()
 
     let updateSelectedFigure (e : SelectionChangedEventArgs) =
-        let idx = window.figureList.SelectedIndex
-        window.deleteMenu.IsEnabled <- idx > -1
-        if idx > -1
-        then
-            let fig = figures.[idx]
-            figureInfoPicker.UpdateSelectedFigure (Some fig)
-        else
-            figureInfoPicker.UpdateSelectedFigure None
+        if not duringFigureUpdate && Option.isNone moveData then
+            let idx = window.figureList.SelectedIndex
+            window.deleteMenu.IsEnabled <- idx > -1
+            if idx > -1
+            then
+                let fig = figures.[idx]
+                figureInfoPicker.UpdateSelectedFigure (Some fig)
+            else
+                figureInfoPicker.UpdateSelectedFigure None
 
-    let updateFigureInfo e =
+    let updateFigureInfo _ =
         let idx = window.figureList.SelectedIndex
         if idx > -1 then
+            duringFigureUpdate <- true
             figures.[idx] <- updateFigure figureInfoPicker.FigureInfo figures.[idx]
             window.figureList.SelectedIndex <- idx
             render ()
+            duringFigureUpdate <- false
 
     // FIGURE BUILDING/MOVING
 
@@ -160,11 +163,11 @@ type MainWindowController() =
         let pos = getPosition e
         let idx = selectHitFigure pos
         window.figureList.SelectedIndex <- idx
-        moveData <- if idx > -1 then Some (FigureMove, pos, idx) else None
+        moveData <- if idx > -1 then Some (pos, idx) else None
         idx > -1
 
     let tryMoveFigure (e : Input.MouseEventArgs) =
-        withMoveData FigureMove (fun s idx ->
+        withMoveData (fun s idx ->
             let pos = getPosition e
             figures.[idx] <- moveFigure (pos -~ s) figures.[idx]
             window.figureList.SelectedIndex <- idx
@@ -228,12 +231,7 @@ type MainWindowController() =
         let pos = Option.withOpt getPosition (-999, -999) e
         let r1 = Option.map (fun _ -> loadCursorFile "bucket_cursor") fillAction
         let r2 = Option.map (fun _ -> Input.Cursors.Hand) figureBuilder
-        let r3 =
-            Option.bind (fun (t, _, _) ->
-                if t = FigureMove
-                then Some Input.Cursors.SizeAll
-                else None
-            ) moveData
+        let r3 = Option.map (fun _ -> Input.Cursors.SizeAll) moveData
         window.imageContainer.Cursor <- List.choose id [r1; r2; r3; Some Input.Cursors.Arrow] |> List.head
 
     // EVENTS

@@ -38,6 +38,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid Grid.ColumnSpan="3">
             <Grid.ColumnDefinitions>
@@ -58,6 +59,9 @@
         <xctk:IntegerUpDown x:Name="figureThickness" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Minimum="1" Maximum="100" Value="6" />
 
         <CheckBox x:Name="isFigureFilled" Grid.Row="2" Grid.ColumnSpan="3" IsEnabled="false" IsChecked="false">Filled</CheckBox>
+
+        <CheckBox x:Name="isTextureReduced" Grid.Row="3" IsEnabled="false" IsChecked="false">Reduction:</CheckBox>
+        <xctk:IntegerUpDown x:Name="reductionValue" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" IsEnabled="false" Minimum="1" Maximum="16777216" Value="16777216" />
     </Grid>
 
 </UserControl>

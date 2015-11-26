@@ -38,12 +38,14 @@ module List =
         | [a]    -> []
         | a :: r -> a :: butLast r
 
-    let rec takeWhileState f s lst =
-        match lst with
-        | x :: xs ->
-            let s', r = f s x
-            if r then x :: takeWhileState f s' xs else []
-        | [] -> []
+    let takeWhileState f s lst =
+        let rec takeWhileState' f s lst acc =
+            match lst with
+            | x :: xs ->
+                let s', r = f s x
+                if r then takeWhileState' f s' xs (x :: acc) else acc
+            | [] -> acc
+        takeWhileState' f s lst []
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
