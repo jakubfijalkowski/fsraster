@@ -101,6 +101,25 @@ let putSolidLine ctx x1' y x2' color =
             index <- index + block
             block <- block * 2
 
+// This is MUCH faster than rendering pixels in renderFilledPolygonTextured and then passing array of PrimPixels
+// to the core renderer. Don't know why, but this way it renders hundreds of thousands of pixels in a bunch of
+// miliseconds, not hundreds of miliseconds. Even when using good ol' mutable arrays it is waaaay slower than this.
+let putTexLine ctx prim =
+    let y = prim.Y
+    let x1 = max prim.X1 0
+    let x2 = min prim.X2 (ctx.Width - 1)
+    let w = x2 - x1
+
+    if x2 >= 0 && x1 < ctx.Width && y >= 0 && y < ctx.Height && w >= 0 then
+        let startIdx = y * ctx.Width
+        let pixels = ctx.Context.Pixels
+        let originX, originY = prim.Origin
+        let texY = abs ((y - originY) % prim.Texture.Height)
+        for x in x1 .. x2 do
+            let texX = abs (x - originX) % prim.Texture.Width
+            let c = convertColor <| FigureColor.getTexPixel prim.Texture texX texY
+            NativeInterop.NativePtr.set pixels (startIdx + x) c
+
 let getPixel ctx x y =
     let index = y * ctx.Width + x
     let pixels = ctx.Context.Pixels
@@ -109,6 +128,7 @@ let getPixel ctx x y =
 let putPrimitive ctx = function
     | PrimPixel ((x, y), c)   -> putColorAlpha ctx x y c
     | PrimLine (x1, y, x2, c) -> putSolidLine ctx x1 y x2 c
+    | PrimTexLine t           -> putTexLine ctx t
 
 type IRenderer =
     inherit IDisposable

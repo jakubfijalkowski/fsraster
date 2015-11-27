@@ -8,9 +8,11 @@ open FSharp.Collections.ParallelSeq
 open FsRaster.Utils
 
 type Point = int * int
+type PrimTexLine = { X1: int; X2: int; Y: int; Texture: FigureColor.Texture; Origin: Point }
 type RenderPrimitive =
-    | PrimPixel of Point * Color
-    | PrimLine  of (int * int * int * Color)
+    | PrimPixel   of Point * Color
+    | PrimLine    of (int * int * int * Color)
+    | PrimTexLine of PrimTexLine
 type Rectangle = int * int * int * int
 
 // "swim" operators - vector addition/subtraction

@@ -151,15 +151,14 @@ let private buildEdgeTable pts =
         withEdgeList edgeTable ymin (curry List.Cons (ymax, double xmin, coeff))
     edgeTable
 
-let private renderFilledPolygonSolid pts figColor = 
+let private renderFilledGeneric pts mkPrim = 
     let baseX, baseY = List.head pts
     let edgeTable = buildEdgeTable pts
     let _, ymin = List.minBy snd pts
     let _, ymax = List.maxBy snd pts
-    let c = FigureColor.getColor figColor
     let processSingleScanline aet y =
         let aet' = aet @ getEdges edgeTable y |> List.sortBy (fun (_, x, _) -> x)
-        let pixels' = aet' |> inPairs |> List.map (fun ((_, x1, _), (_, x2, _)) -> PrimLine (int (round x1), y, int (round x2), c) )
+        let pixels' = aet' |> inPairs |> List.map (fun ((_, x1, _), (_, x2, _)) -> mkPrim (int (round x1)) y (int (round x2)) )
         let aet' = aet' |> List.filter (fun (ymax, _, _) -> ymax <> y + 1) |> List.map (fun (ymax, x, coeff) -> (ymax, x + coeff, coeff))
         (pixels', aet')
     let processSingle (pixels, aet) y =
@@ -167,27 +166,14 @@ let private renderFilledPolygonSolid pts figColor =
         (pixels' @ pixels, aet')
     [ ymin .. ymax ] |> List.fold processSingle ([], []) |> fst |> PSeq.ofList
 
+let private renderFilledPolygonSolid pts figColor =
+    let c = FigureColor.getColor figColor
+    renderFilledGeneric pts (fun x1 y x2 -> PrimLine (x1, y, x2, c))
+
 let private renderFilledPolygonTextured pts figColor =
-    let baseX, baseY = List.head pts
-    let texW, texH = FigureColor.getPatternSize figColor
-    let edgeTable = buildEdgeTable pts
-    let _, ymin = List.minBy snd pts
-    let _, ymax = List.maxBy snd pts
-    let processSingleScanline aet y =
-        let aet' = aet @ getEdges edgeTable y |> List.sortBy (fun (_, x, _) -> x)
-        let pixels = aet' |> inPairs |> List.collect (fun ((_, x1, _), (_, x2, _)) -> [ int (round x1) .. int (round x2) ])
-        let pixels' = pixels |> List.map (fun x ->
-            let texX = abs (x - baseX) % texW
-            let texY = abs (y - baseY) % texH
-            let c = FigureColor.getColorAt texX texY figColor
-            PrimPixel ((x, y), c)
-            )
-        let aet' = aet' |> List.filter (fun (ymax, _, _) -> ymax <> y + 1) |> List.map (fun (ymax, x, coeff) -> (ymax, x + coeff, coeff))
-        (pixels', aet')
-    let processSingle (pixels, aet) y =
-        let (pixels', aet') = processSingleScanline aet y
-        (pixels' @ pixels, aet')
-    [ ymin .. ymax ] |> List.fold processSingle ([], []) |> fst |> PSeq.ofList
+    let origin = List.head pts
+    let tex = FigureColor.getTextureInfo figColor
+    renderFilledGeneric pts (fun x1 y x2 -> PrimTexLine { X1 = x1; X2 = x2; Y = y; Texture = tex; Origin = origin })
 
 let private renderFilledPolygon (pts, figColor) =
     if FigureColor.isTexture figColor
