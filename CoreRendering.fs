@@ -103,7 +103,7 @@ let putTexLine ctx prim =
         let startIdx = y * ctx.Width
         let pixels = ctx.Context.Pixels
         let originX, originY = prim.Origin
-        let texY = abs ((y - originY) % prim.Texture.Height)
+        let texY = abs ((originY - y) % prim.Texture.Height)
         for x in x1 .. x2 do
             let texX = abs (x - originX) % prim.Texture.Width
             let c = FigureColor.getTexPixel prim.Texture texX texY
