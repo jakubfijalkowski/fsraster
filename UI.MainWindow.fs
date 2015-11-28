@@ -43,8 +43,6 @@ type MainWindowController() =
     let mutable moveData : (Point * int) option = None
     let mutable fillAction : (int -> int -> IRenderer -> unit) option = None
 
-    let mutable selectedColor = FigureColor.fromColor Colors.Black
-
     let mutable duringFigureUpdate = false
 
     // HELPERS

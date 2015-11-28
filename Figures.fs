@@ -10,8 +10,8 @@ open FsRaster.Utils
 type Point = int * int
 type PrimTexLine = { X1: int; X2: int; Y: int; Texture: FigureColor.Texture; Origin: Point }
 type RenderPrimitive =
-    | PrimPixel   of Point * Color
-    | PrimLine    of (int * int * int * Color)
+    | PrimPixel   of Point * Colors.RawColor
+    | PrimLine    of (int * int * int * Colors.RawColor)
     | PrimTexLine of PrimTexLine
 type Rectangle = int * int * int * int
 
@@ -50,18 +50,18 @@ let getFigureInfo = function
     | FilledBrush (_, c)          -> { Color = c; Thickness = 1; Filled = Some true  }
 
 let availableFigures = [
-    Point ((0,0), FigureColor.fromColor Colors.Red)
-    Line ((0,0), (0,0), FigureColor.fromColor Colors.Red);
-    Circle ((0,0), 0, FigureColor.fromColor Colors.Red);
-    AntialiasedCircle ((0,0), 0, FigureColor.fromColor Colors.Red);
-    SquareLine ((0,0), (0,0), FigureColor.fromColor Colors.Red, 1);
-    DiamondLine ((0,0), (0,0), FigureColor.fromColor Colors.Red, 1);
-    CircleLine ((0,0), (0,0), FigureColor.fromColor Colors.Red, 1);
-    Polyline ([], FigureColor.fromColor Colors.Red);
-    Polygon ([], FigureColor.fromColor Colors.Red);
-    FilledPolygon ([], FigureColor.fromColor Colors.Red);
-    Brush ([], FigureColor.fromColor Colors.Red);
-    FilledBrush ([], FigureColor.fromColor Colors.Red)
+    Point ((0,0), FigureColor.makeColor Colors.Red)
+    Line ((0,0), (0,0), FigureColor.makeColor Colors.Red);
+    Circle ((0,0), 0, FigureColor.makeColor Colors.Red);
+    AntialiasedCircle ((0,0), 0, FigureColor.makeColor Colors.Red);
+    SquareLine ((0,0), (0,0), FigureColor.makeColor Colors.Red, 1);
+    DiamondLine ((0,0), (0,0), FigureColor.makeColor Colors.Red, 1);
+    CircleLine ((0,0), (0,0), FigureColor.makeColor Colors.Red, 1);
+    Polyline ([], FigureColor.makeColor Colors.Red);
+    Polygon ([], FigureColor.makeColor Colors.Red);
+    FilledPolygon ([], FigureColor.makeColor Colors.Red);
+    Brush ([], FigureColor.makeColor Colors.Red);
+    FilledBrush ([], FigureColor.makeColor Colors.Red)
 ]
 
 let distance ((x1, y1) : Point) ((x2, y2) : Point) =
@@ -139,8 +139,8 @@ let resizeRectMin m (x, y) (left, top, right, bottom) =
 let generateGrid width height spacing color =
     let xs = [ spacing .. spacing .. width - 1 ]
     let ys = [ spacing .. spacing .. height - 1 ]
-    [ for x in xs -> Line ((x, 0), (x, height), FigureColor.fromColor color) ] @
-    [ for y in ys -> Line ((0, y), (width, y), FigureColor.fromColor color) ]
+    [ for x in xs -> Line ((x, 0), (x, height), FigureColor.makeColor color) ] @
+    [ for y in ys -> Line ((0, y), (width, y), FigureColor.makeColor color) ]
     
 let rec inPairs = function
     | a :: b :: rest -> (a, b) :: inPairs rest

@@ -2,120 +2,141 @@
 
 open FsRaster.Utils
 
-type Color = System.Windows.Media.Color
+[<ReferenceEquality>]
+type InternalColor = { R: uint64; G: uint64; B: uint64 }
+[<ReferenceEquality>]
+type RGBTree =
+    { mutable IsLeaf: bool
+    ; mutable Color: InternalColor
+    ; mutable Frequency: uint64
+    ; mutable Children: RGBTree option []
+    }
 
-// This really isn't the most functional way, but otherwise I wouldn't know how to make it fast-ish
-type RGBTree = { mutable IsLeaf : bool; mutable Color : Color; mutable Frequency: int; mutable Children: RGBTree option array }
+let private getColorIndex pos color =
+    let mask = 0x80 >>> pos
+    let off = 7 - pos
+    (Colors.getR color &&& mask >>> off <<< 2) |||
+    (Colors.getG color &&& mask >>> off <<< 1) |||
+    (Colors.getB color &&& mask >>> off)
 
-let rec deepCopyTree tree =
-    { IsLeaf = tree.IsLeaf; Color = tree.Color; Frequency = tree.Frequency; Children = Array.map (Option.map deepCopyTree) tree.Children }
+let rec private deepCopyTree tree =
+    { IsLeaf = tree.IsLeaf
+    ; Color = tree.Color
+    ; Frequency = tree.Frequency
+    ; Children = Array.map (Option.map deepCopyTree) tree.Children
+    }
 
-let getColorIndex pos (color : Color) =
-    let r = int color.R
-    let g = int color.G
-    let b = int color.B
-    let mask = 1 <<< pos
-    (r &&& mask >>> pos <<< 2) ||| (g &&& mask >>> pos <<< 1) ||| (b &&& mask >>> pos)
-
-let mixColor (parentColor : Color) pos idx =
-    let r = int parentColor.R
-    let g = int parentColor.G
-    let b = int parentColor.B
-    let newR = r ||| (idx &&& 4 >>> 2 <<< pos)
-    let newG = g ||| (idx &&& 2 >>> 1 <<< pos)
-    let newB = b ||| (idx &&& 1 <<< pos)
-    Color.FromRgb(byte newR, byte newG, byte newB)
-
-let prepareRGBtreeNode leaf color =
+let private prepareNode leaf =
     { IsLeaf = leaf
-    ; Color = color
-    ; Frequency = 0
+    ; Color = { R = 0UL; G = 0UL; B = 0UL }
+    ; Frequency = 0UL
     ; Children = if leaf then [||] else Array.replicate 8 None
     }
 
-let addColor tree color =
-    let rec addColor' (node : RGBTree) pos color =
+let private    addNode tree color =
+    let rec addNode' pos node =
         if pos = 8
         then
-            node.Frequency <- node.Frequency + 1
+            let r = uint64 <| Colors.getR color
+            let g = uint64 <| Colors.getG color
+            let b = uint64 <| Colors.getB color
+            node.Frequency <- node.Frequency + 1UL
+            node.Color <- { R = node.Color.R + r; G = node.Color.G + g; B = node.Color.B + b }
         else
-            let colorIdx = getColorIndex pos color
+            let idx = getColorIndex pos color
             let childNode =
-                match node.Children.[colorIdx] with
+                match node.Children.[idx] with
                 | Some n -> n
-                | None   ->
-                    let newNode = prepareRGBtreeNode (pos = 7) (mixColor node.Color pos colorIdx)
-                    node.Children.[colorIdx] <- Some newNode
-                    newNode
-            node.Frequency <- node.Frequency + 1
-            addColor' childNode (pos + 1) color
-    addColor' tree 0 color
+                | None ->
+                    let n = prepareNode (pos = 7)
+                    node.Children.[idx] <- Some n
+                    n
+            node.Frequency <- node.Frequency + 1UL
+            addNode' (pos + 1) childNode |> ignore
+        node
+    addNode' 0 tree
+
+let rec private getNodesAtLevel level node =
+    match level with
+    | 0 -> [| node |]
+    | 1 -> node.Children |> Array.choose id
+    | _ -> node.Children |> Array.choose id |> Array.collect (getNodesAtLevel (level - 1))
+
+let private getLeavesCount tree =
+    let rec getLeavesCount' = function
+        | x when x.IsLeaf -> 1
+        | x               -> x.Children |> Array.choose id |> Array.sumBy getLeavesCount'
+    getLeavesCount' tree
+
+let private reduceNode tree node =
+    let validChildren = node.Children |> Array.choose id
+    let mutable r = 0UL
+    let mutable g = 0UL
+    let mutable b = 0UL
+    // Array.sumBy uses checked arithmetic and we don't want this
+    for x in validChildren do
+        r <- x.Color.R + r
+        g <- x.Color.G + g
+        b <- x.Color.B + b
+    node.IsLeaf <- true
+    node.Children <- [||]
+    node.Color <- { R = r; G = g; B = b }
     tree
 
-let rec getLevel level tree =
-    match level with
-    | 0 -> [ tree ]
-    | 1 -> tree.Children |> Array.toList |> List.choose id
-    | _ -> tree.Children |> Array.toList |> List.choose id |> List.collect (getLevel (level - 1))
+let private reduceLevel tree count level =
+    let nodes = getNodesAtLevel level tree |> Array.sortBy (fun n -> n.Frequency)
+    let reduced, nodesToReduce =
+        Array.takeWhileState (fun r x ->
+            if count - r <= 0 then (r, false)
+            else
+                let reduced = (x.Children |> Array.choose id |> Array.length) - 1
+                (r + reduced, true)
+            ) 0 nodes
+    Array.fold reduceNode tree nodesToReduce |> ignore
+    (tree, count - reduced)
 
-let calculateTotalColors tree =
-    let rec calculateTotalColors' level tree =
-        if level = 0
-        then tree.Children |> Array.choose id |> Array.length
-        else tree.Children |> Array.fold (fun s o -> Option.withOpt (sumCount <| level - 1) id o <| s) 0
-    and sumCount level tree s = s + calculateTotalColors' level tree
-    calculateTotalColors' 7 tree
+let private tryReduceLevel tree count level =
+    if count > 0 then reduceLevel tree count level
+    else (tree, count)
 
-let getColorSubstitute tree color =
-    let rec getColorSubstitute' node pos =
+let rec private adjustColorsToFrequency node =
+    if node.IsLeaf then
+        let r = node.Color.R / node.Frequency
+        let g = node.Color.G / node.Frequency
+        let b = node.Color.B / node.Frequency
+        node.Color <- { R = r; G = g; B = b; }
+    else node.Children |> Array.choose id |> Array.iter adjustColorsToFrequency
+
+let prepareTree colors =
+    let root = prepareNode false
+    Array.fold addNode root colors
+
+let reduceTreeInternal tree' finalColors =
+    let totalColors = getLeavesCount tree'
+    let colorsToReduce = totalColors - finalColors
+    if colorsToReduce > 0
+    then
+        let tree = deepCopyTree tree'
+        [ 7 .. -1 .. 0] |> List.fold (fun s -> tryReduceLevel tree s >> snd) colorsToReduce |> ignore
+        adjustColorsToFrequency tree
+        (true, tree)
+    else
+        (false, tree')
+
+let reduceTree tree' finalColors =
+    reduceTreeInternal tree' finalColors |> snd
+
+let getReplacementColor tree color =
+    let rec getReplacementColor' node pos =
         if node.IsLeaf then node.Color
         else
             let idx = getColorIndex pos color
-            let child = Option.fromSome node.Children.[idx]
-            getColorSubstitute' child (pos + 1)
-    getColorSubstitute' tree 0
+            getReplacementColor' (Option.fromSome node.Children.[idx]) (pos + 1)
+    let c = getReplacementColor' tree 0
+    Colors.fromRGB (int c.R) (int c.G) (int c.B)
 
-let reduceNode tree node =
-    let children = node.Children |> Array.choose id
-    let sumR = children |> Array.sumBy (fun c -> int c.Color.R * c.Frequency)
-    let sumG = children |> Array.sumBy (fun c -> int c.Color.G * c.Frequency)
-    let sumB = children |> Array.sumBy (fun c -> int c.Color.B * c.Frequency)
-    let newR = sumR / node.Frequency
-    let newG = sumG / node.Frequency
-    let newB = sumB / node.Frequency
-    node.Children <- [||]
-    node.IsLeaf <- true
-    node.Color <- Color.FromRgb(byte newR, byte newG, byte newB)
-    tree
-
-let reduceSingleLevel (tree, count) level =
-    if count <= 0 then (tree, 0)
-    else
-        let nodes =
-            getLevel level tree |>
-            List.sortBy (fun t -> t.Frequency) |>
-            List.takeWhileState (fun (i, r) x ->
-                let childrenCount = x.Children |> Array.choose id |> Array.length
-                if count <= 0
-                then ((i, r), false)
-                else ((i + 1, r + childrenCount), true)
-                ) (0, 0)
-        let nodesReduced = List.sumBy (fun x -> x.Children |> Array.choose id |> Array.length) nodes
-        let tree' = List.fold reduceNode tree nodes
-        (tree', count - nodesReduced + nodes.Length)
-
-let prepareReductionTree colors =
-    let root = (prepareRGBtreeNode false System.Windows.Media.Colors.Black)
-    let tree = Array.fold addColor root colors
-    let totalColors = calculateTotalColors tree
-    (tree, totalColors)
-
-let reducePalette colors (tree, totalColors) targetCount =
-    let colorsToDelete = totalColors - targetCount
-    let levels = [ 7 .. -1 .. 0 ]
-    if colorsToDelete <= 0 then colors
-    else
-        let tree' = deepCopyTree tree
-        let finaltree = List.fold reduceSingleLevel (tree', colorsToDelete) levels |> fst
-        colors |> Array.map (getColorSubstitute finaltree)
-
+let reduceTreeAndColors tree colors finalColors =
+    let reduced, newTree  = reduceTreeInternal tree finalColors
+    if reduced
+    then Array.map (getReplacementColor newTree) colors
+    else colors

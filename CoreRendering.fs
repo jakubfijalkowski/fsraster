@@ -19,18 +19,15 @@ type CachedBitmapContext = {
 
 #nowarn "9"
 
-let convertColor c = WriteableBitmapExtensions.ConvertColor c
-
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L79-L105
 let clearBitmap ctx c =
-    let color = convertColor c
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
     let h = ctx.Height
     let len = w * 4 //SizeOfArgb
 
     for x = 0 to w do
-        NativeInterop.NativePtr.set pixels x color
+        NativeInterop.NativePtr.set pixels x c
 
     let mutable blockHeight = 1
     let mutable y = 1
@@ -47,37 +44,30 @@ let blendPixels r1 g1 b1 r2 g2 b2 a' =
     let r' = (a * r2 + inv_a * r1) >>> 8
     let g' = (a * g2 + inv_a * g1) >>> 8
     let b' = (a * b2 + inv_a * b1) >>> 8
-    (0xff000000) ||| (r' <<< 16) ||| (g' <<< 8) ||| b'
+    Colors.fromRGB r' g' b'
 
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L392-L398
-let putColor ctx x y c =
+let putPixel ctx x y c =
     if x >= 0 && y >= 0 && x < ctx.Width && y < ctx.Height then
-        let color = convertColor c
         let pixels = ctx.Context.Pixels
         let index = y * ctx.Width + x
-        NativeInterop.NativePtr.set pixels index color
+        NativeInterop.NativePtr.set pixels index c
 
-let putColorAlpha ctx x y (c : Color) =
+let putColorAlpha ctx x y c =
     if x >= 0 && y >= 0 && x < ctx.Width && y < ctx.Height then
         let index = y * ctx.Width + x
         let pixels = ctx.Context.Pixels
         let color = NativeInterop.NativePtr.get pixels index : int
-        let b1 = color &&& 0xff
-        let g1 = (color >>> 8) &&& 0xff
-        let r1 = (color >>> 16) &&& 0xff
-        let b2 = int c.B
-        let g2 = int c.G
-        let r2 = int c.R
-        let a = int c.A
+        let b1 = Colors.getB color
+        let g1 = Colors.getG color
+        let r1 = Colors.getR color
+        let b2 = Colors.getB c
+        let g2 = Colors.getG c
+        let r2 = Colors.getR c
+        let a = Colors.getA c
         NativeInterop.NativePtr.set pixels index (blendPixels r1 g1 b1 r2 g2 b2 a)
 
-let putPixel ctx x y c =
-    if x >= 0 && y >= 0 && x < ctx.Width && y < ctx.Height then
-        let index = y * ctx.Width + x
-        let pixels = ctx.Context.Pixels
-        NativeInterop.NativePtr.set pixels index c
-
-let putSolidLine ctx x1' y x2' color =
+let putSolidLine ctx x1' y x2' c =
     let initialBlockSize = 32
     let x1 = max x1' 0
     let x2 = min x2' (ctx.Width - 1)
@@ -87,7 +77,6 @@ let putSolidLine ctx x1' y x2' color =
         // Here, we operate on ints (as pixels is nativeptr<int>)
         let startIdx = y * ctx.Width + x1
         let pixels = ctx.Context.Pixels
-        let c = convertColor color
         for i in [ 0 .. min w (initialBlockSize - 1) ] do
             NativeInterop.NativePtr.set pixels (startIdx + i) c
 
@@ -117,7 +106,7 @@ let putTexLine ctx prim =
         let texY = abs ((y - originY) % prim.Texture.Height)
         for x in x1 .. x2 do
             let texX = abs (x - originX) % prim.Texture.Width
-            let c = convertColor <| FigureColor.getTexPixel prim.Texture texX texY
+            let c = FigureColor.getTexPixel prim.Texture texX texY
             NativeInterop.NativePtr.set pixels (startIdx + x) c
 
 let getPixel ctx x y =
@@ -151,8 +140,8 @@ type BitmapRenderer(context : BitmapContext) =
         member this.Width = cachedContext.Width
         member this.Height = cachedContext.Height
 
-        member this.Clear color = clearBitmap cachedContext color
-        member this.PutColor x y color = putColorAlpha cachedContext x y color
+        member this.Clear color = clearBitmap cachedContext (Colors.fromUIColor color)
+        member this.PutColor x y color = putColorAlpha cachedContext x y (Colors.fromUIColor color)
 
         member this.GetPixel x y = getPixel cachedContext x y
         member this.PutPixel x y c = putPixel cachedContext x y c

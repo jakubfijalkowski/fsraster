@@ -3,6 +3,7 @@
 #load "load-references.fsx"
 #load "../AssemblyInfo.fs"
       "../Utils.fs"
+      "../Colors.fs"
       "../OctTree.fs"
       "../FigureColor.fs"
       "../Figures.fs"

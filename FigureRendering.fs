@@ -11,10 +11,10 @@ open FsRaster.Figures
 
 let private toColorPixels c lst = PSeq.map (fun a -> PrimPixel (a, FigureColor.getColor c)) lst
 
-let private withAlpha figColor (i : float) =
-    let c = FigureColor.getColor figColor
-    let clamp i = byte (max (min 255.0 i) 0.0)
-    Color.FromArgb(byte (i * 255.0), c.R, c.G, c.B)
+let private withAlpha c (i : float) =
+    let clamp i = int (max (min 255.0 i) 0.0)
+    let a = clamp (i * 255.0)
+    Colors.setA c a
 
 let private renderPoint (p, c) = PSeq.singleton (PrimPixel (p, FigureColor.getColor c))
 
@@ -79,7 +79,8 @@ let private renderCircle' s r =
 
 let private renderCircle (s, r, c) = renderCircle' s r |> toColorPixels c
 
-let private renderAACircle (s, r, c) =
+let private renderAACircle (s, r, c') =
+    let c = FigureColor.getColor c'
     let dist a b = ceil (sqrt (a * a - b * b)) - sqrt (a * a - b * b)
     let rec build acc x y t =
         if x <= y + 1 then acc
@@ -90,7 +91,7 @@ let private renderAACircle (s, r, c) =
             let p1 = ((x', y'), withAlpha c (1.0 - d))
             let p2 = ((x' - 1, y'), withAlpha c d)
             build (p1 :: p2 :: acc) x' y' d
-    build [((r, 0), FigureColor.getColor c)] r 0 0.0
+    build [((r, 0), c)] r 0 0.0
         |> PSeq.collect replicateCirclePointsWithColor
         |> PSeq.map (fun (p, c) -> PrimPixel (p +~ s, c))
 

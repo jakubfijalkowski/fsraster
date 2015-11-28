@@ -6,8 +6,8 @@ open FsRaster.Figures
 open FsRaster.CoreRendering
 
 let private boundaryFill bColor' newColor' pt (ctx : IRenderer) populate =
-    let bColor = convertColor bColor'
-    let newColor = convertColor newColor'
+    let bColor = Colors.fromUIColor bColor'
+    let newColor = Colors.fromUIColor newColor'
     let queue = new Queue<Point>()
     queue.Enqueue pt
     while queue.Count > 0 do

@@ -5,7 +5,7 @@ open FSharp.Collections.ParallelSeq
 open FsRaster.Utils
 open FsRaster.Figures
 
-let asPolygon c (x1, y1, x2, y2) = Polygon ([(x1, y1); (x2, y1); (x2, y2); (x1, y2)], FigureColor.fromColor c)
+let asPolygon c (x1, y1, x2, y2) = Polygon ([(x1, y1); (x2, y1); (x2, y2); (x1, y2)], FigureColor.makeColor c)
 
 let private yPointOnLine x (x1, y1) (x2, y2) =
     let a = double (y2 - y1) / double (x2 - x1)

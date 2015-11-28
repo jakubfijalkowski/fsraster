@@ -43,9 +43,21 @@ module List =
             match lst with
             | x :: xs ->
                 let s', r = f s x
-                if r then takeWhileState' f s' xs (x :: acc) else acc
-            | [] -> acc
+                if r then takeWhileState' f s' xs (x :: acc) else (s, acc)
+            | [] -> (s, acc)
         takeWhileState' f s lst []
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
+module Array =
+    let takeWhileState f s (lst: 'T array) =
+      let rec findIndex currIdx s =
+        if currIdx = lst.Length then (s, currIdx)
+        else
+          let s', acc = f s lst.[currIdx]
+          if acc then findIndex (currIdx + 1) s' else (s, currIdx)
+      let s, lastIndex = findIndex 0 s
+      s, Array.sub lst 0 lastIndex
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]

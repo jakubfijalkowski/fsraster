@@ -7,15 +7,12 @@ open System.Windows.Media.Imaging
 open FsRaster.Utils
 open FsRaster.OctTree
 
-type RawColor = System.Windows.Media.Color
-type ColorList = RawColor []
-
-type Texture = { Width : int; Height: int; Colors: ColorList }
-type ReducedTexture = { Base: Texture; Colors: int; Reduced: ColorList; CachedTree : RGBTree * int }
+type Texture = { Width : int; Height: int; Colors: Colors.ColorList }
+type ReducedTexture = { Base: Texture; Colors: int; Reduced: Colors.ColorList; CachedTree : RGBTree }
 
 [<ReferenceEquality>]
 type Color = 
-    | Color          of RawColor
+    | Color          of Colors.RawColor
     | Texture        of Texture
     | ReducedTexture of ReducedTexture
 
@@ -34,8 +31,6 @@ let getPatternSize = function
     | Texture c        -> (c.Width, c.Height)
     | ReducedTexture c -> (c.Base.Width, c.Base.Height)
 
-let fromColor = Color
-
 let isTexture = function
     | Texture _        -> true
     | ReducedTexture _ -> true
@@ -47,12 +42,14 @@ let isReducedTexture = function
 
 let forceColor = getColor >> Color
 
+let makeColor = Colors.fromUIColor >> Color
+
 let reduceTexture toColors = function
     | Texture c ->
-        let tree = prepareReductionTree c.Colors
-        let reduced = reducePalette c.Colors tree toColors
+        let tree = prepareTree c.Colors
+        let reduced = reduceTreeAndColors tree c.Colors toColors
         ReducedTexture { Base = c; Colors = toColors; Reduced = reduced; CachedTree = tree }
-    | ReducedTexture c  -> ReducedTexture { c with Colors = toColors; Reduced = reducePalette c.Base.Colors c.CachedTree toColors }
+    | ReducedTexture c  -> ReducedTexture { c with Colors = toColors; Reduced = reduceTreeAndColors c.CachedTree c.Base.Colors toColors }
     | c -> c
 
 let revertReduceTexture = function
@@ -77,12 +74,7 @@ let fromImage imgPath =
     use ctx = wb.GetBitmapContext(ReadWriteMode.ReadOnly)
     let pixels = ctx.Pixels
     let mutable output = Array.zeroCreate (ctx.Width * ctx.Height)
-    for y in [ 0 .. ctx.Height - 1] do
-        for x in [ 0 .. ctx.Width - 1] do
-            let idx = y * ctx.Width + x
-            let pix = NativeInterop.NativePtr.get pixels idx
-            let b = pix &&& 0xff
-            let g = (pix >>> 8) &&& 0xff
-            let r = (pix >>> 16) &&& 0xff
-            output.[idx] <- RawColor.FromRgb(byte r, byte g, byte b)
+    for idx in 0 .. ctx.Width * ctx.Height - 1 do
+        let pix = NativeInterop.NativePtr.get pixels idx
+        output.[idx] <- Colors.rgbToARGB pix
     Texture { Width = ctx.Width; Height = ctx.Height; Colors = output }
