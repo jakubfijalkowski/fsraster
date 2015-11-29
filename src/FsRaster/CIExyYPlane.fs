@@ -14,8 +14,8 @@ let private DataFileName = "CIEXYZ_color_matching_functions"
 type CIEXYZMatchingFunctions = CsvProvider<"CIEXYZ_color_matching_functions.csv">
 
 let colorMatchingFunctions =
-    use stream = loadRawStream DataFileName :> Stream
-    CIEXYZMatchingFunctions.Load(stream)
+    let data = loadString DataFileName
+    CIEXYZMatchingFunctions.Parse(data)
 
 let xySpectrumLocusPoints =
     colorMatchingFunctions.Rows |> Seq.toArray |> Array.map (fun v ->

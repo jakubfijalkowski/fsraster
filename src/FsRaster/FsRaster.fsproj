@@ -203,7 +203,8 @@
     <None Include="Scripts\load-project.fsx" />
     <None Include="paket.references" />
     <EmbeddedResource Include="Resources.resx" />
-    <EmbeddedResource Include="CIEXYZ_color_matching_functions.csv" />
+    <Content Include="CIEXYZ_color_matching_functions.csv" />
+    <Content Include="bucket_cursor.cur" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

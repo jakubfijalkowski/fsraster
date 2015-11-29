@@ -75,8 +75,6 @@
     <Resource Include="MainWindow.xaml" />
     <Compile Include="MainWindow.fs" />
     <Compile Include="Program.fs" />
-    <Content Include="bucket_cursor.cur" />
-    <EmbeddedResource Include="Resources.resx" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
