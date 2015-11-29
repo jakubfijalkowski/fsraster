@@ -3,15 +3,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:local="clr-namespace:FsRaster.UI.ColorPicker"
-             x:Name="Root" MinHeight="22">
+             x:Name="Root" MinHeight="28">
+    <UserControl.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3,3,0,3" />
+        </Style>
+        <Style TargetType="xctk:ColorPicker">
+            <Setter Property="Margin" Value="0,3,3,3" />
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="35" />
-            <ColumnDefinition Width="3" />
+            <ColumnDefinition Width="20" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Button IsEnabled="{Binding IsEnabled, ElementName=Root}" Click="OpenAdvancedWindow">Adv</Button>
+        <Button IsEnabled="{Binding IsEnabled, ElementName=Root}" Click="OpenAdvancedWindow">P</Button>
         <xctk:ColorPicker Grid.Column="2" SelectedColor="{Binding SelectedColor, ElementName=Root}"
                           SelectedColorChanged="OnInternalPickerColorChanged"
                           IsEnabled="{Binding IsEnabled, ElementName=Root}" HorizontalAlignment="Stretch" />

@@ -7,7 +7,7 @@ namespace FsRaster.UI.ColorPicker
     public partial class MultiColorPicker
         : UserControl, INotifyPropertyChanged
     {
-        private ColorRGB selectedColor = Colors.ToRGB(System.Windows.Media.Colors.Red);
+        private ColorRGB selectedColor = new ColorRGB();
         private string conversionMessage = string.Empty;
         private bool duringTabChange = false;
 
@@ -40,6 +40,8 @@ namespace FsRaster.UI.ColorPicker
         {
             this.DataContext = this;
             InitializeComponent();
+
+            this.OnSelectedColorChanged();
         }
 
         private void ResetMessage()
@@ -191,6 +193,7 @@ namespace FsRaster.UI.ColorPicker
             this.rgbPicker.SelectedColor = this.SelectedColor;
             this.hsvPicker.SelectedColor = Colors.ToHSV(rgb);
             this.xyzPicker.SelectedColor = Colors.ToXYZ(rgb);
+            this.OnPropertyChanged(nameof(SelectedColor));
         }
     }
 }
