@@ -11,7 +11,7 @@ open FsRaster
 open FsRaster.Utils
 open FsRaster.Figures
 
-type FigureInfoPicker = XAML<"UI.FigureInfoPicker.xaml", true>
+type FigureInfoPicker = XAML<"FigureInfoPicker.xaml", true>
 
 type FigureInfoPickerController(control : FigureInfoPicker) =
 

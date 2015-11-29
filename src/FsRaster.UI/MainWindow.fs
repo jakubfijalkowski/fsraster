@@ -27,7 +27,7 @@ open FsRaster.Resources
 open FsRaster.CoreRendering
 open FsRaster.CoreAlgorithms
 
-type MainWindow = XAML<"UI.MainWindow.xaml", true>
+type MainWindow = XAML<"MainWindow.xaml", true>
 
 type MainWindowController() =
 
