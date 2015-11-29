@@ -59,6 +59,13 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
     let updateFigureFillType _ =
         let value = control.isFigureFilled.IsChecked.GetValueOrDefault false
         currentInfo <- { currentInfo with Filled = Some value }
+
+        if not value then
+            control.useFigureColor.IsChecked <- Nullable true
+            control.figureColor.SelectedColor <- Colors.toUIColor (FigureColor.getColor currentInfo.Color)
+            control.useFigureTexture.IsChecked <- Nullable false
+            control.selectTextureButton.IsEnabled <- false
+
         triggerChanged ()
 
     let enableColor _ =

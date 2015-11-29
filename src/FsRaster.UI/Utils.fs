@@ -37,7 +37,7 @@ module UIUtils =
         if th > 0 then sprintf " (Thickness: %d)" th else ""
 
     let private colorName = function
-        | FsRaster.FigureColor.Color c -> sprintf "%A" c
+        | FsRaster.FigureColor.Color c -> "#" + c.ToString("X").Remove(0, 2)
         | FsRaster.FigureColor.Texture _ -> "Textured"
         | FsRaster.FigureColor.ReducedTexture _ -> "Textured-Reduced"
 
