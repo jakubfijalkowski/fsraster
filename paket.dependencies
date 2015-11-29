@@ -1,6 +1,6 @@
 source https://www.nuget.org/api/v2/
 
-nuget WriteableBitmapEx framework: >= net46
-nuget FSharp.Collections.ParallelSeq framework: >= net46
-nuget Extended.Wpf.Toolkit framework: >= net46
-nuget FsXaml.Wpf framework: >= net46
+nuget Extended.Wpf.Toolkit
+nuget FSharp.Collections.ParallelSeq
+nuget FsXaml.Wpf
+nuget WriteableBitmapEx

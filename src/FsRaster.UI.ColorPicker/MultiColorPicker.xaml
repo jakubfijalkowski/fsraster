@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="FsRaster.UI.ColorPicker.MultiColorPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FsRaster.UI.ColorPicker"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="339"
+             MinHeight="406" MinWidth="339">
+    <UserControl.Resources>
+        <local:ColorConverter x:Key="colorConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TabControl SelectionChanged="OnTabChanged">
+            <TabItem x:Name="rgbTab"  Header="RGB">
+                <local:RGBPicker x:Name="rgbPicker" PropertyChanged="OnRGBColorChanged" />
+            </TabItem>
+            <TabItem x:Name="hsvTab" Header="HSV">
+                <local:HSVPicker x:Name="hsvPicker" PropertyChanged="OnHSVColorChanged" />
+            </TabItem>
+            <TabItem x:Name="xyzTab" Header="XYZ">
+                <local:XYZPicker x:Name="xyzPicker" PropertyChanged="OnXYZColorChanged" />
+            </TabItem>
+        </TabControl>
+
+        <Rectangle Grid.Row="1" HorizontalAlignment="Stretch" Margin="3">
+            <Rectangle.Fill>
+                <SolidColorBrush Color="{Binding SelectedColor, Converter={StaticResource colorConverter}}" />
+            </Rectangle.Fill>
+        </Rectangle>
+        <TextBlock Grid.Row="2" HorizontalAlignment="Left" Text="{Binding ConversionMessage}" Margin="3" />
+    </Grid>
+</UserControl>
