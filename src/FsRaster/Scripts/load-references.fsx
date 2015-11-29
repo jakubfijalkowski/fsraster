@@ -11,3 +11,5 @@
 #r "System.Drawing.dll"
 #r "../../../packages/FSharp.Collections.ParallelSeq/lib/net40/FSharp.Collections.ParallelSeq.dll"
 #r "../../../packages/WriteableBitmapEx/lib/net40/WriteableBitmapEx.Wpf.dll"
+#r "../../../packages/FSharp.Data/lib/net40/FSharp.Data.dll"
+#r "System.Xml.Linq.dll"

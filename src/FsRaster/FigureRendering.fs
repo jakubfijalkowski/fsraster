@@ -50,9 +50,9 @@ let private renderLine' (x1', y1') (x2', y2') =
             | dx, dy when dx >  0 && dy <  0 &&  dx >  -dy -> renderOctant  x1' -y1'  x2' -y2' |> Seq.map (fun (x, y) -> ( x, -y))
             | _ -> Seq.empty
         result
-let private renderLine (p1, p2, c) = renderLine' p1 p2 |> toColorPixels c
+let renderLine (p1, p2, c) = renderLine' p1 p2 |> toColorPixels c
 
-let replicateCirclePoints (x, y) = seq {
+let private replicateCirclePoints (x, y) = seq {
     yield (x, y)
     yield (-x, y)
     yield (x, -y)
@@ -62,7 +62,7 @@ let replicateCirclePoints (x, y) = seq {
     yield (y, -x)
     yield (-y, -x) }
 
-let replicateCirclePointsWithColor (p, c) = replicateCirclePoints p |> Seq.map (fun x -> (x, c))
+let private replicateCirclePointsWithColor (p, c) = replicateCirclePoints p |> Seq.map (fun x -> (x, c))
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
 let private renderCircle' s r =
@@ -77,9 +77,9 @@ let private renderCircle' s r =
         |> PSeq.collect replicateCirclePoints
         |> PSeq.map ((+~) s)
 
-let private renderCircle (s, r, c) = renderCircle' s r |> toColorPixels c
+let renderCircle (s, r, c) = renderCircle' s r |> toColorPixels c
 
-let private renderAACircle (s, r, c') =
+let renderAACircle (s, r, c') =
     let c = FigureColor.getColor c'
     let dist a b = ceil (sqrt (a * a - b * b)) - sqrt (a * a - b * b)
     let rec build acc x y t =
@@ -108,7 +108,7 @@ let private renderRepeatedLine f (p1, p2, c, t) =
         let line = renderLine' p1 p2 |> Seq.toList
         PSeq.append (line |> PSeq.collect (f t)) (line |> List.pairwise |> PSeq.collect addFix) |> toColorPixels c
 
-let private renderSquareLine =
+let renderSquareLine =
     let renderSquare t (cx, cy) =
         let ht = t / 2
         let hor = [cx - ht .. cx + ht] |> List.collect (fun x -> [(x, cy - ht); (x, cy + ht)])
@@ -116,7 +116,7 @@ let private renderSquareLine =
         List.append hor ver
     renderRepeatedLine renderSquare
 
-let private renderDiamondLine =
+let renderDiamondLine =
     let renderDiamond t (cx, cy) =
         let ht = t / 2
         let up = [cy - ht .. cy] |> List.zip [0 .. ht] |> List.collect (fun (i, y) -> [(cx + i, y); (cx - i, y)])
@@ -124,12 +124,12 @@ let private renderDiamondLine =
         List.append up down
     renderRepeatedLine renderDiamond
 
-let private renderCircleLine =
+let renderCircleLine =
     let intRenderCircle t s = renderCircle' s (int (ceil (float t / 2.0))) |> Seq.toList
     renderRepeatedLine intRenderCircle
 
-let private renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (uncurry renderLine') |> toColorPixels c
-let private renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
+let renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (uncurry renderLine') |> toColorPixels c
+let renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
 
 type ActiveEdge = int * double * double
 
@@ -167,22 +167,22 @@ let private renderFilledGeneric pts mkPrim =
         (pixels' @ pixels, aet')
     [ ymin .. ymax ] |> List.fold processSingle ([], []) |> fst |> PSeq.ofList
 
-let private renderFilledPolygonSolid pts figColor =
+let renderFilledPolygonSolid pts figColor =
     let c = FigureColor.getColor figColor
     renderFilledGeneric pts (fun x1 y x2 -> PrimLine (x1, y, x2, c))
 
-let private renderFilledPolygonTextured pts figColor =
+let renderFilledPolygonTextured pts figColor =
     let origin = List.head pts
     let tex = FigureColor.getTextureInfo figColor
     renderFilledGeneric pts (fun x1 y x2 -> PrimTexLine { X1 = x1; X2 = x2; Y = y; Texture = tex; Origin = origin })
 
-let private renderFilledPolygon (pts, figColor) =
+let renderFilledPolygon (pts, figColor) =
     if FigureColor.isTexture figColor
     then renderFilledPolygonTextured pts figColor
     else renderFilledPolygonSolid pts figColor
 
-let private renderBrush = renderPolygon
-let private renderFilledBrush = renderFilledPolygon
+let renderBrush = renderPolygon
+let renderFilledBrush = renderFilledPolygon
 
 let renderSingleFigure = function
     | Point  p            -> renderPoint p

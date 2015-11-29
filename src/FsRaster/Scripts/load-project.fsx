@@ -3,6 +3,7 @@
 #load "load-references.fsx"
 #load "../AssemblyInfo.fs"
       "../Utils.fs"
+      "../Resources.fs"
       "../Colors.fs"
       "../OctTree.fs"
       "../FigureColor.fs"
@@ -13,3 +14,4 @@
       "../FigureClipping.fs"
       "../CoreRendering.fs"
       "../CoreAlgorithms.fs"
+      "../CIExyYPlane.fs"

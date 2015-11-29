@@ -21,3 +21,6 @@ let loadCursorFile name =
         let c = new Cursor(stream)
         cursorCache.[name] <- c
         c
+
+let loadRawStream name =
+    getResourceManager.GetStream(name)

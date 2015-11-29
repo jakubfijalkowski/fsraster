@@ -4,6 +4,9 @@ NUGET
     Expression.Blend.Sdk (1.0.2) - framework: >= net45
     Extended.Wpf.Toolkit (2.5)
     FSharp.Collections.ParallelSeq (1.0.2)
+    FSharp.Data (2.2.5)
+      Zlib.Portable (>= 1.10.0) - framework: portable-net40+sl50+wp80+win80
     FsXaml.Wpf (0.9.9)
       Expression.Blend.Sdk (>= 1.0.2) - framework: >= net45
     WriteableBitmapEx (1.5.0)
+    Zlib.Portable (1.11.0) - framework: portable-net40+sl50+wp80+win80
