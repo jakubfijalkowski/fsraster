@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:FsRaster.UI;assembly=FsRaster.UI"         
-        xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit">
+        xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+        xmlns:colorPicker="clr-namespace:FsRaster.UI.ColorPicker;assembly=FsRaster.UI.ColorPicker">
 
     <UserControl.Resources>
         <Style TargetType="ComboBox">
@@ -27,7 +28,6 @@
             <Setter Property="Margin" Value="3" />
         </Style>
     </UserControl.Resources>
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="85" />
@@ -50,7 +50,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <RadioButton x:Name="useFigureColor" Grid.Column="0" VerticalAlignment="Center" IsChecked="True">Color:</RadioButton>
-            <xctk:ColorPicker x:Name="figureColor" Grid.Row="1" />
+            <colorPicker:AdvancedColorPicker x:Name="figureColor" Grid.Row="1" AdvancedTitle="figure" />
             <RadioButton x:Name="useFigureTexture" Grid.Column="1" VerticalAlignment="Center">Texture:</RadioButton>
             <Button x:Name="selectTextureButton" Grid.Row="1" Grid.Column="1" IsEnabled="False">Select texture</Button>
         </Grid>

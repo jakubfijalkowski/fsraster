@@ -18,8 +18,11 @@ namespace FsRaster.UI.ColorPicker
             get { return this.selectedColor; }
             set
             {
-                this.selectedColor = value;
-                this.OnSelectedColorChanged();
+                if (!this.selectedColor.Equals(value))
+                {
+                    this.selectedColor = value;
+                    this.OnSelectedColorChanged();
+                }
             }
         }
 
@@ -66,7 +69,7 @@ namespace FsRaster.UI.ColorPicker
             if (this.hsvTab.IsSelected)
             {
                 var rgb = Colors.ToRGB(this.hsvPicker.SelectedColor);
-                this.selectedColor = Colors.ToRGB(rgb);
+                this.UpdateSelectedColor(Colors.ToRGB(rgb));
                 this.ResetMessage();
             }
         }
@@ -184,20 +187,10 @@ namespace FsRaster.UI.ColorPicker
 
         private void OnSelectedColorChanged()
         {
-            if (this.rgbTab.IsSelected)
-            {
-                this.rgbPicker.SelectedColor = this.SelectedColor;
-            }
-            else if (this.hsvTab.IsSelected)
-            {
-                var rgb = Colors.ToRGBFull(this.selectedColor);
-                this.hsvPicker.SelectedColor = Colors.ToHSV(rgb);
-            }
-            else
-            {
-                var rgb = Colors.ToRGBFull(this.selectedColor);
-                this.xyzPicker.SelectedColor = Colors.ToXYZ(rgb);
-            }
+            var rgb = Colors.ToRGBFull(this.selectedColor);
+            this.rgbPicker.SelectedColor = this.SelectedColor;
+            this.hsvPicker.SelectedColor = Colors.ToHSV(rgb);
+            this.xyzPicker.SelectedColor = Colors.ToXYZ(rgb);
         }
     }
 }

@@ -8,11 +8,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
     xmlns:local="clr-namespace:FsRaster.UI.ColorPicker"
     mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="300"
-    MinWidth="333" MinHeight="362">
+    MinWidth="343" MinHeight="362">
+    <UserControl.Resources>
+        <ResourceDictionary Source="Styles.xaml" />
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="262" />
-            <ColumnDefinition Width="25" />
+            <ColumnDefinition Width="35" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="25" />
         </Grid.ColumnDefinitions>

@@ -26,7 +26,7 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
         if not duringUpdate then infoChanged.Trigger currentInfo
 
     let currentColor _ =
-        FigureColor.makeColor (control.figureColor.SelectedColor.GetValueOrDefault Colors.White)
+        FigureColor.makeColor control.figureColor.SelectedColor
 
     let updateColor _ =
         currentInfo <- { currentInfo with Color = currentColor () }
@@ -66,7 +66,7 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
         control.figureColor.IsEnabled <- true
         control.selectTextureButton.IsEnabled <- false
 
-        control.figureColor.SelectedColor <- Nullable <| Colors.toUIColor (FigureColor.getColor currentInfo.Color)
+        control.figureColor.SelectedColor <- Colors.toUIColor (FigureColor.getColor currentInfo.Color)
         
         control.isFigureFilled.IsEnabled <- isFigureSelected && Option.isSome currentInfo.Filled
         control.isFigureFilled.IsChecked <- Nullable <| (isFigureSelected && Option.opt false currentInfo.Filled)
@@ -118,7 +118,7 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
             control.reductionValue.Value <- Nullable tx.Colors
 
         if not reallyHasTexture then
-            control.figureColor.SelectedColor <- Nullable <| Colors.toUIColor (FigureColor.getColor info.Color)
+            control.figureColor.SelectedColor <- Colors.toUIColor (FigureColor.getColor info.Color)
 
     let onTypeChanged _ =
         if not duringUpdate then
@@ -148,7 +148,7 @@ type FigureInfoPickerController(control : FigureInfoPicker) =
 
     do
         resetControlsState ()
-        control.figureColor.SelectedColor <- Nullable Colors.Black
+        control.figureColor.SelectedColor <- Colors.Black
 
         control.useFigureColor.Checked.Add onTypeChanged
         control.useFigureTexture.Checked.Add onTypeChanged

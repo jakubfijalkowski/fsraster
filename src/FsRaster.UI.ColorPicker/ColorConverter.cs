@@ -18,6 +18,10 @@ namespace FsRaster.UI.ColorPicker
             {
                 return Colors.ToRGB((Color)value);
             }
+            else if (value == null && targetType == typeof(ColorRGB))
+            {
+                return new ColorRGB(255, 255, 255);
+            }
             return null;
         }
 

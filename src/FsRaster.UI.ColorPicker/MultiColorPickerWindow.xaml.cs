@@ -1,12 +1,15 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 
 namespace FsRaster.UI.ColorPicker
 {
     public partial class MultiColorPickerWindow
-        : Window
+        : Window, INotifyPropertyChanged
     {
         public static readonly DependencyProperty SelectedColorProperty =
-            DependencyProperty.Register("SelectedColor", typeof(ColorRGB), typeof(MultiColorPickerWindow), new PropertyMetadata(new ColorRGB()));
+            DependencyProperty.Register("SelectedColor", typeof(ColorRGB), typeof(MultiColorPickerWindow), new PropertyMetadata(new ColorRGB(), OnSelectedColorChanged));
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public ColorRGB SelectedColor
         {
@@ -33,6 +36,7 @@ namespace FsRaster.UI.ColorPicker
             if (e.PropertyName == nameof(this.picker.SelectedColor))
             {
                 this.SelectedColor = this.picker.SelectedColor;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedColor)));
             }
         }
 

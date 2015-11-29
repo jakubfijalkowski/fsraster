@@ -85,9 +85,8 @@ type MainWindowController() =
     // RENDERING
 
     let render' _ =
-        let bgColor = window.backgroundColor.SelectedColor.Value
-        let gridColor = window.gridColor.SelectedColor.Value
-        let figColor = Colors.Black //window.figureColor.SelectedColor.Value
+        let bgColor = window.backgroundColor.SelectedColor
+        let gridColor = window.gridColor.SelectedColor
 
         use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
         context.Clear bgColor
@@ -213,14 +212,14 @@ type MainWindowController() =
 
     let startFilling4 _ =
         cancelAllActions ()
-        let bColor = window.boundaryColor.SelectedColor.Value
-        let fColor = window.fillColor.SelectedColor.Value
+        let bColor = window.boundaryColor.SelectedColor
+        let fColor = window.fillColor.SelectedColor
         fillAction <- Some (boundaryFill4 bColor fColor)
 
     let startFilling8 _ =
         cancelAllActions ()
-        let bColor = window.boundaryColor.SelectedColor.Value
-        let fColor = window.fillColor.SelectedColor.Value
+        let bColor = window.boundaryColor.SelectedColor
+        let fColor = window.fillColor.SelectedColor
         fillAction <- Some (boundaryFill8 bColor fColor)
 
     // MOUSE CURSOR
@@ -267,10 +266,10 @@ type MainWindowController() =
         render ()
 
     do
-        window.backgroundColor.SelectedColor <- Nullable Colors.White
-        window.gridColor.SelectedColor <- Nullable Colors.Black
-        window.boundaryColor.SelectedColor <- Nullable Colors.Red
-        window.fillColor.SelectedColor <- Nullable Colors.Green
+        window.backgroundColor.SelectedColor <- Colors.White
+        window.gridColor.SelectedColor <- Colors.Black
+        window.boundaryColor.SelectedColor <- Colors.Red
+        window.fillColor.SelectedColor <- Colors.Green
 
         window.figureList.ItemsSource <- figures
 

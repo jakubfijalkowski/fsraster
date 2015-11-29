@@ -28,6 +28,11 @@ namespace FsRaster.UI.ColorPicker
             this.G = g;
             this.B = b;
         }
+
+        public bool Equals(ColorRGB rgb)
+        {
+            return this.R == rgb.R && this.G == rgb.G && this.B == rgb.B;
+        }
     }
 
     public struct ColorRGBFull

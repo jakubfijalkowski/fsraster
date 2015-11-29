@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:utils="clr-namespace:FsRaster.UI.Utils;assembly=FsRaster.UI"
         xmlns:ui="clr-namespace:FsRaster.UI;assembly=FsRaster.UI"
+        xmlns:colorPicker="clr-namespace:FsRaster.UI.ColorPicker;assembly=FsRaster.UI.ColorPicker"
         xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
         MinWidth="800" MinHeight="600">
     <Window.Resources>
@@ -69,19 +70,19 @@
 
         <CheckBox x:Name="gridCheckBox" Grid.Row="4" Grid.Column="1" VerticalAlignment="Center">Grid:</CheckBox>
         <xctk:IntegerUpDown x:Name="gridSpacing" Grid.Row="4" Grid.Column="2" Minimum="10" Maximum="1000" Value="100" />
-        <xctk:ColorPicker x:Name="gridColor" Grid.Row="4" Grid.Column="3" />
+        <colorPicker:AdvancedColorPicker x:Name="gridColor" Grid.Row="4" Grid.Column="3" AdvancedTitle="grid" />
 
         <TextBlock Grid.Row="5" Grid.Column="1" VerticalAlignment="Center">Background:</TextBlock>
-        <xctk:ColorPicker x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" />
+        <colorPicker:AdvancedColorPicker x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" AdvancedTitle="background" />
 
         <CheckBox x:Name="clipCheckBox" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center">Clipping</CheckBox>
 
         <TextBlock Grid.Row="8" Grid.Column="1" VerticalAlignment="Center">Boundary:</TextBlock>
-        <xctk:ColorPicker x:Name="boundaryColor" Grid.Row="8" Grid.Column="2" />
+        <colorPicker:AdvancedColorPicker x:Name="boundaryColor" Grid.Row="8" Grid.Column="2" AdvancedTitle="boundary" />
         <Button x:Name="fill4" Grid.Row="8" Grid.Column="3">4</Button>
 
         <TextBlock Grid.Row="9" Grid.Column="1" VerticalAlignment="Center">Fill:</TextBlock>
-        <xctk:ColorPicker x:Name="fillColor" Grid.Row="9" Grid.Column="2" />
+        <colorPicker:AdvancedColorPicker x:Name="fillColor" Grid.Row="9" Grid.Column="2" AdvancedTitle="fill" />
         <Button x:Name="fill8" Grid.Row="9" Grid.Column="3">8</Button>
 
     </Grid>

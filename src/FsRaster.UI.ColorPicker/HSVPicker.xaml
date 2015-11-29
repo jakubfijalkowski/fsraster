@@ -9,11 +9,14 @@
     xmlns:local="clr-namespace:FsRaster.UI.ColorPicker"
     mc:Ignorable="d" 
     d:DesignHeight="300" d:DesignWidth="300"
-    MinWidth="333" MinHeight="362">
+    MinWidth="343" MinHeight="362">
+    <UserControl.Resources>
+        <ResourceDictionary Source="Styles.xaml" />
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="262" />
-            <ColumnDefinition Width="25" />
+            <ColumnDefinition Width="35" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="25" />
         </Grid.ColumnDefinitions>
@@ -58,7 +61,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0">H:</TextBlock>
-            <xctk:DoubleUpDown x:Name="hValue" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="360" Increment="0.1" Value="0" ValueChanged="OnControlsColorChanged" />
+            <xctk:DoubleUpDown x:Name="hValue" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="360" Value="0" ValueChanged="OnControlsColorChanged" />
             <TextBlock Grid.Row="1">S:</TextBlock>
             <xctk:DoubleUpDown x:Name="sValue" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="{Binding Value, ElementName=hsRect}" Value="0" ValueChanged="OnControlsColorChanged" />
             <TextBlock Grid.Row="2">V:</TextBlock>

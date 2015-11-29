@@ -90,6 +90,11 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <ProjectReference Include="..\FsRaster.UI.ColorPicker\FsRaster.UI.ColorPicker.csproj">
+      <Name>FsRaster.UI.ColorPicker</Name>
+      <Project>{8d7ed1ff-3929-42d8-b2ec-02a7eb0eebdb}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\FsRaster\FsRaster.fsproj">
       <Name>FsRaster</Name>
       <Project>{713b9713-18a1-4096-a0d2-b0718987dd0f}</Project>

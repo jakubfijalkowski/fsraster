@@ -60,6 +60,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdvancedColorPicker.xaml.cs">
+      <DependentUpon>AdvancedColorPicker.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ColorConverter.cs" />
     <Compile Include="ColorPickerBase.cs" />
     <Compile Include="Colors.cs" />
@@ -86,6 +89,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="AdvancedColorPicker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="HSVPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -101,6 +108,10 @@
     <Page Include="RGBPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Styles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="XYZPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
