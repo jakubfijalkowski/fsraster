@@ -34,23 +34,27 @@ namespace FsRaster.UI.ColorPicker
 
         public Point Project(ColorHSVFull hsv)
         {
-            var r = hsv.Saturation * ColorHSV.MaxValue;
+            var cx = this.RenderSize.Width / 2.0;
+            var r = hsv.Saturation * cx;
             var theta = hsv.Hue / 180.0 * Math.PI;
-            var y = ColorHSV.MaxValue + r * Math.Sin(theta);
-            var x = ColorHSV.MaxValue + r * Math.Cos(theta);
+            var y = cx + r * Math.Sin(theta);
+            var x = cx + r * Math.Cos(theta);
             return new Point(x, y);
         }
 
         public ColorHSVFull Project(Point pt)
         {
-            var dx = pt.X - ColorHSV.MaxValue;
-            var dy = pt.Y - ColorHSV.MaxValue;
+            var cx = this.RenderSize.Width / 2.0;
+            var cy = this.RenderSize.Height / 2.0;
+
+            var dx = pt.X - cx;
+            var dy = pt.Y - cy;
             double theta = Math.Atan2(dy, dx);
             if (theta < 0)
             {
                 theta += Math.PI * 2;
             }
-            var saturation = Math.Sqrt(dx * dx + dy * dy) / ColorHSV.MaxValue;
+            var saturation = Math.Sqrt(dx * dx + dy * dy) / cx;
             saturation = Math.Min(saturation, this.Value);
             var hue = theta * 180.0 / Math.PI;
 
