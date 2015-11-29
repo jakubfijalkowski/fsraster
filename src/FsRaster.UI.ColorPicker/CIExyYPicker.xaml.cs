@@ -2,16 +2,16 @@
 
 namespace FsRaster.UI.ColorPicker
 {
-    public partial class XYZPicker
-        : ColorPickerBase<ColorXYZFull>
+    public partial class CIExyYPicker
+        : ColorPickerBase<ColorxyYFull>
     {
-        public XYZPicker()
-            : base(new ColorXYZFull(0, 0, 0))
+        public CIExyYPicker()
+            : base(new ColorxyYFull(0.3, 0.3, 1))
         {
             InitializeComponent();
         }
 
-        protected override IColorPlane<ColorXYZFull> ColorPlane
+        protected override IColorPlane<ColorxyYFull> ColorPlane
         {
             get
             {
@@ -27,20 +27,20 @@ namespace FsRaster.UI.ColorPicker
             }
         }
 
-        protected override ColorXYZFull UpdateColor()
+        protected override ColorxyYFull UpdateColor()
         {
             var x = this.xValue.Value.GetValueOrDefault(0);
             var y = this.yValue.Value.GetValueOrDefault(0);
-            var z = this.zValue.Value.GetValueOrDefault(0);
+            var Y = this.YValue.Value.GetValueOrDefault(0);
 
-            return new ColorXYZFull(x, y, z);
+            return new ColorxyYFull(x, y, Y);
         }
 
         protected override void UpdateControls()
         {
-            this.xValue.Value = this.SelectedColor.X;
-            this.yValue.Value = this.SelectedColor.Y;
-            this.zValue.Value = this.SelectedColor.Z;
+            this.xValue.Value = this.SelectedColor.x;
+            this.yValue.Value = this.SelectedColor.y;
+            this.YValue.Value = this.SelectedColor.Y;
         }
     }
 }

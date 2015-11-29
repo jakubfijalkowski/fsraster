@@ -24,7 +24,10 @@
                 <local:HSVPicker x:Name="hsvPicker" PropertyChanged="OnHSVColorChanged" />
             </TabItem>
             <TabItem x:Name="xyzTab" Header="XYZ">
-                <local:XYZPicker x:Name="xyzPicker" PropertyChanged="OnXYZColorChanged" />
+                <local:CIEXYZPicker x:Name="xyzPicker" PropertyChanged="OnXYZColorChanged" />
+            </TabItem>
+            <TabItem x:Name="xyYTab" Header="xyY">
+                <local:CIExyYPicker x:Name="xyYPicker" PropertyChanged="xyYPlane_PropertyChanged" />
             </TabItem>
         </TabControl>
 

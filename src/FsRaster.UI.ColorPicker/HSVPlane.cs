@@ -6,11 +6,11 @@ using System.Windows.Media.Imaging;
 
 namespace FsRaster.UI.ColorPicker
 {
-    public sealed class HSRectangle
+    public sealed class HSVPlane
         : Image, IColorPlane<ColorHSVFull>
     {
         public static readonly DependencyProperty ValueProperty =
-            DependencyProperty.Register("Value", typeof(double), typeof(HSRectangle), new PropertyMetadata((double)1.0, OnValueChanged));
+            DependencyProperty.Register("Value", typeof(double), typeof(HSVPlane), new PropertyMetadata((double)1.0, OnValueChanged));
 
         private WriteableBitmap hsPlane = BitmapFactory.New(ColorHSV.MaxValue * 2 + 1, ColorHSV.MaxValue * 2 + 1);
 
@@ -22,11 +22,11 @@ namespace FsRaster.UI.ColorPicker
 
         private static void OnValueChanged(DependencyObject dp, DependencyPropertyChangedEventArgs e)
         {
-            var obj = (HSRectangle)dp;
+            var obj = (HSVPlane)dp;
             obj.GenerateHSPlane();
         }
 
-        public HSRectangle()
+        public HSVPlane()
         {
             this.GenerateHSPlane();
             this.Source = this.hsPlane;
@@ -61,7 +61,7 @@ namespace FsRaster.UI.ColorPicker
             return new ColorHSVFull(hue, saturation, this.Value);
         }
 
-        public ColorHSVFull Coerce(ColorHSVFull color)
+        public ColorHSVFull Coerce(ColorHSVFull color, ColorHSVFull currentColor)
         {
             return Colors.Clamp(color);
         }

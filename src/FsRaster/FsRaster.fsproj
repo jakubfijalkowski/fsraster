@@ -72,6 +72,44 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <None Include="App.config" />
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Utils.fs" />
+    <Compile Include="Resources.fs" />
+    <Compile Include="Colors.fs" />
+    <Compile Include="OctTree.fs" />
+    <Compile Include="FigureColor.fs" />
+    <Compile Include="Figures.fs" />
+    <Compile Include="FigureRendering.fs" />
+    <Compile Include="FigureBuilding.fs" />
+    <Compile Include="FigureHitTests.fs" />
+    <Compile Include="FigureClipping.fs" />
+    <Compile Include="CoreRendering.fs" />
+    <Compile Include="CoreAlgorithms.fs" />
+    <Compile Include="CIExyYPlane.fs" />
+    <None Include="Scripts\load-references.fsx" />
+    <None Include="Scripts\load-project.fsx" />
+    <None Include="paket.references" />
+    <EmbeddedResource Include="Resources.resx" />
+    <Content Include="CIEXYZ_color_matching_functions.csv" />
+    <Content Include="bucket_cursor.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="UIAutomationTypes" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.0' Or $(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6')">
       <ItemGroup>
@@ -183,42 +221,4 @@
       </ItemGroup>
     </When>
   </Choose>
-  <ItemGroup>
-    <None Include="App.config" />
-    <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Utils.fs" />
-    <Compile Include="Resources.fs" />
-    <Compile Include="Colors.fs" />
-    <Compile Include="OctTree.fs" />
-    <Compile Include="FigureColor.fs" />
-    <Compile Include="Figures.fs" />
-    <Compile Include="FigureRendering.fs" />
-    <Compile Include="FigureBuilding.fs" />
-    <Compile Include="FigureHitTests.fs" />
-    <Compile Include="FigureClipping.fs" />
-    <Compile Include="CoreRendering.fs" />
-    <Compile Include="CoreAlgorithms.fs" />
-    <Compile Include="CIExyYPlane.fs" />
-    <None Include="Scripts\load-references.fsx" />
-    <None Include="Scripts\load-project.fsx" />
-    <None Include="paket.references" />
-    <EmbeddedResource Include="Resources.resx" />
-    <Content Include="CIEXYZ_color_matching_functions.csv" />
-    <Content Include="bucket_cursor.cur" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="UIAutomationTypes" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
 </Project>

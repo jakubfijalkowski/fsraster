@@ -7,6 +7,6 @@ namespace FsRaster.UI.ColorPicker
     {
         Point Project(TColor color);
         TColor Project(Point pt);
-        TColor Coerce(TColor color);
+        TColor Coerce(TColor color, TColor currentColor);
     }
 }

@@ -172,8 +172,64 @@ namespace FsRaster.UI.ColorPicker
         }
     }
 
+    public struct ColorxyY
+    {
+        public const int MaxValue = 1000;
+
+        /// <summary>
+        /// 0 - MaxValue
+        /// </summary>
+        public readonly int x;
+
+        /// <summary>
+        /// 0 - MaxValue
+        /// </summary>
+        public readonly int y;
+
+        /// <summary>
+        /// 0 - MaxValue
+        /// </summary>
+        public readonly int Y;
+
+        public ColorxyY(int x, int y, int Y)
+        {
+            this.x = x;
+            this.y = y;
+            this.Y = Y;
+        }
+    }
+
+    public struct ColorxyYFull
+    {
+        public const double MaxValue = 1.0;
+
+        /// <summary>
+        /// 0 - MaxValue
+        /// </summary>
+        public readonly double x;
+
+        /// <summary>
+        /// 0 - MaxValue
+        /// </summary>
+        public readonly double y;
+
+        /// <summary>
+        /// 0 - MaxValue
+        /// </summary>
+        public readonly double Y;
+
+        public ColorxyYFull(double x, double y, double Y)
+        {
+            this.x = x;
+            this.y = y;
+            this.Y = Y;
+        }
+    }
+
     public static class Colors
     {
+        const double Epsilon = 0.0001;
+
         private static readonly double[,] XYZToRGB = new double[3, 3]
         {
             { 3.2405, -1.5371, -0.4985 },
@@ -194,35 +250,6 @@ namespace FsRaster.UI.ColorPicker
             var g = Math.Floor(Clamp(rgb.G) * ColorRGB.MaxValue);
             var b = Math.Floor(Clamp(rgb.B) * ColorRGB.MaxValue);
             return new ColorRGB((int)r, (int)g, (int)b);
-        }
-
-        public static ColorRGB ToRGBFromXYZ(ColorRGBFull rgb)
-        {
-            const double Gamma = 1 / 2.4;
-            var r = Clamp(rgb.R);
-            var g = Clamp(rgb.G);
-            var b = Clamp(rgb.B);
-            var max = Math.Max(r, Math.Max(g, b));
-            r = Math.Pow(r / max, Gamma);
-            g = Math.Pow(g / max, Gamma);
-            b = Math.Pow(b / max, Gamma);
-            r = r * ColorRGB.MaxValue;
-            g = g * ColorRGB.MaxValue;
-            b = b * ColorRGB.MaxValue;
-            return new ColorRGB((int)r, (int)g, (int)b);
-        }
-
-        public static ColorHSVFull ToHSVFromXYZ(ColorRGBFull rgb)
-        {
-            const double Gamma = 1 / 2.4;
-            var r = Clamp(rgb.R);
-            var g = Clamp(rgb.G);
-            var b = Clamp(rgb.B);
-            var max = Math.Max(r, Math.Max(g, b));
-            r = Math.Pow(r / max, Gamma);
-            g = Math.Pow(g / max, Gamma);
-            b = Math.Pow(b / max, Gamma);
-            return ToHSV(new ColorRGBFull(r, g, b));
         }
 
         public static ColorHSV ToHSV(ColorHSVFull hsv)
@@ -263,6 +290,14 @@ namespace FsRaster.UI.ColorPicker
             var y = (double)xyz.Y / ColorXYZ.MaxValue;
             var z = (double)xyz.Z / ColorXYZ.MaxValue;
             return new ColorXYZFull(x, y, z);
+        }
+
+        public static ColorxyYFull ToxyYFull(ColorxyY xyy)
+        {
+            var x = (double)xyy.x / ColorxyY.MaxValue;
+            var y = (double)xyy.y / ColorxyY.MaxValue;
+            var Y = (double)xyy.Y / ColorxyY.MaxValue;
+            return new ColorxyYFull(x, y, Y);
         }
 
         public static ColorRGBFull ToRGB(ColorHSVFull hsv)
@@ -333,6 +368,22 @@ namespace FsRaster.UI.ColorPicker
             return new ColorRGBFull(r, g, b);
         }
 
+        public static ColorRGB ToRGBFromXYZ(ColorRGBFull rgb)
+        {
+            const double Gamma = 1 / 2.4;
+            var r = Clamp(rgb.R);
+            var g = Clamp(rgb.G);
+            var b = Clamp(rgb.B);
+            var max = Math.Max(r, Math.Max(g, b));
+            r = Math.Pow(r / max, Gamma);
+            g = Math.Pow(g / max, Gamma);
+            b = Math.Pow(b / max, Gamma);
+            r = r * ColorRGB.MaxValue;
+            g = g * ColorRGB.MaxValue;
+            b = b * ColorRGB.MaxValue;
+            return new ColorRGB((int)r, (int)g, (int)b);
+        }
+
         public static ColorHSVFull ToHSV(ColorRGBFull rgb)
         {
             var min = Math.Min(rgb.R, Math.Min(rgb.G, rgb.B));
@@ -359,15 +410,66 @@ namespace FsRaster.UI.ColorPicker
             }
         }
 
+        public static ColorHSVFull ToHSVFromXYZ(ColorRGBFull rgb)
+        {
+            const double Gamma = 1 / 2.4;
+            var r = Clamp(rgb.R);
+            var g = Clamp(rgb.G);
+            var b = Clamp(rgb.B);
+            var max = Math.Max(r, Math.Max(g, b));
+            r = Math.Pow(r / max, Gamma);
+            g = Math.Pow(g / max, Gamma);
+            b = Math.Pow(b / max, Gamma);
+            return ToHSV(new ColorRGBFull(r, g, b));
+        }
+
+
         public static ColorXYZFull ToXYZ(ColorRGBFull rgb)
         {
             var xyz = Multiply(RGBToXYZ, rgb.R, rgb.G, rgb.B);
             return new ColorXYZFull(xyz.R, xyz.G, xyz.B);
         }
 
+        public static ColorXYZFull ToXYZ(ColorxyYFull xyy)
+        {
+            if (Math.Abs(xyy.y) < Epsilon)
+            {
+                return new ColorXYZFull(0, 0, 0);
+            }
+            double Yy = xyy.Y / xyy.y;
+            double X = xyy.x * Yy;
+            double Z = (1 - xyy.x - xyy.y) * Yy;
+            return new ColorXYZFull(X, xyy.Y, Z);
+        }
+
+        public static ColorxyYFull ToxyY(ColorXYZFull xyz)
+        {
+            double sum = xyz.X + xyz.Y + xyz.Z;
+            if (Math.Abs(sum) < Epsilon)
+            {
+                return new ColorxyYFull(0.3, 0.3, 1.0);
+            }
+            double x = xyz.X / sum;
+            double y = xyz.Y / sum;
+            return new ColorxyYFull(x, y, xyz.Y);
+        }
+
         public static double Clamp(double v)
         {
             return Math.Max(0.0, Math.Min(1.0, v));
+        }
+
+        public static int Clamp(int v)
+        {
+            return Math.Max(0, Math.Min(255, v));
+        }
+
+        public static ColorRGB Clamp(ColorRGB color)
+        {
+            var r = Clamp(color.R);
+            var g = Clamp(color.G);
+            var b = Clamp(color.B);
+            return new ColorRGB(r, g, b);
         }
 
         public static ColorRGBFull Clamp(ColorRGBFull rgb)
@@ -392,6 +494,22 @@ namespace FsRaster.UI.ColorPicker
             var y = Clamp(xyz.Y);
             var z = Clamp(xyz.Z);
             return new ColorXYZFull(x, y, z);
+        }
+
+        public static ColorxyYFull Clapm(ColorxyYFull xyy)
+        {
+            var x = Clamp(xyy.x);
+            var y = Clamp(xyy.y);
+            var Y = Clamp(xyy.Y);
+            return new ColorxyYFull(x, y, Y);
+        }
+
+        public static ColorxyYFull Clamp(ColorxyYFull color)
+        {
+            var x = Clamp(color.x);
+            var y = Clamp(color.y);
+            var Y = Clamp(color.Y);
+            return new ColorxyYFull(x, y, Y);
         }
 
         public static uint GetBytes(uint r, uint g, uint b)

@@ -5,11 +5,11 @@ using System.Windows.Media.Imaging;
 
 namespace FsRaster.UI.ColorPicker
 {
-    public sealed class RGRectangle
+    public sealed class RGBPlane
         : Image, IColorPlane<ColorRGB>
     {
         public static readonly DependencyProperty BProperty =
-            DependencyProperty.Register("B", typeof(byte), typeof(RGRectangle), new PropertyMetadata((byte)0, OnBChanged));
+            DependencyProperty.Register("B", typeof(byte), typeof(RGBPlane), new PropertyMetadata((byte)0, OnBChanged));
 
         private readonly WriteableBitmap rgbPlane = BitmapFactory.New(256, 256);
 
@@ -21,11 +21,11 @@ namespace FsRaster.UI.ColorPicker
 
         private static void OnBChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var obj = (RGRectangle)d;
+            var obj = (RGBPlane)d;
             obj.GenerateRGBPlane();
         }
 
-        public RGRectangle()
+        public RGBPlane()
         {
             this.GenerateRGBPlane();
             this.Source = this.rgbPlane;
@@ -45,9 +45,9 @@ namespace FsRaster.UI.ColorPicker
             return new ColorRGB((byte)Math.Round(xCoeff * 255.0), (byte)Math.Round(yCoeff * 255.0), this.B);
         }
 
-        public ColorRGB Coerce(ColorRGB color)
+        public ColorRGB Coerce(ColorRGB color, ColorRGB currentColor)
         {
-            return color;
+            return Colors.Clamp(color);
         }
 
         private void GenerateRGBPlane()

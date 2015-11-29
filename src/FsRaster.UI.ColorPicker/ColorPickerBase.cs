@@ -19,7 +19,7 @@ namespace FsRaster.UI.ColorPicker
             get { return this.selectedColor; }
             set
             {
-                this.selectedColor = this.ColorPlane.Coerce(value);
+                this.selectedColor = this.ColorPlane.Coerce(value, this.selectedColor);
                 this.OnSelectedColorChanged();
                 this.OnPropertyChanged();
             }
@@ -48,7 +48,7 @@ namespace FsRaster.UI.ColorPicker
         {
             if (!this.duringUpdate)
             {
-                this.SelectedColor = this.ColorPlane.Coerce(this.UpdateColor());
+                this.SelectedColor = this.UpdateColor();
                 this.UpdatePointer();
             }
         }

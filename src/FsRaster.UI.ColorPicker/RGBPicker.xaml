@@ -3,11 +3,8 @@
     x:TypeArguments="local:ColorRGB"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
     xmlns:local="clr-namespace:FsRaster.UI.ColorPicker"
-    mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="300"
     MinWidth="343" MinHeight="362">
     <UserControl.Resources>
         <ResourceDictionary Source="Styles.xaml" />
@@ -24,7 +21,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <local:RGRectangle x:Name="rgRect" Grid.Row="0" Grid.Column="0" Width="256" Height="256" Margin="3" SnapsToDevicePixels="True" />
+        <local:RGBPlane x:Name="rgRect" Grid.Row="0" Grid.Column="0" Width="256" Height="256" Margin="3" SnapsToDevicePixels="True" />
         <Canvas Grid.Row="0" Grid.Column="0" Background="Transparent" MouseDown="OnColorPlaneClicked" Margin="3"
                 SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased">
             <Path x:Name="pointer" Width="11" Height="11" Stroke="White" Canvas.Left="-5" Canvas.Top="-5" SnapsToDevicePixels="True">

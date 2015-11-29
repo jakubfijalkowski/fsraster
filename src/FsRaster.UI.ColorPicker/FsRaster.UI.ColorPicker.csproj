@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FsRaster.UI.ColorPicker</RootNamespace>
     <AssemblyName>FsRaster.UI.ColorPicker</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -63,10 +63,14 @@
     <Compile Include="AdvancedColorPicker.xaml.cs">
       <DependentUpon>AdvancedColorPicker.xaml</DependentUpon>
     </Compile>
+    <Compile Include="CIExyYPicker.xaml.cs">
+      <DependentUpon>CIExyYPicker.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CIExyYPlane.cs" />
     <Compile Include="ColorConverter.cs" />
     <Compile Include="ColorPickerBase.cs" />
     <Compile Include="Colors.cs" />
-    <Compile Include="HSRectangle.cs" />
+    <Compile Include="HSVPlane.cs" />
     <Compile Include="HSVPicker.xaml.cs">
       <DependentUpon>HSVPicker.xaml</DependentUpon>
     </Compile>
@@ -82,14 +86,18 @@
     <Compile Include="RGBPicker.xaml.cs">
       <DependentUpon>RGBPicker.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RGRectangle.cs" />
-    <Compile Include="XYRectangle.cs" />
-    <Compile Include="XYZPicker.xaml.cs">
-      <DependentUpon>XYZPicker.xaml</DependentUpon>
+    <Compile Include="RGBPlane.cs" />
+    <Compile Include="CIEXYZPlane.cs" />
+    <Compile Include="CIEXYZPicker.xaml.cs">
+      <DependentUpon>CIEXYZPicker.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Include="AdvancedColorPicker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CIExyYPicker.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -113,13 +121,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="XYZPicker.xaml">
+    <Page Include="CIEXYZPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FsRaster\FsRaster.fsproj">
+      <Project>{713b9713-18a1-4096-a0d2-b0718987dd0f}</Project>
+      <Name>FsRaster</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -173,6 +187,17 @@
         </Reference>
         <Reference Include="Xceed.Wpf.Toolkit">
           <HintPath>..\..\packages\Extended.Wpf.Toolkit\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.0' Or $(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6')">
+      <ItemGroup>
+        <Reference Include="FSharp.Collections.ParallelSeq">
+          <HintPath>..\..\packages\FSharp.Collections.ParallelSeq\lib\net40\FSharp.Collections.ParallelSeq.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

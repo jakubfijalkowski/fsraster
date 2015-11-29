@@ -5,11 +5,11 @@ using System.Windows.Media.Imaging;
 
 namespace FsRaster.UI.ColorPicker
 {
-    public class XYRectangle
+    public class CIEXYZPlane
         : Image, IColorPlane<ColorXYZFull>
     {
         public static readonly DependencyProperty ZProperty =
-            DependencyProperty.Register("Z", typeof(double), typeof(XYRectangle), new PropertyMetadata((double)0.3, OnYChanged));
+            DependencyProperty.Register("Z", typeof(double), typeof(CIEXYZPlane), new PropertyMetadata((double)0.3, OnYChanged));
 
         private readonly WriteableBitmap xyPlane = BitmapFactory.New(ColorXYZ.MaxValue + 1, ColorXYZ.MaxValue + 1);
 
@@ -21,11 +21,11 @@ namespace FsRaster.UI.ColorPicker
 
         private static void OnYChanged(DependencyObject dp, DependencyPropertyChangedEventArgs e)
         {
-            var obj = (XYRectangle)dp;
+            var obj = (CIEXYZPlane)dp;
             obj.GenerateXYPlane();
         }
 
-        public XYRectangle()
+        public CIEXYZPlane()
         {
             this.GenerateXYPlane();
             this.Source = this.xyPlane;
@@ -45,7 +45,7 @@ namespace FsRaster.UI.ColorPicker
             return new ColorXYZFull(x, y, this.Z);
         }
 
-        public ColorXYZFull Coerce(ColorXYZFull color)
+        public ColorXYZFull Coerce(ColorXYZFull color, ColorXYZFull currentColor)
         {
             return Colors.Clamp(color);
         }

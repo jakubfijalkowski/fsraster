@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Controls;
 
@@ -87,6 +88,18 @@ namespace FsRaster.UI.ColorPicker
             }
         }
 
+        private void xyYPlane_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (this.xyYTab.IsSelected)
+            {
+                var xyz = Colors.ToXYZ(this.xyYPicker.SelectedColor);
+                var xyzrgb = Colors.ToRGB(xyz);
+                var rgb = Colors.ToRGBFromXYZ(xyzrgb);
+                this.UpdateSelectedColor(rgb);
+                this.ResetMessage();
+            }
+        }
+
         private void OnTabChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.RemovedItems.Count == 0 || e.AddedItems.Count == 0)
@@ -100,9 +113,13 @@ namespace FsRaster.UI.ColorPicker
                 {
                     this.ConvertFromRGBToHSV();
                 }
-                else
+                else if (e.AddedItems[0] == this.xyzTab)
                 {
                     this.ConvertFromRGBToXYZ();
+                }
+                else
+                {
+                    this.ConvertFromRGBToxyY();
                 }
             }
             else if (e.RemovedItems[0] == this.hsvTab)
@@ -111,20 +128,43 @@ namespace FsRaster.UI.ColorPicker
                 {
                     this.ConvertFromHSVToRGB();
                 }
-                else
+                else if (e.AddedItems[0] == this.xyzTab)
                 {
                     this.ConvertFromHSVToXYZ();
+                }
+                else
+                {
+                    this.ConvertFromHSVToxyY();
+                }
+            }
+            else if (e.RemovedItems[0] == this.xyzTab)
+            {
+                if (e.AddedItems[0] == this.rgbTab)
+                {
+                    this.ConvertFromXYZToRGB();
+                }
+                else if (e.AddedItems[0] == this.hsvTab)
+                {
+                    this.ConvertFromXYZToHSV();
+                }
+                else
+                {
+                    this.ConvertFromXYZToxyY();
                 }
             }
             else
             {
                 if (e.AddedItems[0] == this.rgbTab)
                 {
-                    this.ConvertFromXYZToRGB();
+                    this.ConvertFromxyYToRGB();
+                }
+                else if (e.AddedItems[0] == this.hsvTab)
+                {
+                    this.ConvertFromxyYToHSV();
                 }
                 else
                 {
-                    this.ConvertFromXYZToHSV();
+                    this.ConvertFromxyYToXYZ();
                 }
             }
             this.duringTabChange = false;
@@ -146,6 +186,12 @@ namespace FsRaster.UI.ColorPicker
             this.ConversionMessage = string.Empty;
         }
 
+        private void ConvertFromRGBToxyY()
+        {
+            this.ConvertFromRGBToXYZ();
+            this.xyYPicker.SelectedColor = Colors.ToxyY(this.xyzPicker.SelectedColor);
+        }
+
         private void ConvertFromHSVToRGB()
         {
             var src = this.hsvPicker.SelectedColor;
@@ -161,6 +207,12 @@ namespace FsRaster.UI.ColorPicker
             var rgb = Colors.ToRGB(src);
             this.xyzPicker.SelectedColor = Colors.ToXYZ(rgb);
             this.ConversionMessage = string.Empty;
+        }
+
+        private void ConvertFromHSVToxyY()
+        {
+            this.ConvertFromHSVToXYZ();
+            this.xyYPicker.SelectedColor = Colors.ToxyY(this.xyzPicker.SelectedColor);
         }
 
         private void ConvertFromXYZToRGB()
@@ -179,6 +231,33 @@ namespace FsRaster.UI.ColorPicker
             var safeHSV = ColorsSafe.ToHSVFromXYZ(rgb);
             this.hsvPicker.SelectedColor = safeHSV.Item1;
             this.ConversionMessage = safeHSV.Item2;
+        }
+
+        private void ConvertFromXYZToxyY()
+        {
+            this.xyYPicker.SelectedColor = Colors.ToxyY(this.xyzPicker.SelectedColor);
+            this.ConversionMessage = string.Empty;
+        }
+
+        private void ConvertFromxyYToXYZ()
+        {
+            var src = this.xyYPicker.SelectedColor;
+            this.xyzPicker.SelectedColor = Colors.ToXYZ(src);
+            this.ConversionMessage = string.Empty;
+        }
+
+        private void ConvertFromxyYToRGB()
+        {
+            var src = this.xyYPicker.SelectedColor;
+            this.xyzPicker.SelectedColor = Colors.ToXYZ(src);
+            this.ConvertFromXYZToRGB();
+        }
+
+        private void ConvertFromxyYToHSV()
+        {
+            var src = this.xyYPicker.SelectedColor;
+            this.xyzPicker.SelectedColor = Colors.ToXYZ(src);
+            this.ConvertFromXYZToHSV();
         }
 
         private void UpdateSelectedColor(ColorRGB color)
