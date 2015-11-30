@@ -228,20 +228,25 @@ namespace FsRaster.UI.ColorPicker
 
     public static class Colors
     {
+        const double Gamma = 1 / 2.4;
+        const double InvGamma = 2.4;
+        const double Transition = 0.003;
+        const double Slope = 12.92;
+        const double Offset = 0.055;
         const double Epsilon = 0.0001;
 
         private static readonly double[,] XYZToRGB = new double[3, 3]
         {
-            { 3.2405, -1.5371, -0.4985 },
-            { -0.9693, 1.8760, 0.0416 },
-            { 0.0556, -0.2040, 1.0572 }
+            {  3.2404542, -1.5371385, -0.4985314 },
+            { -0.9692660,  1.8760108,  0.0415560 },
+            {  0.0556434, -0.2040259,  1.0572252 }
         };
 
         private static readonly double[,] RGBToXYZ = new double[3, 3]
         {
-            { 0.4215, 0.3576, 0.1804 },
-            { 0.2127, 0.7152, 0.0722 },
-            { 0.0191, 0.1192, 0.9503 }
+            { 0.4124564, 0.3575761, 0.1804375 },
+            { 0.2126729, 0.7151522, 0.0721750 },
+            { 0.0193339, 0.1191920, 0.9503041 }
         };
 
         public static ColorRGB ToRGB(ColorRGBFull rgb)
@@ -370,17 +375,19 @@ namespace FsRaster.UI.ColorPicker
 
         public static ColorRGB ToRGBFromXYZ(ColorRGBFull rgb)
         {
-            const double Gamma = 1 / 2.4;
             var r = Clamp(rgb.R);
             var g = Clamp(rgb.G);
             var b = Clamp(rgb.B);
             var max = Math.Max(r, Math.Max(g, b));
-            r = Math.Pow(r / max, Gamma);
-            g = Math.Pow(g / max, Gamma);
-            b = Math.Pow(b / max, Gamma);
-            r = r * ColorRGB.MaxValue;
-            g = g * ColorRGB.MaxValue;
-            b = b * ColorRGB.MaxValue;
+            r /= max;
+            g /= max;
+            b /= max;
+            r = GammaCorrect(r);
+            g = GammaCorrect(g);
+            b = GammaCorrect(b);
+            r *= ColorRGB.MaxValue;
+            g *= ColorRGB.MaxValue;
+            b *= ColorRGB.MaxValue;
             return new ColorRGB((int)r, (int)g, (int)b);
         }
 
@@ -423,10 +430,12 @@ namespace FsRaster.UI.ColorPicker
             return ToHSV(new ColorRGBFull(r, g, b));
         }
 
-
         public static ColorXYZFull ToXYZ(ColorRGBFull rgb)
         {
-            var xyz = Multiply(RGBToXYZ, rgb.R, rgb.G, rgb.B);
+            var r = InverseGammaCorrection(rgb.R);
+            var g = InverseGammaCorrection(rgb.G);
+            var b = InverseGammaCorrection(rgb.B);
+            var xyz = Multiply(RGBToXYZ, r, g, b);
             return new ColorXYZFull(xyz.R, xyz.G, xyz.B);
         }
 
@@ -543,6 +552,20 @@ namespace FsRaster.UI.ColorPicker
             double y = matrix[1, 0] * a + matrix[1, 1] * b + matrix[1, 2] * c;
             double z = matrix[2, 0] * a + matrix[2, 1] * b + matrix[2, 2] * c;
             return new ColorRGBFull(x, y, z);
+        }
+
+        private static double GammaCorrect(double value)
+        {
+            if (1 >= value && value >= Transition)
+            {
+                return (1 + Offset) * Math.Pow(value, Gamma) - Offset;
+            }
+            return Slope * value;
+        }
+
+        private static double InverseGammaCorrection(double value)
+        {
+            return Math.Pow((value + Offset) / (1 + Offset), InvGamma);
         }
     }
 
