@@ -90,6 +90,8 @@
     <Compile Include="CIExyYPlane.fs" />
     <None Include="Scripts\load-references.fsx" />
     <None Include="Scripts\load-project.fsx" />
+    <None Include="Scripts\load-references-debug.fsx" />
+    <None Include="Scripts\load-project-debug.fsx" />
     <None Include="paket.references" />
     <EmbeddedResource Include="Resources.resx" />
     <Content Include="CIEXYZ_color_matching_functions.csv" />

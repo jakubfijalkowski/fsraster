@@ -1,0 +1,17 @@
+// Warning: generated file; your changes could be lost when a new file is generated.
+#I __SOURCE_DIRECTORY__
+#load "load-references-debug.fsx"
+#load "../AssemblyInfo.fs"
+      "../Utils.fs"
+      "../Resources.fs"
+      "../Colors.fs"
+      "../OctTree.fs"
+      "../FigureColor.fs"
+      "../Figures.fs"
+      "../FigureRendering.fs"
+      "../FigureBuilding.fs"
+      "../FigureHitTests.fs"
+      "../FigureClipping.fs"
+      "../CoreRendering.fs"
+      "../CoreAlgorithms.fs"
+      "../CIExyYPlane.fs"
