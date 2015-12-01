@@ -228,12 +228,14 @@ namespace FsRaster.UI.ColorPicker
 
     public static class Colors
     {
+        const double Epsilon = 0.000001;
+
         const double Gamma = 1 / 2.4;
         const double InvGamma = 2.4;
+
         const double Transition = 0.003;
         const double Slope = 12.92;
         const double Offset = 0.055;
-        const double Epsilon = 0.0001;
 
         private static readonly double[,] XYZToRGB = new double[3, 3]
         {
@@ -446,7 +448,7 @@ namespace FsRaster.UI.ColorPicker
             double sum = xyz.X + xyz.Y + xyz.Z;
             if (Math.Abs(sum) < Epsilon)
             {
-                return new ColorxyYFull(0.3, 0.3, 1.0);
+                return new ColorxyYFull(1 / 3.0, 1 / 3.0, 0);
             }
             double x = xyz.X / sum;
             double y = xyz.Y / sum;
@@ -535,22 +537,18 @@ namespace FsRaster.UI.ColorPicker
 
         private static double GammaCorrect(double value)
         {
-            if (1 >= value && value >= Transition)
-            {
-                return (1 + Offset) * Math.Pow(value, Gamma) - Offset;
-            }
-            return Slope * value;
+            return Math.Pow(value, Gamma);
         }
 
         private static double InverseGammaCorrection(double value)
         {
-            return Math.Pow((value + Offset) / (1 + Offset), InvGamma);
+            return Math.Pow(value, InvGamma);
         }
     }
 
     public static class ColorsSafe
     {
-        const double Epsilon = 0.0001;
+        const double Epsilon = 0.000001;
 
         public static Tuple<ColorRGB, string> ToRGBFromHSV(ColorRGBFull rgb)
         {
@@ -567,9 +565,7 @@ namespace FsRaster.UI.ColorPicker
         public static Tuple<ColorHSVFull, string> ToHSVFromXYZ(ColorRGBFull rgb)
         {
             var result = Colors.ToHSVFromXYZ(rgb);
-            if (rgb.R < 0.0 || rgb.R > 1.0 ||
-                rgb.G < 0.0 || rgb.G > 1.0 ||
-                rgb.B < 0.0 || rgb.B > 1.0)
+            if (IsOutside(rgb))
             {
                 return Tuple.Create(result, $"Cannot convert colors. Approximated by ~({result.Hue:##0.000}, {result.Saturation:0.000}, {result.Value:0.000})");
             }
@@ -578,13 +574,22 @@ namespace FsRaster.UI.ColorPicker
 
         private static Tuple<ColorRGB, string> SafeConvert(ColorRGBFull rgb, ColorRGB result)
         {
-            if (rgb.R < 0.0 || rgb.R > 1.0 ||
-                rgb.G < 0.0 || rgb.G > 1.0 ||
-                rgb.B < 0.0 || rgb.B > 1.0)
+            if (IsOutside(rgb))
             {
                 return Tuple.Create(result, $"Cannot convert colors. Approximated by ({result.R}, {result.G}, {result.B})");
             }
             return Tuple.Create(result, string.Empty);
+        }
+
+        private static bool IsOutside(ColorRGBFull rgb)
+        {
+            return
+                (rgb.R + Epsilon) < 0 ||
+                (rgb.G + Epsilon) < 0 ||
+                (rgb.B + Epsilon) < 0 ||
+                (rgb.R - Epsilon) > 1 ||
+                (rgb.G - Epsilon) > 1 ||
+                (rgb.B - Epsilon) > 1;
         }
     }
 }
