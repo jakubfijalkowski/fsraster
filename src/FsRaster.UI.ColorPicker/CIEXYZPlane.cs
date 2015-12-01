@@ -7,17 +7,18 @@ namespace FsRaster.UI.ColorPicker
     public class CIEXYZPlane
         : Image, IColorPlane<ColorXYZFull>
     {
-        public static readonly DependencyProperty ZProperty =
-            DependencyProperty.Register("Z", typeof(double), typeof(CIEXYZPlane), new PropertyMetadata((double)0.3, OnYChanged));
+        public static readonly DependencyProperty YProperty =
+            DependencyProperty.Register("Y", typeof(double), typeof(CIEXYZPlane), new PropertyMetadata((double)0.3, OnYChanged));
 
-        private readonly WriteableBitmap xyPlane = BitmapFactory.New(ColorXYZ.MaxValue + 1, ColorXYZ.MaxValue + 1);
+        private readonly WriteableBitmap xzPlane = BitmapFactory.New(ColorXYZ.MaxValue + 1, ColorXYZ.MaxValue + 1);
 
-        private bool shouldReloadXYPlane = false;
+        private bool shouldReloadXZPlane = false;
+        private bool isLoaded = false;
 
-        public double Z
+        public double Y
         {
-            get { return (double)GetValue(ZProperty); }
-            set { SetValue(ZProperty, value); }
+            get { return (double)GetValue(YProperty); }
+            set { SetValue(YProperty, value); }
         }
 
         private static void OnYChanged(DependencyObject dp, DependencyPropertyChangedEventArgs e)
@@ -25,30 +26,39 @@ namespace FsRaster.UI.ColorPicker
             var obj = (CIEXYZPlane)dp;
             lock (obj)
             {
-                obj.shouldReloadXYPlane = true;
+                obj.shouldReloadXZPlane = true;
+                if (obj.isLoaded)
+                {
+                    obj.GenerateXZPlane();
+                }
             }
         }
 
         public CIEXYZPlane()
         {
-            this.shouldReloadXYPlane = true;
-            this.GenerateXYPlane();
-            this.Source = this.xyPlane;
-            this.Loaded += (s, e) => this.GenerateXYPlane();
+            this.shouldReloadXZPlane = true;
+            this.Source = this.xzPlane;
+
+            this.Loaded += (s, e) =>
+            {
+                this.GenerateXZPlane();
+                this.isLoaded = true;
+            };
+            this.Unloaded += (s, e) => this.isLoaded = false;
         }
 
         public Point Project(ColorXYZFull color)
         {
             var x = color.X * this.RenderSize.Width;
-            var y = color.Y * this.RenderSize.Height;
-            return new Point(x, y);
+            var z = color.Z * this.RenderSize.Height;
+            return new Point(x, z);
         }
 
         public ColorXYZFull Project(Point pt)
         {
             var x = pt.X / (this.RenderSize.Width - 1);
-            var y = pt.Y / (this.RenderSize.Height - 1);
-            return new ColorXYZFull(x, y, this.Z);
+            var z = pt.Y / (this.RenderSize.Height - 1);
+            return new ColorXYZFull(x, this.Y, z);
         }
 
         public ColorXYZFull Coerce(ColorXYZFull color, ColorXYZFull currentColor)
@@ -56,28 +66,27 @@ namespace FsRaster.UI.ColorPicker
             return Colors.Clamp(color);
         }
 
-        private unsafe void GenerateXYPlane()
+        private unsafe void GenerateXZPlane()
         {
             lock (this)
             {
-                if (this.shouldReloadXYPlane)
+                if (this.shouldReloadXZPlane)
                 {
-                    using (var ctx = this.xyPlane.GetBitmapContext(ReadWriteMode.ReadWrite))
+                    using (var ctx = this.xzPlane.GetBitmapContext(ReadWriteMode.ReadWrite))
                     {
                         var pixels = (uint*)ctx.Pixels;
                         for (int x = 0; x <= ColorXYZ.MaxValue; x++)
                         {
-                            for (int y = 0; y <= ColorXYZ.MaxValue; y++)
+                            for (int z = 0; z <= ColorXYZ.MaxValue; z++)
                             {
-                                var xyz = Colors.ToXYZFull(new ColorXYZ(x, y, 0));
-                                var xyzrgb = Colors.ToRGB(new ColorXYZFull(xyz.X, xyz.Y, this.Z));
+                                var xyz = Colors.ToXYZFull(new ColorXYZ(x, 0, z));
+                                var xyzrgb = Colors.ToRGB(new ColorXYZFull(xyz.X, this.Y, xyz.Z));
                                 var rgb = Colors.ToRGBFromXYZ(xyzrgb);
-                                pixels[y * (ColorXYZ.MaxValue + 1) + x] = Colors.GetBytes(rgb);
-
+                                pixels[z * (ColorXYZ.MaxValue + 1) + x] = Colors.GetBytes(rgb);
                             }
                         }
                     }
-                    this.shouldReloadXYPlane = false;
+                    this.shouldReloadXZPlane = false;
                 }
             }
         }

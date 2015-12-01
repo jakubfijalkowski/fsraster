@@ -147,7 +147,7 @@ namespace FsRaster.UI.ColorPicker
 
     public struct ColorXYZFull
     {
-        public const double MaxValue = 1.0;
+        public const double MaxValue = 2.0;
 
         /// <summary>
         /// 0 - 1.0
@@ -291,9 +291,9 @@ namespace FsRaster.UI.ColorPicker
 
         public static ColorXYZFull ToXYZFull(ColorXYZ xyz)
         {
-            var x = (double)xyz.X / ColorXYZ.MaxValue;
-            var y = (double)xyz.Y / ColorXYZ.MaxValue;
-            var z = (double)xyz.Z / ColorXYZ.MaxValue;
+            var x = (double)xyz.X / ColorXYZ.MaxValue * ColorXYZFull.MaxValue;
+            var y = (double)xyz.Y / ColorXYZ.MaxValue * ColorXYZFull.MaxValue;
+            var z = (double)xyz.Z / ColorXYZ.MaxValue * ColorXYZFull.MaxValue;
             return new ColorXYZFull(x, y, z);
         }
 

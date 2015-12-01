@@ -15,7 +15,7 @@ namespace FsRaster.UI.ColorPicker
         {
             get
             {
-                return this.xyRect;
+                return this.xzRect;
             }
         }
 

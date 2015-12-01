@@ -21,7 +21,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <local:CIEXYZPlane x:Name="xyRect" Grid.Row="0" Grid.Column="0" Width="256" Height="256" Margin="3" SnapsToDevicePixels="True" />
+        <local:CIEXYZPlane x:Name="xzRect" Grid.Row="0" Grid.Column="0" Width="256" Height="256" Margin="3" SnapsToDevicePixels="True" />
         <Canvas Grid.Row="0" Grid.Column="0" Background="Transparent" MouseDown="OnColorPlaneClicked" Margin="3"
                 SnapsToDevicePixels="True" RenderOptions.EdgeMode="Aliased">
             <Path x:Name="pointer" Width="11" Height="11" Stroke="White" Canvas.Left="-5" Canvas.Top="-5" SnapsToDevicePixels="True">
@@ -35,17 +35,17 @@
         </Canvas>
         <Grid Grid.Row="1" Grid.Column="0">
             <TextBlock HorizontalAlignment="Left">X</TextBlock>
-            <TextBlock HorizontalAlignment="Right">1.0</TextBlock>
+            <TextBlock HorizontalAlignment="Right">2.0</TextBlock>
         </Grid>
         <Grid Grid.Row="0" Grid.Column="1">
-            <TextBlock VerticalAlignment="Top">Y</TextBlock>
-            <TextBlock VerticalAlignment="Bottom">1.0</TextBlock>
+            <TextBlock VerticalAlignment="Top">Z</TextBlock>
+            <TextBlock VerticalAlignment="Bottom">2.0</TextBlock>
         </Grid>
         <Grid Grid.Row="0" Grid.Column="3">
-            <TextBlock VerticalAlignment="Top">1.0</TextBlock>
-            <TextBlock VerticalAlignment="Bottom">Z</TextBlock>
+            <TextBlock VerticalAlignment="Top">2.0</TextBlock>
+            <TextBlock VerticalAlignment="Bottom">Y</TextBlock>
         </Grid>
-        <Slider x:Name="bPicker" Grid.Row="0" Grid.Column="2" Minimum="0" Maximum="1.0" Value="{Binding Z, ElementName=xyRect}" Orientation="Vertical" SmallChange="0.01" LargeChange="0.1" />
+        <Slider x:Name="bPicker" Grid.Row="0" Grid.Column="2" Minimum="0" Maximum="2.0" Value="{Binding Y, ElementName=xzRect}" Orientation="Vertical" SmallChange="0.01" LargeChange="0.1" />
         <Grid Grid.Row="3" Grid.ColumnSpan="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="20" />
@@ -57,11 +57,11 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0">X:</TextBlock>
-            <xctk:DoubleUpDown x:Name="xValue" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="1.0" ValueChanged="OnControlsColorChanged" />
+            <xctk:DoubleUpDown x:Name="xValue" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="2.0" ValueChanged="OnControlsColorChanged" />
             <TextBlock Grid.Row="1">Y:</TextBlock>
-            <xctk:DoubleUpDown x:Name="yValue" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1.0" ValueChanged="OnControlsColorChanged" />
+            <xctk:DoubleUpDown x:Name="yValue" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="2.0" Value="{Binding Y, ElementName=xzRect}" ValueChanged="OnControlsColorChanged" />
             <TextBlock Grid.Row="2">Z:</TextBlock>
-            <xctk:DoubleUpDown x:Name="zValue" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1.0" Value="{Binding Z, ElementName=xyRect}" ValueChanged="OnControlsColorChanged" />
+            <xctk:DoubleUpDown x:Name="zValue" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="2.0" ValueChanged="OnControlsColorChanged" />
         </Grid>
     </Grid>
 </local:ColorPickerBase>
