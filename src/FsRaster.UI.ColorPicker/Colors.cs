@@ -366,11 +366,7 @@ namespace FsRaster.UI.ColorPicker
 
         public static ColorRGBFull ToRGB(ColorXYZFull xyz)
         {
-            var rgb = Multiply(XYZToRGB, xyz.X, xyz.Y, xyz.Z);
-            var r = rgb.R / 100.0;
-            var g = rgb.G / 100.0;
-            var b = rgb.B / 100.0;
-            return new ColorRGBFull(r, g, b);
+            return Multiply(XYZToRGB, xyz.X, xyz.Y, xyz.Z);
         }
 
         public static ColorRGB ToRGBFromXYZ(ColorRGBFull rgb)
@@ -379,9 +375,6 @@ namespace FsRaster.UI.ColorPicker
             var g = Clamp(rgb.G);
             var b = Clamp(rgb.B);
             var max = Math.Max(r, Math.Max(g, b));
-            r /= max;
-            g /= max;
-            b /= max;
             r = GammaCorrect(r);
             g = GammaCorrect(g);
             b = GammaCorrect(b);
@@ -423,9 +416,6 @@ namespace FsRaster.UI.ColorPicker
             var g = Clamp(rgb.G);
             var b = Clamp(rgb.B);
             var max = Math.Max(r, Math.Max(g, b));
-            r /= max;
-            g /= max;
-            b /= max;
             r = GammaCorrect(r);
             g = GammaCorrect(g);
             b = GammaCorrect(b);
