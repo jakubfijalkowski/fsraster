@@ -78,7 +78,7 @@ namespace FsRaster.UI.ColorPicker
                             var xyyFull = Colors.ToxyYFull(xyy);
                             var xyz = Colors.ToXYZ(xyyFull);
                             var rgbFull = Colors.ToRGB(xyz);
-                            var rgb = Colors.ToRGBFromXYZ(rgbFull);
+                            var rgb = Colors.ToRGBFromXYZUniform(rgbFull);
 
                             pixels[baseIndex + x] = Colors.GetBytes(rgb);
                         }

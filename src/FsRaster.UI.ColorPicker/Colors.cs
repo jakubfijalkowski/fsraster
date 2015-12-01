@@ -385,6 +385,24 @@ namespace FsRaster.UI.ColorPicker
             return new ColorRGB((int)Math.Round(r), (int)Math.Round(g), (int)Math.Round(b));
         }
 
+        public static ColorRGB ToRGBFromXYZUniform(ColorRGBFull rgb)
+        {
+            var r = Clamp(rgb.R / 100.0);
+            var g = Clamp(rgb.G / 100.0);
+            var b = Clamp(rgb.B / 100.0);
+            var max = Math.Max(r, Math.Max(g, b));
+            r /= max;
+            g /= max;
+            b /= max;
+            r = GammaCorrect(r);
+            g = GammaCorrect(g);
+            b = GammaCorrect(b);
+            r *= ColorRGB.MaxValue;
+            g *= ColorRGB.MaxValue;
+            b *= ColorRGB.MaxValue;
+            return new ColorRGB((int)Math.Round(r), (int)Math.Round(g), (int)Math.Round(b));
+        }
+
         public static ColorHSVFull ToHSV(ColorRGBFull rgb)
         {
             var min = Math.Min(rgb.R, Math.Min(rgb.G, rgb.B));
