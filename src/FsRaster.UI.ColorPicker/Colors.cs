@@ -388,7 +388,7 @@ namespace FsRaster.UI.ColorPicker
             r *= ColorRGB.MaxValue;
             g *= ColorRGB.MaxValue;
             b *= ColorRGB.MaxValue;
-            return new ColorRGB((int)r, (int)g, (int)b);
+            return new ColorRGB((int)Math.Round(r), (int)Math.Round(g), (int)Math.Round(b));
         }
 
         public static ColorHSVFull ToHSV(ColorRGBFull rgb)
@@ -419,14 +419,16 @@ namespace FsRaster.UI.ColorPicker
 
         public static ColorHSVFull ToHSVFromXYZ(ColorRGBFull rgb)
         {
-            const double Gamma = 1 / 2.4;
             var r = Clamp(rgb.R);
             var g = Clamp(rgb.G);
             var b = Clamp(rgb.B);
             var max = Math.Max(r, Math.Max(g, b));
-            r = Math.Pow(r / max, Gamma);
-            g = Math.Pow(g / max, Gamma);
-            b = Math.Pow(b / max, Gamma);
+            r /= max;
+            g /= max;
+            b /= max;
+            r = GammaCorrect(r);
+            g = GammaCorrect(g);
+            b = GammaCorrect(b);
             return ToHSV(new ColorRGBFull(r, g, b));
         }
 
@@ -499,25 +501,14 @@ namespace FsRaster.UI.ColorPicker
 
         public static ColorXYZFull Clamp(ColorXYZFull xyz)
         {
-            var x = Clamp(xyz.X);
-            var y = Clamp(xyz.Y);
-            var z = Clamp(xyz.Z);
-            return new ColorXYZFull(x, y, z);
+            return xyz;
         }
 
-        public static ColorxyYFull Clapm(ColorxyYFull xyy)
+        public static ColorxyYFull Clamp(ColorxyYFull xyy)
         {
             var x = Clamp(xyy.x);
             var y = Clamp(xyy.y);
             var Y = Clamp(xyy.Y);
-            return new ColorxyYFull(x, y, Y);
-        }
-
-        public static ColorxyYFull Clamp(ColorxyYFull color)
-        {
-            var x = Clamp(color.x);
-            var y = Clamp(color.y);
-            var Y = Clamp(color.Y);
             return new ColorxyYFull(x, y, Y);
         }
 
@@ -599,15 +590,9 @@ namespace FsRaster.UI.ColorPicker
 
         private static Tuple<ColorRGB, string> SafeConvert(ColorRGBFull rgb, ColorRGB result)
         {
-            var r = result.R - rgb.R * ColorRGB.MaxValue;
-            var g = result.G - rgb.G * ColorRGB.MaxValue;
-            var b = result.B - rgb.B * ColorRGB.MaxValue;
             if (rgb.R < 0.0 || rgb.R > 1.0 ||
                 rgb.G < 0.0 || rgb.G > 1.0 ||
-                rgb.B < 0.0 || rgb.B > 1.0 ||
-                Math.Abs(r) > Epsilon ||
-                Math.Abs(g) > Epsilon ||
-                Math.Abs(b) > Epsilon)
+                rgb.B < 0.0 || rgb.B > 1.0)
             {
                 return Tuple.Create(result, $"Cannot convert colors. Approximated by ({result.R}, {result.G}, {result.B})");
             }
