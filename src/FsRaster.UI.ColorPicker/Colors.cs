@@ -374,7 +374,6 @@ namespace FsRaster.UI.ColorPicker
             var r = Clamp(rgb.R);
             var g = Clamp(rgb.G);
             var b = Clamp(rgb.B);
-            var max = Math.Max(r, Math.Max(g, b));
             r = GammaCorrect(r);
             g = GammaCorrect(g);
             b = GammaCorrect(b);
@@ -415,7 +414,6 @@ namespace FsRaster.UI.ColorPicker
             var r = Clamp(rgb.R);
             var g = Clamp(rgb.G);
             var b = Clamp(rgb.B);
-            var max = Math.Max(r, Math.Max(g, b));
             r = GammaCorrect(r);
             g = GammaCorrect(g);
             b = GammaCorrect(b);
