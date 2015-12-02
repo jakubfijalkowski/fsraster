@@ -253,9 +253,9 @@ namespace FsRaster.UI.ColorPicker
 
         public static ColorRGB ToRGB(ColorRGBFull rgb)
         {
-            var r = Math.Floor(Clamp(rgb.R) * ColorRGB.MaxValue);
-            var g = Math.Floor(Clamp(rgb.G) * ColorRGB.MaxValue);
-            var b = Math.Floor(Clamp(rgb.B) * ColorRGB.MaxValue);
+            var r = Math.Round(Clamp(rgb.R) * ColorRGB.MaxValue);
+            var g = Math.Round(Clamp(rgb.G) * ColorRGB.MaxValue);
+            var b = Math.Round(Clamp(rgb.B) * ColorRGB.MaxValue);
             return new ColorRGB((int)r, (int)g, (int)b);
         }
 
@@ -503,7 +503,7 @@ namespace FsRaster.UI.ColorPicker
         {
             var hue = Math.Min(ColorHSVFull.MaxHueValue, Math.Max(0.0, hsv.Hue));
             var value = Clamp(hsv.Value);
-            var saturation = Math.Min(Clamp(hsv.Saturation), value);
+            var saturation = Clamp(hsv.Saturation);
             return new ColorHSVFull(hue, saturation, value);
         }
 

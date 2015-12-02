@@ -55,7 +55,6 @@ namespace FsRaster.UI.ColorPicker
                 theta += Math.PI * 2;
             }
             var saturation = Math.Sqrt(dx * dx + dy * dy) / cx;
-            saturation = Math.Min(saturation, this.Value);
             var hue = theta * 180.0 / Math.PI;
 
             return new ColorHSVFull(hue, saturation, this.Value);
@@ -66,24 +65,21 @@ namespace FsRaster.UI.ColorPicker
             return Colors.Clamp(color);
         }
 
-        private void GenerateHSPlane()
+        private unsafe void GenerateHSPlane()
         {
             using (var ctx = this.hsPlane.GetBitmapContext(ReadWriteMode.ReadWrite))
             {
                 ctx.Clear();
-                unsafe
+                var pixels = (uint*)ctx.Pixels;
+
+                var value = this.Value;
+
+                foreach (var pt in GenerateCircle(ColorHSV.MaxValue))
                 {
-                    var pixels = (uint*)ctx.Pixels;
-
-                    var value = this.Value;
-
-                    foreach (var pt in GenerateCircle((int)Math.Round(this.Value * ColorHSV.MaxValue)))
-                    {
-                        RenderHSLine(-pt.X, pt.X, pt.Y, value, pixels);
-                        RenderHSLine(-pt.X, pt.X, -pt.Y, value, pixels);
-                        RenderHSLine(-pt.Y, pt.Y, pt.X, value, pixels);
-                        RenderHSLine(-pt.Y, pt.Y, -pt.X, value, pixels);
-                    }
+                    RenderHSLine(-pt.X, pt.X, pt.Y, value, pixels);
+                    RenderHSLine(-pt.X, pt.X, -pt.Y, value, pixels);
+                    RenderHSLine(-pt.Y, pt.Y, pt.X, value, pixels);
+                    RenderHSLine(-pt.Y, pt.Y, -pt.X, value, pixels);
                 }
             }
         }
