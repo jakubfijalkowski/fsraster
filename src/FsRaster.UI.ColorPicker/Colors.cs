@@ -174,7 +174,7 @@ namespace FsRaster.UI.ColorPicker
 
     public struct ColorxyY
     {
-        public const int MaxValue = 1000;
+        public const int MaxValue = 256;
 
         /// <summary>
         /// 0 - MaxValue
