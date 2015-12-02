@@ -69,6 +69,7 @@
     <Compile Include="CIExyYPlane.cs" />
     <Compile Include="ColorConverter.cs" />
     <Compile Include="ColorPickerBase.cs" />
+    <Compile Include="ColorPlaneBase.cs" />
     <Compile Include="Colors.cs" />
     <Compile Include="HSVPlane.cs" />
     <Compile Include="HSVPicker.xaml.cs">

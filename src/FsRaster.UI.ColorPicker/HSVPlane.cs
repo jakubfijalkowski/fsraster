@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
 namespace FsRaster.UI.ColorPicker
 {
     public sealed class HSVPlane
-        : Image, IColorPlane<ColorHSVFull>
+        : ColorPlaneBase<ColorHSVFull>
     {
         public static readonly DependencyProperty ValueProperty =
-            DependencyProperty.Register("Value", typeof(double), typeof(HSVPlane), new PropertyMetadata((double)1.0, OnValueChanged));
-
-        private WriteableBitmap hsPlane = BitmapFactory.New(ColorHSV.MaxValue * 2 + 1, ColorHSV.MaxValue * 2 + 1);
+            DependencyProperty.Register("Value", typeof(double), typeof(HSVPlane), new PropertyMetadata((double)1.0, ColorPlaneBase<ColorHSVFull>.OnPropertyChanged));
 
         public double Value
         {
@@ -20,19 +16,11 @@ namespace FsRaster.UI.ColorPicker
             set { SetValue(ValueProperty, value); }
         }
 
-        private static void OnValueChanged(DependencyObject dp, DependencyPropertyChangedEventArgs e)
-        {
-            var obj = (HSVPlane)dp;
-            obj.GenerateHSPlane();
-        }
-
         public HSVPlane()
-        {
-            this.GenerateHSPlane();
-            this.Source = this.hsPlane;
-        }
+            : base(ColorHSV.MaxValue * 2 + 1, ColorHSV.MaxValue * 2 + 1)
+        { }
 
-        public Point Project(ColorHSVFull hsv)
+        public override Point Project(ColorHSVFull hsv)
         {
             var cx = this.RenderSize.Width / 2.0;
             var r = hsv.Saturation * cx;
@@ -42,7 +30,7 @@ namespace FsRaster.UI.ColorPicker
             return new Point(x, y);
         }
 
-        public ColorHSVFull Project(Point pt)
+        public override ColorHSVFull Project(Point pt)
         {
             var cx = this.RenderSize.Width / 2.0;
             var cy = this.RenderSize.Height / 2.0;
@@ -60,27 +48,21 @@ namespace FsRaster.UI.ColorPicker
             return new ColorHSVFull(hue, saturation, this.Value);
         }
 
-        public ColorHSVFull Coerce(ColorHSVFull color, ColorHSVFull currentColor)
+        public override ColorHSVFull Coerce(ColorHSVFull color, ColorHSVFull currentColor)
         {
             return Colors.Clamp(color);
         }
 
-        private unsafe void GenerateHSPlane()
+        protected override unsafe void GeneratePlane(uint* pixels)
         {
-            using (var ctx = this.hsPlane.GetBitmapContext(ReadWriteMode.ReadWrite))
+            var value = this.Value;
+
+            foreach (var pt in GenerateCircle(ColorHSV.MaxValue))
             {
-                ctx.Clear();
-                var pixels = (uint*)ctx.Pixels;
-
-                var value = this.Value;
-
-                foreach (var pt in GenerateCircle(ColorHSV.MaxValue))
-                {
-                    RenderHSLine(-pt.X, pt.X, pt.Y, value, pixels);
-                    RenderHSLine(-pt.X, pt.X, -pt.Y, value, pixels);
-                    RenderHSLine(-pt.Y, pt.Y, pt.X, value, pixels);
-                    RenderHSLine(-pt.Y, pt.Y, -pt.X, value, pixels);
-                }
+                RenderHSLine(-pt.X, pt.X, pt.Y, value, pixels);
+                RenderHSLine(-pt.X, pt.X, -pt.Y, value, pixels);
+                RenderHSLine(-pt.Y, pt.Y, pt.X, value, pixels);
+                RenderHSLine(-pt.Y, pt.Y, -pt.X, value, pixels);
             }
         }
 

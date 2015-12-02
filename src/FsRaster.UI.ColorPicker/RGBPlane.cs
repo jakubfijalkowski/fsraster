@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
 namespace FsRaster.UI.ColorPicker
 {
     public sealed class RGBPlane
-        : Image, IColorPlane<ColorRGB>
+        : ColorPlaneBase<ColorRGB>
     {
         public static readonly DependencyProperty BProperty =
-            DependencyProperty.Register("B", typeof(byte), typeof(RGBPlane), new PropertyMetadata((byte)0, OnBChanged));
-
-        private readonly WriteableBitmap rgbPlane = BitmapFactory.New(256, 256);
+            DependencyProperty.Register("B", typeof(byte), typeof(RGBPlane), new PropertyMetadata((byte)0, ColorPlaneBase<ColorRGB>.OnPropertyChanged));
 
         public byte B
         {
@@ -19,52 +15,37 @@ namespace FsRaster.UI.ColorPicker
             set { this.SetValue(BProperty, value); }
         }
 
-        private static void OnBChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var obj = (RGBPlane)d;
-            obj.GenerateRGBPlane();
-        }
-
         public RGBPlane()
-        {
-            this.GenerateRGBPlane();
-            this.Source = this.rgbPlane;
-        }
+            : base(ColorRGB.MaxValue + 1, ColorRGB.MaxValue + 1)
+        { }
 
-        public Point Project(ColorRGB color)
+        public override Point Project(ColorRGB color)
         {
             var x = color.R / 255.0 * this.RenderSize.Width;
             var y = (255 - color.G) / 255.0 * this.RenderSize.Height;
             return new Point(x, y);
         }
 
-        public ColorRGB Project(Point pt)
+        public override ColorRGB Project(Point pt)
         {
             double xCoeff = pt.X / (this.RenderSize.Width - 1);
             double yCoeff = 1.0 - pt.Y / (this.RenderSize.Height - 1);
             return new ColorRGB((byte)Math.Round(xCoeff * 255.0), (byte)Math.Round(yCoeff * 255.0), this.B);
         }
 
-        public ColorRGB Coerce(ColorRGB color, ColorRGB currentColor)
+        public override ColorRGB Coerce(ColorRGB color, ColorRGB currentColor)
         {
             return Colors.Clamp(color);
         }
 
-        private void GenerateRGBPlane()
+        protected override unsafe void GeneratePlane(uint* pixels)
         {
-            using (var ctx = this.rgbPlane.GetBitmapContext(ReadWriteMode.ReadWrite))
+            for (uint g = 0; g < 256; g++)
             {
-                unsafe
+                for (uint r = 0; r < 256; r++)
                 {
-                    var pixels = (uint*)ctx.Pixels;
-                    for (uint g = 0; g < 256; g++)
-                    {
-                        for (uint r = 0; r < 256; r++)
-                        {
-                            long idx = (255 - g) * ctx.Height + r;
-                            pixels[idx] = Colors.GetBytes(r, g, this.B);
-                        }
-                    }
+                    long idx = (255 - g) * (ColorRGB.MaxValue + 1) + r;
+                    pixels[idx] = Colors.GetBytes(r, g, this.B);
                 }
             }
         }
