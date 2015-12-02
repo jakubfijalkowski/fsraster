@@ -1,6 +1,5 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Media;
 
 namespace FsRaster.UI.ColorPicker
@@ -110,6 +109,10 @@ namespace FsRaster.UI.ColorPicker
                 {
                     this.colorPickerWindow = this.CreateNewWindow();
                     this.colorPickerWindow.Show();
+                }
+                else
+                {
+                    this.colorPickerWindow.Activate();
                 }
             }
         }
