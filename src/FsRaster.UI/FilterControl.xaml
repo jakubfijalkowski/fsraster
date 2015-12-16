@@ -36,7 +36,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <ComboBox x:Name="histogramChannel">
+        <ComboBox x:Name="histogramChannel" SelectedIndex="0">
             <ComboBoxItem x:Name="rChannel">R</ComboBoxItem>
             <ComboBoxItem x:Name="gChannel">G</ComboBoxItem>
             <ComboBoxItem x:Name="bChannel">B</ComboBoxItem>

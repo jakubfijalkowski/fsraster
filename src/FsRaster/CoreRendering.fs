@@ -212,6 +212,8 @@ type IRenderer =
     abstract member MapXY : Rectangle -> (int -> int -> int -> int) -> unit
     abstract member Fold : Rectangle -> ('a -> int -> 'a) -> 'a -> 'a
     abstract member FoldXY : Rectangle -> ('a -> int -> int -> int -> 'a) -> 'a -> 'a
+
+    abstract member Context : CachedBitmapContext
        
 type BitmapRenderer(context : BitmapContext) =
     let cachedContext = { Context = context; Width = context.Width; Height = context.Height }
@@ -235,6 +237,8 @@ type BitmapRenderer(context : BitmapContext) =
         member this.MapXY rect f = mapPixelsXY cachedContext rect f
         member this.Fold rect f state = foldPixelsXY cachedContext rect (fun s _ _ p -> f s p) state
         member this.FoldXY rect f state = foldPixelsXY cachedContext rect f state
+
+        member this.Context = cachedContext
 
     interface IDisposable with
         member x.Dispose() = context.Dispose()

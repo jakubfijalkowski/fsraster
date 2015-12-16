@@ -2,15 +2,25 @@
 
 open FsRaster.CoreRendering
 
-let minMaxColor (renderer : IRenderer) rect = 
-    let app ((minR, minG, minB), (maxR, maxG, maxB)) c =
-        let r = Colors.getR c
-        let g = Colors.getG c
-        let b = Colors.getB c
-        let minimum = (min minR r, min minG g, min minB b)
-        let maximum = (max maxR r, max maxG g, max maxB b)
-        (minimum, maximum)
-    renderer.Fold rect app ((255, 255, 255), (0, 0, 0))
+let minMaxColor ctx w (left, top, right, bottom) = 
+    let pixels = ctx.Context.Pixels
+    let mutable minR, minG, minB = 255, 255, 255
+    let mutable maxR, maxG, maxB = (0, 0, 0)
+    for y in [ top .. bottom ] do
+        for x in [ left .. right ] do
+            let idx = y * w + x
+            let pix = NativeInterop.NativePtr.get pixels idx
+            let r = Colors.getR pix
+            let g = Colors.getG pix
+            let b = Colors.getB pix
+            minR <- min minR r
+            minG <- min minG g
+            minB <- min minB b
+            maxR <- max maxR r
+            maxG <- max maxG g
+            maxB <- max maxB b
+    ((minR, minG, minB), (maxR, maxG, maxB))
+
 
 let normalizeChannel min max c =
     let minF = double min
@@ -25,15 +35,30 @@ let normalizePixel (minR, minG, minB) (maxR, maxG, maxB) c =
     let b = normalizeChannel minB maxB (Colors.getB c)
     Colors.fromRGB r g b
 
-let normalizeRenderer rect (renderer : CoreRendering.IRenderer) =
-    let minC, maxC = minMaxColor renderer rect
-    renderer.Map rect (normalizePixel minC maxC)
-    ()
+let normalizeHistogram ctx rect =
+    let w = ctx.Width
+    let h = ctx.Height
+    let pixels = ctx.Context.Pixels
+    let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
+    let minC, maxC = minMaxColor ctx w (left, top, right, bottom)
+    for y in [ top .. bottom ] do
+        for x in [ left .. right ] do
+            let idx = y * w + x
+            let pix = NativeInterop.NativePtr.get pixels idx
+            let newPix = normalizePixel minC maxC pix
+            NativeInterop.NativePtr.set pixels idx newPix
 
-let generateHistogram bg channel pixels =
+let generateHistogram bg channel ctx rect =
+    let w = ctx.Width
+    let h = ctx.Height
+    let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
+    let pixels = ctx.Context.Pixels
     let histogram = Array.zeroCreate 256
-    pixels |> Array.filter (fun c -> c <> bg) |> Array.iter (fun pix ->
-        let c = channel pix
-        histogram.[c] <- histogram.[c] + 1
-    )
+    for y in [ top .. bottom ] do
+        for x in [ left .. right ] do
+            let idx = y * w + x
+            let pix = NativeInterop.NativePtr.get pixels idx
+            if pix <> bg then
+                let c = channel pix
+                histogram.[c] <- histogram.[c] + 1
     histogram
