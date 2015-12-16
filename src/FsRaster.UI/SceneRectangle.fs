@@ -8,9 +8,9 @@ open FsXaml
 open FsRaster.Figures
 open FsRaster.Utils
 
-type ClipRectMouseMoveType = ClipResize | ClipMove
+type RectMouseMoveType = Resize | Move
 
-type ClippingRectangleController(control : FrameworkElement) =
+type SceneRectangleController(control : FrameworkElement) =
 
     [<Literal>]
     let MatchDistance = 10
@@ -39,9 +39,9 @@ type ClippingRectangleController(control : FrameworkElement) =
             Option.bind (fun (left, top, right, bottom) ->
                 let pos = getPosition e
                 if distance pos (left, top) <= MatchDistance
-                then Some (ClipMove, pos)
+                then Some (Move, pos)
                 else if distance pos (right, bottom) <= MatchDistance
-                then Some (ClipResize, pos)
+                then Some (Resize, pos)
                 else None
             ) clipRect
         if Option.isSome moveData then
@@ -51,14 +51,14 @@ type ClippingRectangleController(control : FrameworkElement) =
     let onMouseMove (e : Input.MouseEventArgs) =
         moveData <-
             match moveData with
-            | Some (ClipResize, oldPos) ->
+            | Some (Resize, oldPos) ->
                 let newPos = getPosition e
                 clipRect <- Option.map (resizeRectMin MinSize (newPos -~ oldPos)) clipRect
-                Some (ClipResize, newPos)
-            | Some (ClipMove, oldPos) ->
+                Some (Resize, newPos)
+            | Some (Move, oldPos) ->
                 let newPos = getPosition e
                 clipRect <- Option.map (moveRect (newPos -~ oldPos)) clipRect
-                Some (ClipMove, newPos)
+                Some (Move, newPos)
             | None -> None
 
         if Option.isSome moveData then requestRender.Trigger ()
@@ -86,7 +86,7 @@ type ClippingRectangleController(control : FrameworkElement) =
         control.MouseMove.Add onMouseMove
         control.MouseUp.Add onMouseUp
 
-    member x.ClipRect = clipRect
+    member x.Rectangle = clipRect
 
     member x.IsEnabled
         with get() = Option.isSome clipRect

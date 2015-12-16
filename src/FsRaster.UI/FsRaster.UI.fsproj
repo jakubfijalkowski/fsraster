@@ -69,7 +69,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <None Include="App.config" />
     <Compile Include="Utils.fs" />
-    <Compile Include="ClippingRectangle.fs" />
+    <Compile Include="SceneRectangle.fs" />
     <Resource Include="FigureInfoPicker.xaml" />
     <Compile Include="FigureInfoPicker.fs" />
     <Resource Include="MainWindow.xaml" />

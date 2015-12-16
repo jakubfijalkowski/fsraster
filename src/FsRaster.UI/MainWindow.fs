@@ -33,7 +33,7 @@ type MainWindowController() =
 
     let window = MainWindow()
     let figureInfoPicker = FigureInfoPickerController(window.figureInfoPicker :?> FigureInfoPicker)
-    let clippingRectangle = ClippingRectangleController(window.clipOverlayMouse)
+    let clippingRectangle = SceneRectangleController(window.overlayMouse)
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -99,7 +99,7 @@ type MainWindowController() =
         use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
         context.Clear bgColor
 
-        let clipRect = clippingRectangle.ClipRect
+        let clipRect = clippingRectangle.Rectangle
 
         let grid =
             if window.gridCheckBox.IsChecked.Value
