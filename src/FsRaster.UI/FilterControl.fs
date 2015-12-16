@@ -18,7 +18,20 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
 
     let requestRender = Event<unit>()
 
+    let mutable duringBuild = false
     let histogramControl = control.histogramControl :?> HistogramControl
+
+    let generateGaussianMatrix size sigma' =
+        let k = size / 2
+        let sigma = sigma' * sigma' * 2.0
+        let piSigma = sigma * Math.PI
+        [ 0 .. size - 1 ] |> List.collect (fun y ->
+            [ 0 .. size - 1] |> List.map (fun x ->
+                let a = double <| (x - k - 1) * (x - k - 1)
+                let b = double <| (y - k - 1) * (y - k - 1)
+                (exp (-(a + b) / sigma)) / piSigma
+            )
+        )
 
     let getRectangle () =
         Option.map (fun (left, top, right, bottom) -> (left + 1, top + 1, right - 1, bottom - 1)) rectangle.Rectangle
@@ -41,10 +54,13 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         let selectedItem = control.convolutionFilterSize.SelectedItem :?> ComboBoxItem
         selectedItem.Tag :?> int
 
-    let getConvolutionWeights () =
+    let getConvolutionControls () =
         let size = getConvolutionSize ()
         [ 0 .. size * size - 1 ]
-        |> List.map (fun idx -> (control.convolutionWeights.Children.Item idx :?> DoubleUpDown).Value.GetValueOrDefault 0.0)
+        |> List.map (fun idx -> control.convolutionWeights.Children.Item idx :?> DoubleUpDown)
+
+    let getConvolutionWeights () =
+        getConvolutionControls () |> List.map (fun c -> c.Value.GetValueOrDefault(0.0))
 
     let triggerRequestRender _ = requestRender.Trigger()
 
@@ -64,7 +80,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         ) (getRectangle ()) |> ignore
 
     let updateCoeffWeight _ =
-        if not (control.manualCoeff.IsChecked.GetValueOrDefault false)
+        if not duringBuild && not (control.manualCoeff.IsChecked.GetValueOrDefault false)
         then
             let weights = getConvolutionWeights ()
             let sum = weights |> List.sum
@@ -86,13 +102,24 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
     let onConvolutionSizeChanged _ =
         let size = getConvolutionSize ()
         control.convolutionFilter.IsEnabled <- size > 0
+        control.loadGauss.IsEnabled <- size > 0
         if size <> 0
         then
+            duringBuild <- true
             control.convolutionWeights.Children.Clear()
-            [ 1 .. size * size ]
-            |> List.map prepareWeightControl
-            |> List.iter (control.convolutionWeights.Children.Add >> ignore)
+            let controls = [ 1 .. size * size ] |> List.map prepareWeightControl
+            controls.[controls.Length / 2].Value <- Nullable(1.0)
+            controls |> List.iter (control.convolutionWeights.Children.Add >> ignore)
             updateCoeffWeight ()
+            duringBuild <- false
+
+    let onLoadGaussMatrix _ =
+        let size = getConvolutionSize ()
+        let gauss = generateGaussianMatrix size 3.0
+        let ctrls = getConvolutionControls ()
+        control.manualCoeff.IsChecked <- Nullable(true)
+        control.convolutionCoeff.Value <- Nullable(1.0)
+        ctrls |> List.zip gauss |> List.iter (fun (g, c) -> c.Value <- Nullable(g))
 
     do
         render.Add onRender
@@ -100,6 +127,8 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         control.normalizeHistogramCheckBox.Checked.Add triggerRequestRender
         control.normalizeHistogramCheckBox.Unchecked.Add triggerRequestRender
         control.histogramChannel.SelectionChanged.Add triggerRequestRender
+
+        control.loadGauss.Click.Add onLoadGaussMatrix
 
         control.convolutionFilterSize.SelectionChanged.Add onConvolutionSizeChanged
         control.convolutionNone.Tag <- 0

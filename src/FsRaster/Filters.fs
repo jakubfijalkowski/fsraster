@@ -102,6 +102,6 @@ let convolve ctx size matrix offset coeff rect =
             let r' = r / coeff + offset
             let g' = g / coeff + offset
             let b' = b / coeff + offset
-            let pix = Colors.fromRGB (int r') (int g') (int b')
+            let pix = Colors.fromRGB (Colors.clamp <| int r') (Colors.clamp <| int g') (Colors.clamp <| int b')
             let idx = (y + top) * w + x + right
             NativeInterop.NativePtr.set pixels idx pix

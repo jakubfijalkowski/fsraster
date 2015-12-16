@@ -57,6 +57,7 @@
                 <ComboBoxItem x:Name="convolutionSize7">7</ComboBoxItem>
             </ComboBox>
             <CheckBox x:Name="manualCoeff" IsChecked="False">Manual coeff</CheckBox>
+            <Button x:Name="loadGauss">Load Gauss matrix</Button>
         </StackPanel>
 
         <GroupBox x:Name="convolutionFilter" Header="Convolution filter" Grid.Column="2" Grid.RowSpan="2" IsEnabled="True" Width="300" Height="260">

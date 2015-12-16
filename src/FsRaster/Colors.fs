@@ -20,6 +20,7 @@ let inline fromUIColor (c : UIColor) =
     let g = int c.G
     let b = int c.B
     fromARGB a r g b
+let inline clamp c = min 255 (max 0 c)
 
 let inline toUIColor c =
     let a = byte (getA c)
