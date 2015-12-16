@@ -2,6 +2,8 @@
 
 open FsRaster.CoreRendering
 
+#nowarn "9"
+
 let minMaxColor ctx w (left, top, right, bottom) = 
     let pixels = ctx.Context.Pixels
     let mutable minR, minG, minB = 255, 255, 255
