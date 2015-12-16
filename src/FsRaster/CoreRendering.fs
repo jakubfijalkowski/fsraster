@@ -161,7 +161,7 @@ let streamPixels ctx rect =
     let pixels = ctx.Context.Pixels
     seq {
         for y in [ y1 .. y2 ] do
-            let scanline = y1 * ctx.Width
+            let scanline = y * ctx.Width
             for i in [ scanline + x1 .. scanline + x2 ] do
                 yield NativeInterop.NativePtr.get pixels i 
     }

@@ -31,10 +31,13 @@ type MainWindow = XAML<"MainWindow.xaml", true>
 
 type MainWindowController() =
 
+    let renderEvent = Event<IRenderer>()
+
     let window = MainWindow()
     let figureInfoPicker = FigureInfoPickerController(window.figureInfoPicker :?> FigureInfoPicker)
     let clippingRectangle = SceneRectangleController(window.overlayMouse)
     let filteringRectangle = SceneRectangleController(window.overlayMouse)
+    let filterControl = FilterControlController(window.filterControl :?> FilterControl, filteringRectangle, renderEvent.Publish, window.backgroundColor)
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -46,7 +49,6 @@ type MainWindowController() =
 
     let mutable duringFigureUpdate = false
 
-    let renderEvent = Event<IRenderer>()
 
     // HELPERS
 
@@ -220,11 +222,13 @@ type MainWindowController() =
 
     let toggleClipping _ =
         clippingRectangle.IsEnabled <- window.clipCheckBox.IsChecked.GetValueOrDefault false
-        render ()
 
     let toggleFiltering _ =
-        filteringRectangle.IsEnabled <- window.filterCheckBox.IsChecked.GetValueOrDefault false
-        render ()
+        filteringRectangle.IsEnabled <- window.filterExpand.IsExpanded
+
+    let resizeWindowToFitFiltering (e : SizeChangedEventArgs) =
+        let diff = e.NewSize.Height - e.PreviousSize.Height
+        window.Root.Height <- window.Root.Height + diff
 
     // FILLING
 
@@ -289,9 +293,14 @@ type MainWindowController() =
         | _ -> ()
 
     let onSizeChanged (e : SizeChangedEventArgs) =
-        mainCanvas <- BitmapFactory.New(int e.NewSize.Width, int e.NewSize.Height)
-        window.mainImage.Source <- mainCanvas
-        render ()
+        let oldW = int e.PreviousSize.Width
+        let oldH = int e.PreviousSize.Height
+        let newW = int e.NewSize.Width
+        let newH = int e.NewSize.Height
+        if oldW <> newW || oldH <> newH then
+            mainCanvas <- BitmapFactory.New(newW, newH)
+            window.mainImage.Source <- mainCanvas
+            render ()
 
     do
         window.backgroundColor.SelectedColor <- Colors.White
@@ -341,8 +350,9 @@ type MainWindowController() =
         clippingRectangle.IsEnabled <- false
         clippingRectangle.RequestRender.Add render
 
-        window.filterCheckBox.Checked.Add toggleFiltering
-        window.filterCheckBox.Unchecked.Add toggleFiltering
+        window.filterExpand.Collapsed.Add toggleFiltering
+        window.filterExpand.Expanded.Add toggleFiltering
+        window.filterExpand.SizeChanged.Add resizeWindowToFitFiltering
         filteringRectangle.IsEnabled <- false
         filteringRectangle.RequestRender.Add render
 

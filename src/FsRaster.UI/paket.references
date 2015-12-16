@@ -2,4 +2,5 @@
 FSharp.Collections.ParallelSeq
 Extended.Wpf.Toolkit
 FsXaml.Wpf
-Fsharp.Charting
+FSharp.Charting
+FSharp.Control.Reactive

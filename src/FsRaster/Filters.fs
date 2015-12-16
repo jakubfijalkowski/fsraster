@@ -27,9 +27,9 @@ let normalizeRenderer rect (renderer : CoreRendering.IRenderer) =
     let minC, maxC = renderer.StreamPixels rect |> minMaxColor
     renderer.Map rect (normalizePixel minC maxC)
 
-let generateHistogram channel pixels =
+let generateHistogram bg channel pixels =
     let histogram = Array.zeroCreate 256
-    pixels |> Seq.iter (fun pix ->
+    pixels |> Seq.filter (fun c -> c <> bg) |> Seq.iter (fun pix ->
         let c = channel pix
         histogram.[c] <- histogram.[c] + 1
     )

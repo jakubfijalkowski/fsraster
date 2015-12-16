@@ -27,6 +27,9 @@
         <Style TargetType="Button">
             <Setter Property="Margin" Value="3" />
         </Style>
+        <Style TargetType="Expander">
+            <Setter Property="Margin" Value="3" />
+        </Style>
         <utils:FigureNameConverter x:Key="figureConverter" />
     </Window.Resources>
     <Grid>
@@ -34,6 +37,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -76,10 +80,7 @@
         <TextBlock Grid.Row="5" Grid.Column="1" VerticalAlignment="Center">Background:</TextBlock>
         <colorPicker:AdvancedColorPicker x:Name="backgroundColor" Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" AdvancedTitle="background" />
 
-        <UniformGrid Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Rows="1">
-            <CheckBox x:Name="clipCheckBox" VerticalAlignment="Center">Clipping</CheckBox>
-            <CheckBox x:Name="filterCheckBox" VerticalAlignment="Center">Filtering</CheckBox>
-        </UniformGrid>
+        <CheckBox x:Name="clipCheckBox" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center">Clipping</CheckBox>
 
         <TextBlock Grid.Row="8" Grid.Column="1" VerticalAlignment="Center">Boundary:</TextBlock>
         <colorPicker:AdvancedColorPicker x:Name="boundaryColor" Grid.Row="8" Grid.Column="2" AdvancedTitle="boundary" />
@@ -95,5 +96,9 @@
             <ComboBoxItem x:Name="uPlane">U</ComboBoxItem>
             <ComboBoxItem x:Name="vPlane">V</ComboBoxItem>
         </ComboBox>
+
+        <Expander x:Name="filterExpand" Grid.Row="11" Grid.ColumnSpan="4" IsExpanded="False" Header="Filtering">
+            <ui:FilterControl x:Name="filterControl" />
+        </Expander>
     </Grid>
 </Window>
