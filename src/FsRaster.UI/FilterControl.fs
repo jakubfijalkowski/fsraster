@@ -17,7 +17,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
 
     let requestRender = Event<unit>()
 
-    let histogramContainer = control.histogramContainer :?> System.Windows.Forms.Integration.WindowsFormsHost
+    let histogramControl = control.histogramControl :?> HistogramControl
 
     let mutable normalizeHandler = None
 
@@ -49,14 +49,11 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         let histogramChannel =
             control.histogramChannel.SelectionChanged
             |> Observable.map getHistogramChannel
-        let histogramData =
-            data
+        data
             |> Observable.map (fun r -> r.StreamPixels(getRectangle ()))
             |> Observable.combineLatest (fun a b -> (a, b)) histogramChannel
             |> Observable.map (fun (chan, p) -> generateHistogram (getBgColor ()) chan p)
-            |> Observable.map (Array.zip [| 0 .. 255 |])
-        let chart = LiveChart.Area(histogramData).WithXAxis(Enabled = false, Min = 0.0, Max = 255.0).WithYAxis(Enabled = false)
-        histogramContainer.Child <- new ChartControl(chart)
+            |> Observable.add (fun s -> histogramControl.UpdateHistogram s 0xffff0000)
 
         control.histogramChannel.SelectedIndex <- 0
 

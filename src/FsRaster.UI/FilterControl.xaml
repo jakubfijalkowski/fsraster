@@ -1,6 +1,5 @@
 ﻿<UserControl
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:forms="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:FsRaster.UI;assembly=FsRaster.UI"
         xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit">
@@ -42,7 +41,7 @@
             <ComboBoxItem x:Name="gChannel">G</ComboBoxItem>
             <ComboBoxItem x:Name="bChannel">B</ComboBoxItem>
         </ComboBox>
-        <forms:WindowsFormsHost x:Name="histogramContainer" Grid.Row="1" Width="200" Height="200" />
+        <ui:HistogramControl x:Name="histogramControl" Grid.Row="1" Width="200" Height="200" />
 
         <CheckBox x:Name="normalizeHistogramCheckBox" Grid.Column="1">Normalize histogram</CheckBox>
     </Grid>

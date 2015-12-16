@@ -3,7 +3,6 @@ NUGET
   specs:
     Expression.Blend.Sdk (1.0.2) - framework: >= net45
     Extended.Wpf.Toolkit (2.5)
-    FSharp.Charting (0.90.13)
     FSharp.Collections.ParallelSeq (1.0.2)
     FSharp.Control.Reactive (3.2.0)
       FSharp.Core (>= 3.1.2)
