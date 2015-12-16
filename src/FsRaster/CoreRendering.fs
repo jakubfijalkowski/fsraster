@@ -153,6 +153,31 @@ let extractYUVPlane ctx plane =
         let rgb = yuvToRGB yuv
         NativeInterop.NativePtr.set pixels i rgb
 
+let streamPixels ctx rect =
+    let maxW = ctx.Width - 1
+    let maxH = ctx.Height - 1
+    let x1, y1, x2, y2 = clipRect rect maxW maxH
+
+    let pixels = ctx.Context.Pixels
+    seq {
+        for y in [ y1 .. y2 ] do
+            let scanline = y1 * ctx.Width
+            for i in [ scanline + x1 .. scanline + x2 ] do
+                yield NativeInterop.NativePtr.get pixels i 
+    }
+
+let mapPixelsXY ctx rect f =
+    let maxW = ctx.Width - 1
+    let maxH = ctx.Height - 1
+    let x1, y1, x2, y2 = clipRect rect maxW maxH
+    let pixels = ctx.Context.Pixels
+    for y in [ y1 .. y2 ] do
+        for x in [ x1 .. x2 ] do
+            let i = y * ctx.Width + x
+            let pix = NativeInterop.NativePtr.get pixels i
+            let newPix = f x y pix
+            NativeInterop.NativePtr.set pixels i newPix
+
 type IRenderer =
     inherit IDisposable
 
@@ -168,6 +193,10 @@ type IRenderer =
     abstract member PutPrimitive : RenderPrimitive -> unit
 
     abstract member ExtractYUVPlane : YUVPlane -> unit
+
+    abstract member StreamPixels : Rectangle -> seq<int>
+    abstract member Map : Rectangle -> (int -> int) -> unit
+    abstract member MapXY : Rectangle -> (int -> int -> int -> int) -> unit
        
 type BitmapRenderer(context : BitmapContext) =
     let cachedContext = { Context = context; Width = context.Width; Height = context.Height }
@@ -185,6 +214,10 @@ type BitmapRenderer(context : BitmapContext) =
         member this.PutPrimitive prim = putPrimitive cachedContext prim
 
         member this.ExtractYUVPlane plane = extractYUVPlane cachedContext plane
+
+        member this.StreamPixels rect = streamPixels cachedContext rect
+        member this.Map rect f = mapPixelsXY cachedContext rect (fun _ _ p -> f p)
+        member this.MapXY rect f = mapPixelsXY cachedContext rect f
 
     interface IDisposable with
         member x.Dispose() = context.Dispose()

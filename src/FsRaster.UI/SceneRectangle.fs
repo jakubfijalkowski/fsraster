@@ -17,9 +17,9 @@ type SceneRectangleController(control : FrameworkElement) =
     [<Literal>]
     let MinSize = 3
 
-    let mutable clipRect = None
+    let mutable rect = None
     let mutable moveData = None
-    let requestRender = Event<unit>()
+    let requestRender = Event<Rectangle option>()
 
     let getPosition (e : Input.MouseEventArgs) =
         let pos = e.GetPosition(control)
@@ -43,7 +43,7 @@ type SceneRectangleController(control : FrameworkElement) =
                 else if distance pos (right, bottom) <= MatchDistance
                 then Some (Resize, pos)
                 else None
-            ) clipRect
+            ) rect
         if Option.isSome moveData then
             e.Handled <- true
             Input.Mouse.Capture control |> ignore
@@ -53,15 +53,15 @@ type SceneRectangleController(control : FrameworkElement) =
             match moveData with
             | Some (Resize, oldPos) ->
                 let newPos = getPosition e
-                clipRect <- Option.map (resizeRectMin MinSize (newPos -~ oldPos)) clipRect
+                rect <- Option.map (resizeRectMin MinSize (newPos -~ oldPos)) rect
                 Some (Resize, newPos)
             | Some (Move, oldPos) ->
                 let newPos = getPosition e
-                clipRect <- Option.map (moveRect (newPos -~ oldPos)) clipRect
+                rect <- Option.map (moveRect (newPos -~ oldPos)) rect
                 Some (Move, newPos)
             | None -> None
 
-        if Option.isSome moveData then requestRender.Trigger ()
+        if Option.isSome moveData then requestRender.Trigger rect
 
         let cursor =
             Option.bind (fun (left, top, right, bottom) ->
@@ -71,7 +71,7 @@ type SceneRectangleController(control : FrameworkElement) =
                 else if distance pos (right, bottom) <= MatchDistance
                 then Some Input.Cursors.SizeNWSE
                 else None
-            ) clipRect
+            ) rect
         e.Handled <- Option.isSome cursor
         control.Cursor <- Option.opt null cursor
 
@@ -86,13 +86,14 @@ type SceneRectangleController(control : FrameworkElement) =
         control.MouseMove.Add onMouseMove
         control.MouseUp.Add onMouseUp
 
-    member x.Rectangle = clipRect
+    member x.Rectangle = rect
 
     member x.IsEnabled
-        with get() = Option.isSome clipRect
+        with get() = Option.isSome rect
         and  set(value) =
             if value
-            then clipRect <- Some (getDefaultClipRect ())
-            else clipRect <- None
+            then rect <- Some (getDefaultClipRect ())
+            else rect <- None
+            requestRender.Trigger rect
 
     member x.RequestRender = requestRender.Publish

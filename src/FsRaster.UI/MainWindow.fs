@@ -34,6 +34,7 @@ type MainWindowController() =
     let window = MainWindow()
     let figureInfoPicker = FigureInfoPickerController(window.figureInfoPicker :?> FigureInfoPicker)
     let clippingRectangle = SceneRectangleController(window.overlayMouse)
+    let filteringRectangle = SceneRectangleController(window.overlayMouse)
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -100,6 +101,7 @@ type MainWindowController() =
         context.Clear bgColor
 
         let clipRect = clippingRectangle.Rectangle
+        let filterRect = filteringRectangle.Rectangle
 
         let grid =
             if window.gridCheckBox.IsChecked.Value
@@ -112,7 +114,8 @@ type MainWindowController() =
         let buildInfo = figureInfoPicker.FigureInfo
         let topMost = Seq.choose id
                         [ getBuilderPreview buildInfo
-                        ; Option.map (asPolygon Colors.Red) clipRect ]
+                        ; Option.map (asPolygon Colors.Red) clipRect
+                        ; Option.map (asPolygon Colors.Blue) filterRect ]
 
         let figs = Option.fold clipFigures (figures :> Figure seq) clipRect
 
@@ -203,10 +206,14 @@ type MainWindowController() =
             render ()
         | _ -> ()
 
-    // CLIPPING
+    // CLIPPING/FILTERING
 
     let toggleClipping _ =
         clippingRectangle.IsEnabled <- window.clipCheckBox.IsChecked.GetValueOrDefault false
+        render ()
+
+    let toggleFiltering _ =
+        filteringRectangle.IsEnabled <- window.filterCheckBox.IsChecked.GetValueOrDefault false
         render ()
 
     // FILLING
@@ -310,8 +317,6 @@ type MainWindowController() =
         window.deleteMenu.Click.Add deleteFigure
 
         window.Root.KeyUp.Add onKeyUp
-        window.clipCheckBox.Checked.Add toggleClipping
-        window.clipCheckBox.Unchecked.Add toggleClipping
 
         window.fill4.Click.Add startFilling4
         window.fill8.Click.Add startFilling8
@@ -321,7 +326,14 @@ type MainWindowController() =
 
         window.yuvPlane.SelectionChanged.Add render
 
+        window.clipCheckBox.Checked.Add toggleClipping
+        window.clipCheckBox.Unchecked.Add toggleClipping
         clippingRectangle.IsEnabled <- false
         clippingRectangle.RequestRender.Add render
+
+        window.filterCheckBox.Checked.Add toggleFiltering
+        window.filterCheckBox.Unchecked.Add toggleFiltering
+        filteringRectangle.IsEnabled <- false
+        filteringRectangle.RequestRender.Add render
 
     member this.Window with get() = window.Root

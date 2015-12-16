@@ -5,3 +5,4 @@ nuget FSharp.Collections.ParallelSeq
 nuget FsXaml.Wpf
 nuget WriteableBitmapEx
 nuget FSharp.Data
+nuget FSharp.Charting

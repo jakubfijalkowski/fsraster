@@ -14,4 +14,5 @@
       "../FigureClipping.fs"
       "../CoreRendering.fs"
       "../CoreAlgorithms.fs"
+      "../Filters.fs"
       "../CIExyYPlane.fs"

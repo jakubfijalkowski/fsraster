@@ -145,3 +145,10 @@ let generateGrid width height spacing color =
 let rec inPairs = function
     | a :: b :: rest -> (a, b) :: inPairs rest
     | _              -> []
+
+let clipRect (left, top, right, bottom) maxW maxH =
+    let x1 = min maxW <| max 0 left
+    let x2 = min maxW <| max 0 right
+    let y1 = min maxH <| max 0 top
+    let y2 = min maxH <| max 0 bottom
+    (x1, y1, x2, y2)
