@@ -41,6 +41,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
@@ -53,7 +54,7 @@
             <MenuItem x:Name="addMenu" Header="_Add" />
             <MenuItem x:Name="deleteMenu" Header="_Delete" IsEnabled="False" />
         </Menu>
-        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="9">
+        <Grid x:Name="imageContainer" Grid.Row="1" Grid.RowSpan="10">
             <Image x:Name="mainImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
             <Grid x:Name="clipOverlayMouse" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" />
         </Grid>
@@ -85,5 +86,11 @@
         <colorPicker:AdvancedColorPicker x:Name="fillColor" Grid.Row="9" Grid.Column="2" AdvancedTitle="fill" />
         <Button x:Name="fill8" Grid.Row="9" Grid.Column="3">8</Button>
 
+        <CheckBox x:Name="yuvCheckbox" Grid.Row="10" Grid.Column="1">YUV</CheckBox>
+        <ComboBox x:Name="yuvPlane" Grid.Row="10" Grid.Column="2" Grid.ColumnSpan="2" SelectedIndex="0" IsEnabled="{Binding IsChecked, ElementName=yuvCheckbox}">
+            <ComboBoxItem x:Name="yPlane">Y</ComboBoxItem>
+            <ComboBoxItem x:Name="uPlane">U</ComboBoxItem>
+            <ComboBoxItem x:Name="vPlane">V</ComboBoxItem>
+        </ComboBox>
     </Grid>
 </Window>

@@ -118,6 +118,40 @@ let putPrimitive ctx = function
     | PrimPixel ((x, y), c)   -> putColorAlpha ctx x y c
     | PrimLine (x1, y, x2, c) -> putSolidLine ctx x1 y x2 c
     | PrimTexLine t           -> putTexLine ctx t
+    
+type YUVPlane = PlaneY | PlaneU | PlaneV
+
+let getYUVFromPixel p =
+    let r = (double <| Colors.getR p) / 255.0
+    let g = (double <| Colors.getG p) / 255.0
+    let b = (double <| Colors.getB p) / 255.0
+    let y = 0.299 * r + 0.587 * g + 0.114 * b
+    let u = -0.147 * r - 0.289 * g + 0.436 * g
+    let v = 0.615 * r - 0.515 * g - 0.1 * b
+    (y, u, v)
+
+let getPlane plane (y, u, v) =
+    match plane with
+    | PlaneY -> (y, 0.0, 0.0)
+    | PlaneU -> (0.0, u, 0.0)
+    | PlaneV -> (0.0, 0.0, v)
+
+let yuvToRGB (y, u, v) =
+    let r = (y + 1.140 * v) * 255.0
+    let g = (y - 0.395 * u - 0.581 * v) * 255.0
+    let b = (y + 2.032 * u) * 255.0
+    Colors.fromRGB (int r) (int g) (int b)
+
+let extractYUVPlane ctx plane =
+    let pixels = ctx.Context.Pixels
+    let w = ctx.Width
+    let h = ctx.Height
+    let len = w * h - 1
+    for i in 0 .. len do
+        let pix = NativeInterop.NativePtr.get pixels i
+        let yuv = getYUVFromPixel pix |> getPlane plane
+        let rgb = yuvToRGB yuv
+        NativeInterop.NativePtr.set pixels i rgb
 
 type IRenderer =
     inherit IDisposable
@@ -132,6 +166,8 @@ type IRenderer =
     abstract member PutPixel : int -> int -> int -> unit
 
     abstract member PutPrimitive : RenderPrimitive -> unit
+
+    abstract member ExtractYUVPlane : YUVPlane -> unit
        
 type BitmapRenderer(context : BitmapContext) =
     let cachedContext = { Context = context; Width = context.Width; Height = context.Height }
@@ -147,6 +183,8 @@ type BitmapRenderer(context : BitmapContext) =
         member this.PutPixel x y c = putPixel cachedContext x y c
 
         member this.PutPrimitive prim = putPrimitive cachedContext prim
+
+        member this.ExtractYUVPlane plane = extractYUVPlane cachedContext plane
 
     interface IDisposable with
         member x.Dispose() = context.Dispose()

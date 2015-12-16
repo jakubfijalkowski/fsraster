@@ -555,12 +555,12 @@ namespace FsRaster.UI.ColorPicker
 
         private static double GammaCorrect(double value)
         {
-            return Math.Pow(value, Gamma);
+            return value;
         }
 
         private static double InverseGammaCorrection(double value)
         {
-            return Math.Pow(value, InvGamma);
+            return value;
         }
     }
 

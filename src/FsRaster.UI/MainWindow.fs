@@ -84,6 +84,14 @@ type MainWindowController() =
 
     // RENDERING
 
+    let processYUVPlane (renderer : IRenderer) =
+        let plane =
+            match window.yuvPlane.SelectedIndex with
+            | 1 -> PlaneU
+            | 2 -> PlaneV
+            | _ -> PlaneY
+        renderer.ExtractYUVPlane plane
+
     let render' _ =
         let bgColor = window.backgroundColor.SelectedColor
         let gridColor = window.gridColor.SelectedColor
@@ -109,6 +117,9 @@ type MainWindowController() =
         let figs = Option.fold clipFigures (figures :> Figure seq) clipRect
 
         renderFigures context (seq { yield! grid; yield! figs; yield! topMost })
+
+        if window.yuvCheckbox.IsChecked.GetValueOrDefault(false) then
+            processYUVPlane context
 
     let render _ =
         #if DEBUG || PROFILE_RENDERING
@@ -304,6 +315,11 @@ type MainWindowController() =
 
         window.fill4.Click.Add startFilling4
         window.fill8.Click.Add startFilling8
+
+        window.yuvCheckbox.Checked.Add render
+        window.yuvCheckbox.Unchecked.Add render
+
+        window.yuvPlane.SelectionChanged.Add render
 
         clippingRectangle.IsEnabled <- false
         clippingRectangle.RequestRender.Add render
