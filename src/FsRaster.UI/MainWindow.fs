@@ -46,6 +46,8 @@ type MainWindowController() =
 
     let mutable duringFigureUpdate = false
 
+    let renderEvent = Event<IRenderer>()
+
     // HELPERS
 
     let getPosition (e : Input.MouseEventArgs) =
@@ -85,44 +87,52 @@ type MainWindowController() =
 
     // RENDERING
 
-    let processYUVPlane (renderer : IRenderer) =
-        let plane =
-            match window.yuvPlane.SelectedIndex with
-            | 1 -> PlaneU
-            | 2 -> PlaneV
-            | _ -> PlaneY
-        renderer.ExtractYUVPlane plane
-
-    let render' _ =
+    let clearBackground (ctx : IRenderer) =
         let bgColor = window.backgroundColor.SelectedColor
-        let gridColor = window.gridColor.SelectedColor
+        ctx.Clear bgColor
 
-        use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer 
-        context.Clear bgColor
+    let getGrid (ctx : IRenderer) =
+        if window.gridCheckBox.IsChecked.Value
+        then
+            let spacing = window.gridSpacing.Value.GetValueOrDefault 10
+            let gridColor = window.gridColor.SelectedColor
+            generateGrid ctx.Width ctx.Height spacing gridColor
+        else []
 
+    let getTopMostFigures (ctx : IRenderer) =
         let clipRect = clippingRectangle.Rectangle
         let filterRect = filteringRectangle.Rectangle
-
-        let grid =
-            if window.gridCheckBox.IsChecked.Value
-            then
-                let spacing = window.gridSpacing.Value.GetValueOrDefault 10
-                generateGrid context.Width context.Height spacing gridColor
-            else []
-        let grid = Option.fold clipFigures (grid :> Figure seq) clipRect
-
         let buildInfo = figureInfoPicker.FigureInfo
-        let topMost = Seq.choose id
-                        [ getBuilderPreview buildInfo
-                        ; Option.map (asPolygon Colors.Red) clipRect
-                        ; Option.map (asPolygon Colors.Blue) filterRect ]
+        Seq.choose id
+            [ getBuilderPreview buildInfo
+            ; Option.map (asPolygon Colors.Red) clipRect
+            ; Option.map (asPolygon Colors.Blue) filterRect ]
 
-        let figs = Option.fold clipFigures (figures :> Figure seq) clipRect
+    let clipRenderFigures (ctx : IRenderer) figures =
+        let clipRect = clippingRectangle.Rectangle
+        Option.fold clipFigures (figures :> Figure seq) clipRect
 
-        renderFigures context (seq { yield! grid; yield! figs; yield! topMost })
-
+    let processYUVPlane (ctx : IRenderer) =
         if window.yuvCheckbox.IsChecked.GetValueOrDefault(false) then
-            processYUVPlane context
+            let plane =
+                match window.yuvPlane.SelectedIndex with
+                | 1 -> PlaneU
+                | 2 -> PlaneV
+                | _ -> PlaneY
+            ctx.ExtractYUVPlane plane
+
+    let renderPipeline (ctx : IRenderer) =
+        clearBackground ctx
+        let grid = getGrid ctx :> Figure seq |> clipRenderFigures ctx
+        let figs = figures :> Figure seq |> clipRenderFigures ctx
+        let topMost = getTopMostFigures ctx
+        renderFigures ctx (seq { yield! grid; yield! figs; yield! topMost })
+        processYUVPlane ctx
+
+    let render' _ =
+        use context = new BitmapRenderer(mainCanvas.GetBitmapContext ReadWriteMode.ReadWrite) :> IRenderer
+        renderPipeline context
+        renderEvent.Trigger context
 
     let render _ =
         #if DEBUG || PROFILE_RENDERING
