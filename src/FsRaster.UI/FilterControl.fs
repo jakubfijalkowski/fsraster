@@ -14,7 +14,12 @@ open FsRaster.Filters
 type FilterControl = XAML<"FilterControl.xaml", true>
 
 type FilterControlController(control : FilterControl, rectangle : SceneRectangleController, data : IObservable<IRenderer>, bgColorPicker : FsRaster.UI.ColorPicker.AdvancedColorPicker) =
+
+    let requestRender = Event<unit>()
+
     let histogramContainer = control.histogramContainer :?> System.Windows.Forms.Integration.WindowsFormsHost
+
+    let mutable normalizeHandler = None
 
     let getRectangle () =
         Option.map (fun (left, top, right, bottom) -> (left + 1, top + 1, right - 1, bottom - 1)) rectangle.Rectangle
@@ -27,6 +32,18 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         | 1 -> FsRaster.Colors.getG
         | 2 -> FsRaster.Colors.getB
         | _ -> FsRaster.Colors.getR
+
+    let triggerRequestRender _ = requestRender.Trigger()
+
+    let normalizeHistogramChanged _ =
+        let should = control.normalizeHistogramCheckBox.IsChecked.GetValueOrDefault false
+        if should
+        then
+            normalizeHandler <- data |> Observable.subscribe (fun r -> normalizeRenderer (getRectangle ()) r) |> Some
+        else
+            (Option.get normalizeHandler).Dispose()
+            normalizeHandler <- None
+        triggerRequestRender ()
 
     do
         let histogramChannel =
@@ -42,3 +59,8 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         histogramContainer.Child <- new ChartControl(chart)
 
         control.histogramChannel.SelectedIndex <- 0
+
+        control.normalizeHistogramCheckBox.Checked.Add normalizeHistogramChanged
+        control.normalizeHistogramCheckBox.Unchecked.Add normalizeHistogramChanged
+
+    member this.RequestRender = requestRender.Publish

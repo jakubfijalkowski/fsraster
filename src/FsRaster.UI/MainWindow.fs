@@ -356,4 +356,6 @@ type MainWindowController() =
         filteringRectangle.IsEnabled <- false
         filteringRectangle.RequestRender.Add render
 
+        filterControl.RequestRender.Add render
+
     member this.Window with get() = window.Root

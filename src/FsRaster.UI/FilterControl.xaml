@@ -43,6 +43,8 @@
             <ComboBoxItem x:Name="bChannel">B</ComboBoxItem>
         </ComboBox>
         <forms:WindowsFormsHost x:Name="histogramContainer" Grid.Row="1" Width="200" Height="200" />
+
+        <CheckBox x:Name="normalizeHistogramCheckBox" Grid.Column="1">Normalize histogram</CheckBox>
     </Grid>
 
 </UserControl>

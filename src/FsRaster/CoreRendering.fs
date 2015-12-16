@@ -159,12 +159,12 @@ let streamPixels ctx rect =
     let x1, y1, x2, y2 = clipRect rect maxW maxH
 
     let pixels = ctx.Context.Pixels
-    seq {
+    [|
         for y in [ y1 .. y2 ] do
             let scanline = y * ctx.Width
             for i in [ scanline + x1 .. scanline + x2 ] do
                 yield NativeInterop.NativePtr.get pixels i 
-    }
+    |]
 
 let mapPixelsXY ctx rect f =
     let maxW = ctx.Width - 1
@@ -177,6 +177,19 @@ let mapPixelsXY ctx rect f =
             let pix = NativeInterop.NativePtr.get pixels i
             let newPix = f x y pix
             NativeInterop.NativePtr.set pixels i newPix
+
+let foldPixelsXY ctx rect f state =
+    let maxW = ctx.Width - 1
+    let maxH = ctx.Height - 1
+    let x1, y1, x2, y2 = clipRect rect maxW maxH
+    let pixels = ctx.Context.Pixels
+    let mutable state' = state
+    for y in [ y1 .. y2 ] do
+        for x in [ x1 .. x2 ] do
+            let i = y * ctx.Width + x
+            let pix = NativeInterop.NativePtr.get pixels i
+            state' <- f state' x y pix
+    state'
 
 type IRenderer =
     inherit IDisposable
@@ -194,9 +207,11 @@ type IRenderer =
 
     abstract member ExtractYUVPlane : YUVPlane -> unit
 
-    abstract member StreamPixels : Rectangle -> seq<int>
+    abstract member StreamPixels : Rectangle -> int array
     abstract member Map : Rectangle -> (int -> int) -> unit
     abstract member MapXY : Rectangle -> (int -> int -> int -> int) -> unit
+    abstract member Fold : Rectangle -> ('a -> int -> 'a) -> 'a -> 'a
+    abstract member FoldXY : Rectangle -> ('a -> int -> int -> int -> 'a) -> 'a -> 'a
        
 type BitmapRenderer(context : BitmapContext) =
     let cachedContext = { Context = context; Width = context.Width; Height = context.Height }
@@ -218,6 +233,8 @@ type BitmapRenderer(context : BitmapContext) =
         member this.StreamPixels rect = streamPixels cachedContext rect
         member this.Map rect f = mapPixelsXY cachedContext rect (fun _ _ p -> f p)
         member this.MapXY rect f = mapPixelsXY cachedContext rect f
+        member this.Fold rect f state = foldPixelsXY cachedContext rect (fun s _ _ p -> f s p) state
+        member this.FoldXY rect f state = foldPixelsXY cachedContext rect f state
 
     interface IDisposable with
         member x.Dispose() = context.Dispose()
