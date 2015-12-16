@@ -1,5 +1,7 @@
 ﻿module FsRaster.Filters
 
+open System.Diagnostics.CodeAnalysis
+
 open FsRaster.CoreRendering
 
 #nowarn "9"
@@ -64,3 +66,42 @@ let generateHistogram bg channel ctx rect =
                 let c = channel pix
                 histogram.[c] <- histogram.[c] + 1
     histogram
+
+[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
+let convolvePixel size (matrix : double array) (copy : int array) w h x y =
+    let hs = size / 2
+    let mutable sumR, sumG, sumB = 0.0, 0.0, 0.0
+    for dy in -hs .. hs do
+        for dx in -hs .. hs do
+            let x' = x + dx
+            let y' = y + dy
+            if x' >= 0 && y' >= 0 && x' < w && y' < h then
+                let weight = matrix.[(dy + hs) * size + dx + hs]
+                let idx = y' * w + x'
+                let pix = copy.[idx]
+                let r = Colors.getR pix
+                let g = Colors.getG pix
+                let b = Colors.getB pix
+                sumR <- sumR + double r * weight
+                sumG <- sumG + double g * weight
+                sumB <- sumB + double b * weight
+    (sumR, sumG, sumB)
+
+[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
+let convolve ctx size matrix offset coeff rect =
+    let w = ctx.Width
+    let h = ctx.Height
+    let pixels = ctx.Context.Pixels
+    let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
+    let rectW = right - left
+    let rectH = bottom - top
+    let pixelsCopy = streamPixels ctx rect
+    for y in 0 .. rectH do
+        for x in 0 .. rectW do
+            let r, g, b = convolvePixel size matrix pixelsCopy rectW rectH x y
+            let r' = r / coeff + offset
+            let g' = g / coeff + offset
+            let b' = b / coeff + offset
+            let pix = Colors.fromRGB (int r') (int g') (int b')
+            let idx = (y + top) * w + x + right
+            NativeInterop.NativePtr.set pixels idx pix

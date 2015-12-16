@@ -20,6 +20,9 @@
         <Style TargetType="xctk:IntegerUpDown">
             <Setter Property="Margin" Value="3" />
         </Style>
+        <Style TargetType="xctk:DoubleUpDown">
+            <Setter Property="Margin" Value="3" />
+        </Style>
         <Style TargetType="xctk:ColorPicker">
             <Setter Property="Margin" Value="3" />
         </Style>
@@ -34,6 +37,8 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <ComboBox x:Name="histogramChannel" SelectedIndex="0">
@@ -43,8 +48,35 @@
         </ComboBox>
         <ui:HistogramControl x:Name="histogramControl" Grid.Row="1" Width="200" Height="200" />
 
-        <CheckBox x:Name="normalizeHistogramCheckBox" Grid.Column="1">Normalize histogram</CheckBox>
+        <StackPanel Grid.Column="1" Grid.RowSpan="2" Orientation="Vertical">
+            <CheckBox x:Name="normalizeHistogramCheckBox">Normalize histogram</CheckBox>
+            <ComboBox x:Name="convolutionFilterSize" SelectedIndex="0">
+                <ComboBoxItem x:Name="convolutionNone">None</ComboBoxItem>
+                <ComboBoxItem x:Name="convolutionSize3">3</ComboBoxItem>
+                <ComboBoxItem x:Name="convolutionSize5">5</ComboBoxItem>
+                <ComboBoxItem x:Name="convolutionSize7">7</ComboBoxItem>
+            </ComboBox>
+            <CheckBox x:Name="manualCoeff" IsChecked="False">Manual coeff</CheckBox>
+        </StackPanel>
+
+        <GroupBox x:Name="convolutionFilter" Header="Convolution filter" Grid.Column="2" Grid.RowSpan="2" IsEnabled="True" Width="300" Height="260">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <UniformGrid x:Name="convolutionWeights" Grid.ColumnSpan="2" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.Column="0">Offset:</TextBlock>
+                <xctk:DoubleUpDown x:Name="convolutionOffset" Grid.Row="1" Grid.Column="1" Value="0.0" />
+                <TextBlock Grid.Row="2" Grid.Column="0">Coeff:</TextBlock>
+                <xctk:DoubleUpDown x:Name="convolutionCoeff" Grid.Row="2" Grid.Column="1" Value="0.0" IsEnabled="{Binding IsChecked, ElementName=manualCoeff}" />
+            </Grid>            
+        </GroupBox>
     </Grid>
 
 </UserControl>
-
