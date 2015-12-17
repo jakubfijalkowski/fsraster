@@ -119,6 +119,7 @@ let applyFunctionFilter ctx rect (filterR : int array) (filterG : int array) (fi
             let b = filterB.[Colors.getB pix]
             NativeInterop.NativePtr.set pixels idx (Colors.fromRGB r g b)
 
+[<SuppressMessage("CyclomaticComplexity", "*")>]
 let scaleImage ctx scaleX scaleY rect =
     let w = ctx.Width
     let h = ctx.Height
