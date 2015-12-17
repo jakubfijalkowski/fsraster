@@ -125,9 +125,9 @@
                     </Grid.RowDefinitions>
                     <CheckBox x:Name="scaleCheckBox" Grid.Row="0" Grid.ColumnSpan="2" IsChecked="False">Enabled</CheckBox>
                     <TextBlock Grid.Row="1">X:</TextBlock>
-                    <xctk:DoubleUpDown x:Name="scaleFactorX" Grid.Row="1" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" />
+                    <xctk:DoubleUpDown x:Name="scaleFactorX" Grid.Row="1" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" Increment="0.1" />
                     <TextBlock Grid.Row="2">Y:</TextBlock>
-                    <xctk:DoubleUpDown x:Name="scaleFactorY" Grid.Row="2" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" />
+                    <xctk:DoubleUpDown x:Name="scaleFactorY" Grid.Row="2" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" Increment="0.1" />
                 </Grid>
             </GroupBox>
         </StackPanel>
