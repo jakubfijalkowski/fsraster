@@ -47,7 +47,9 @@
             <ComboBoxItem x:Name="gChannel">G</ComboBoxItem>
             <ComboBoxItem x:Name="bChannel">B</ComboBoxItem>
         </ComboBox>
-        <ui:HistogramControl x:Name="histogramControl" Grid.Row="1" Width="200" Height="200" />
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" Padding="1" VerticalAlignment="Top">
+            <ui:HistogramControl x:Name="histogramControl" Width="256" Height="256" />
+        </Border>
 
         <StackPanel Grid.Column="1" Grid.RowSpan="2" Orientation="Vertical">
             <CheckBox x:Name="normalizeHistogramCheckBox">Normalize histogram</CheckBox>

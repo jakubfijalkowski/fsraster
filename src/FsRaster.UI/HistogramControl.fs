@@ -6,14 +6,12 @@ open System.Windows.Controls
 open FsRaster.CoreRendering
 
 type HistogramControl() as self =
-    inherit UserControl()
+    inherit Image()
 
     let bitmap = BitmapFactory.New(256, 256)
 
     do
-        let img = new Image()
-        img.Source <- bitmap
-        self.Content <- img
+        self.Source <- bitmap
 
     member this.UpdateHistogram data c =
         let scale = data |> Array.max |> double
