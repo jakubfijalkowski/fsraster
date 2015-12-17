@@ -123,13 +123,13 @@ let scaleImage ctx scaleX scaleY rect =
     let w = ctx.Width
     let h = ctx.Height
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
-    let pixelsCopy = streamPixels ctx (left, top, right, bottom)
+    let pixelsCopy = streamPixels ctx (left, top, right + 1, bottom + 1)
 
     let invScaleX = 1.0 / scaleX
     let invScaleY = 1.0 / scaleY
 
-    let srcW = right - left
-    let srcH = bottom - top
+    let srcW = right - left + 1
+    let srcH = bottom - top + 1
     let dstW = int <| double srcW * scaleX
     let dstH = int <| double srcH * scaleY
 
@@ -157,11 +157,18 @@ let scaleImage ctx scaleX scaleY rect =
         for idx in x + top * w .. w .. x + bottom * w do
             NativeInterop.NativePtr.set pixels idx 0xff000000
 
+    let srcCX = srcW / 2
+    let srcCY = srcH / 2
+    let dstCX = left + leftOffset + dstW / 2 - if scaleX > 1.0 then (dstW - srcW) / 2 else 0
+    let dstCY = top + topOffset + dstH / 2 - if scaleY > 1.0 then (dstH - srcH) / 2 else 0
+
     //  Real image
-    for y in top + topOffset .. bottom - bottomOffset - 1 do
-        for x in left + leftOffset .. right - rightOffset - 1 do
-            let srcX = int <| double (x - left - leftOffset) * invScaleX
-            let srcY = int <| double (y - top - topOffset) * invScaleY
+    for y in top + topOffset .. bottom - bottomOffset do
+        for x in left + leftOffset .. right - rightOffset do
+            let distX = x - dstCX
+            let distY = y - dstCY
+            let srcX = srcCX + (int <| double distX * invScaleX)
+            let srcY = srcCY + (int <| double distY * invScaleY)
             let dstIdx = y * w + x
             let srcIdx = srcY * srcW + srcX
             NativeInterop.NativePtr.set pixels dstIdx pixelsCopy.[srcIdx]
