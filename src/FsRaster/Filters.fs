@@ -118,3 +118,50 @@ let applyFunctionFilter ctx rect (filterR : int array) (filterG : int array) (fi
             let g = filterG.[Colors.getG pix]
             let b = filterB.[Colors.getB pix]
             NativeInterop.NativePtr.set pixels idx (Colors.fromRGB r g b)
+
+let scaleImage ctx scaleX scaleY rect =
+    let w = ctx.Width
+    let h = ctx.Height
+    let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
+    let pixelsCopy = streamPixels ctx (left, top, right, bottom)
+
+    let invScaleX = 1.0 / scaleX
+    let invScaleY = 1.0 / scaleY
+
+    let srcW = right - left
+    let srcH = bottom - top
+    let dstW = int <| double srcW * scaleX
+    let dstH = int <| double srcH * scaleY
+
+    let leftOffset = max 0 (srcW - dstW) / 2
+    let rightOffset = max 0 (srcW - leftOffset - dstW)
+    let topOffset = max 0 (srcH - dstH) / 2
+    let bottomOffset = max 0 (srcH - topOffset - dstH)
+
+    let pixels = ctx.Context.Pixels
+    // Black background
+    //  Top
+    for y in top .. top + topOffset - 1 do
+        for idx in y * w + left .. y * w + right - 1 do
+            NativeInterop.NativePtr.set pixels idx 0xff000000
+    //  Bottom
+    for y in bottom - bottomOffset + 1 .. bottom do
+        for idx in y * w + left .. y * w + right - 1 do
+            NativeInterop.NativePtr.set pixels idx 0xff000000
+    //  Left
+    for x in left .. left + leftOffset - 1 do
+        for idx in x + top * w .. w .. x + bottom * w do
+            NativeInterop.NativePtr.set pixels idx 0xff000000
+    //  Right
+    for x in right - rightOffset + 1 .. right do
+        for idx in x + top * w .. w .. x + bottom * w do
+            NativeInterop.NativePtr.set pixels idx 0xff000000
+
+    //  Real image
+    for y in top + topOffset .. bottom - bottomOffset - 1 do
+        for x in left + leftOffset .. right - rightOffset - 1 do
+            let srcX = int <| double (x - left - leftOffset) * invScaleX
+            let srcY = int <| double (y - top - topOffset) * invScaleY
+            let dstIdx = y * w + x
+            let srcIdx = srcY * srcW + srcX
+            NativeInterop.NativePtr.set pixels dstIdx pixelsCopy.[srcIdx]

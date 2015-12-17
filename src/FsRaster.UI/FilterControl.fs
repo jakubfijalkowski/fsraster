@@ -40,6 +40,12 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
     let getRectangle () =
         Option.map (fun (left, top, right, bottom) -> (left + 1, top + 1, right - 1, bottom - 1)) rectangle.Rectangle
 
+    let withRectangle f =
+        Option.bind (fun rect ->
+            f rect
+            None
+        ) (getRectangle ()) |> ignore
+
     let getBgColor () = bgColorPicker.SelectedColor |> FsRaster.Colors.fromUIColor
 
     let getHistogramChannel _ =
@@ -70,28 +76,45 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
 
     let normalizeHistogramOnRender ctx =
         if control.normalizeHistogramCheckBox.IsChecked.GetValueOrDefault(false) then
-            Option.bind (fun rect ->
-                normalizeHistogram ctx rect
-                None
-            ) (getRectangle ()) |> ignore
+            withRectangle (normalizeHistogram ctx)
 
     let updateHistogram ctx =
-        Option.bind (fun rect ->
+        withRectangle (fun rect ->
             let histogram = generateHistogram (getBgColor ()) (getHistogramChannel ()) ctx rect
             histogramControl.UpdateHistogram histogram (getHistogramColor ())
-            None
-        ) (getRectangle ()) |> ignore
+        )
 
     let convolveImage ctx =
-        Option.bind (fun rect ->
+        withRectangle (fun rect ->
             let size = getConvolutionSize ()
             if size > 0 then
                 let weights = getConvolutionWeights () |> List.toArray
                 let coeff = control.convolutionCoeff.Value.GetValueOrDefault(1.0)
                 let offset = control.convolutionOffset.Value.GetValueOrDefault(0.0)
                 convolve ctx size weights offset coeff rect
-            None
-        ) (getRectangle ()) |> ignore
+        )
+
+    let applyFunctionFilter ctx =
+        if control.functionFilterCheckBox.IsChecked.GetValueOrDefault false then
+            withRectangle (fun rect -> 
+                let filterR = redFunctionDefinition.TranslationArray
+                let filterG = greenFunctionDefinition.TranslationArray
+                let filterB = blueFunctionDefinition.TranslationArray
+                FsRaster.Filters.applyFunctionFilter ctx rect filterR filterG filterB
+            )
+
+    let applyScaling ctx =
+        if control.scaleCheckBox.IsChecked.GetValueOrDefault false then
+            let scaleX = control.scaleFactorX.Value.GetValueOrDefault 1.0
+            let scaleY = control.scaleFactorY.Value.GetValueOrDefault 1.0
+            withRectangle (scaleImage ctx scaleX scaleY)
+
+    let onRender (renderer : IRenderer) =
+        normalizeHistogramOnRender renderer.Context
+        convolveImage renderer.Context
+        applyFunctionFilter renderer.Context
+        applyScaling renderer.Context
+        updateHistogram renderer.Context
 
     let updateCoeffWeight _ =
         if not duringBuild && not (control.manualCoeff.IsChecked.GetValueOrDefault false) then
@@ -99,22 +122,6 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
             let sum = weights |> List.sum
             let sum' = if abs sum < 0.0001 then 1.0 else sum
             control.convolutionCoeff.Value <- Nullable(sum')
-
-    let applyFunctionFilter ctx =
-        if control.functionFilterCheckBox.IsChecked.GetValueOrDefault false then
-            Option.bind (fun rect -> 
-                let filterR = redFunctionDefinition.TranslationArray
-                let filterG = greenFunctionDefinition.TranslationArray
-                let filterB = blueFunctionDefinition.TranslationArray
-                FsRaster.Filters.applyFunctionFilter ctx rect filterR filterG filterB
-                None
-            ) (getRectangle ()) |> ignore
-
-    let onRender (renderer : IRenderer) =
-        normalizeHistogramOnRender renderer.Context
-        convolveImage renderer.Context
-        applyFunctionFilter renderer.Context
-        updateHistogram renderer.Context
 
     let prepareWeightControl idx =
         let ctrl = new DoubleUpDown()
@@ -179,5 +186,10 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         redFunctionDefinition.FunctionChanged.Add triggerRequestRender
         greenFunctionDefinition.FunctionChanged.Add triggerRequestRender
         blueFunctionDefinition.FunctionChanged.Add triggerRequestRender
+
+        control.scaleCheckBox.Checked.Add triggerRequestRender
+        control.scaleCheckBox.Unchecked.Add triggerRequestRender
+        control.scaleFactorX.ValueChanged.Add triggerRequestRender
+        control.scaleFactorY.ValueChanged.Add triggerRequestRender
 
     member this.RequestRender = requestRender.Publish

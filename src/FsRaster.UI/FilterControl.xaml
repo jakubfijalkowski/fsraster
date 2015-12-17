@@ -40,6 +40,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <ComboBox x:Name="histogramChannel" SelectedIndex="0">
@@ -51,7 +52,7 @@
             <ui:HistogramControl x:Name="histogramControl" Width="256" Height="256" />
         </Border>
 
-        <StackPanel Grid.Column="1" Grid.RowSpan="2" Orientation="Vertical">
+        <StackPanel Grid.Column="1" Grid.RowSpan="2" Orientation="Vertical" Width="200">
             <CheckBox x:Name="normalizeHistogramCheckBox">Normalize histogram</CheckBox>
             <GroupBox Header="Convolution">
                 <StackPanel Orientation="Vertical">
@@ -110,6 +111,26 @@
                 </TabItem>
             </TabControl>
         </GroupBox>
+        <StackPanel Grid.Column="4" Grid.RowSpan="2" Orientation="Vertical" Width="200">
+            <GroupBox Header="Scaling">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <CheckBox x:Name="scaleCheckBox" Grid.Row="0" Grid.ColumnSpan="2" IsChecked="False">Enabled</CheckBox>
+                    <TextBlock Grid.Row="1">X:</TextBlock>
+                    <xctk:DoubleUpDown x:Name="scaleFactorX" Grid.Row="1" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" />
+                    <TextBlock Grid.Row="2">Y:</TextBlock>
+                    <xctk:DoubleUpDown x:Name="scaleFactorY" Grid.Row="2" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" />
+                </Grid>
+            </GroupBox>
+        </StackPanel>
     </Grid>
 
 </UserControl>
