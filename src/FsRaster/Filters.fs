@@ -104,3 +104,17 @@ let convolve ctx size matrix offset coeff rect =
             let pix = Colors.fromRGB (Colors.clamp <| int r') (Colors.clamp <| int g') (Colors.clamp <| int b')
             let idx = (y + top) * w + x + left
             NativeInterop.NativePtr.set pixels idx pix
+
+let applyFunctionFilter ctx rect (filterR : int array) (filterG : int array) (filterB : int array) =
+    let w = ctx.Width
+    let h = ctx.Height
+    let pixels = ctx.Context.Pixels
+    let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
+    for y in top .. bottom do
+        for x in left .. right do
+            let idx = y * w + x
+            let pix = NativeInterop.NativePtr.get pixels idx
+            let r = filterR.[Colors.getR pix]
+            let g = filterG.[Colors.getG pix]
+            let b = filterB.[Colors.getB pix]
+            NativeInterop.NativePtr.set pixels idx (Colors.fromRGB r g b)

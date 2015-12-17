@@ -29,7 +29,7 @@ let private renderLine' (x1', y1') (x2', y2') =
             let incE = 2 * dy
             let incNE = 2 * (dy - dx)
             let rec build acc d x y =
-                if x >= x2 then acc
+                if x > x2 then acc
                 else
                     let acc' = (x, y) :: acc
                     if d < 0
@@ -128,7 +128,7 @@ let renderCircleLine =
     let intRenderCircle t s = renderCircle' s (int (ceil (float t / 2.0))) |> Seq.toList
     renderRepeatedLine intRenderCircle
 
-let renderPolyline (pts, c) = pts |> List.pairwise |> PSeq.collect (uncurry renderLine') |> toColorPixels c
+let renderPolyline (pts, c) = pts |> List.pairwise |> Seq.collect (uncurry renderLine') |> toColorPixels c
 let renderPolygon (pts, c) = renderPolyline (makeConnected pts, c)
 
 type ActiveEdge = int * double * double

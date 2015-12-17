@@ -71,7 +71,7 @@
             </GroupBox>
         </StackPanel>
 
-        <GroupBox x:Name="convolutionFilter" Header="Convolution filter" Grid.Column="2" Grid.RowSpan="2" IsEnabled="True" Width="300" Height="260">
+        <GroupBox x:Name="convolutionFilter" Header="Convolution filter" Grid.Column="2" Grid.RowSpan="2" IsEnabled="True" Width="300">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -92,13 +92,19 @@
         <GroupBox Header="Function definition" Grid.Column="3" Grid.RowSpan="2" IsEnabled="{Binding IsChecked, ElementName=functionFilterCheckBox}">
             <TabControl>
                 <TabItem Header="R">
-                    <ui:FunctionDef x:Name="redFunctionDefinition" Width="256" Height="256" LineColor="Red" />
+                    <Border BorderThickness="1" BorderBrush="Black">
+                        <ui:FunctionDef x:Name="redFunctionDefinition" Width="256" Height="256" LineColor="Red" />
+                    </Border>
                 </TabItem>
                 <TabItem Header="G">
-                    <ui:FunctionDef x:Name="greenFunctionDefinition" Width="256" Height="256" LineColor="Green" />
+                    <Border BorderThickness="1" BorderBrush="Black">
+                        <ui:FunctionDef x:Name="greenFunctionDefinition" Width="256" Height="256" LineColor="Green" />
+                    </Border>
                 </TabItem>
                 <TabItem Header="B">
-                    <ui:FunctionDef x:Name="blueFunctionDefinition" Width="256" Height="256" LineColor="Blue" />
+                    <Border BorderThickness="1" BorderBrush="Black">
+                        <ui:FunctionDef x:Name="blueFunctionDefinition" Width="256" Height="256" LineColor="Blue" />
+                    </Border>
                 </TabItem>
             </TabControl>
         </GroupBox>

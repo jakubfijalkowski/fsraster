@@ -69,8 +69,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
     let triggerRequestRender _ = if not duringBuild then requestRender.Trigger()
 
     let normalizeHistogramOnRender ctx =
-        if control.normalizeHistogramCheckBox.IsChecked.GetValueOrDefault(false)
-        then
+        if control.normalizeHistogramCheckBox.IsChecked.GetValueOrDefault(false) then
             Option.bind (fun rect ->
                 normalizeHistogram ctx rect
                 None
@@ -95,16 +94,26 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         ) (getRectangle ()) |> ignore
 
     let updateCoeffWeight _ =
-        if not duringBuild && not (control.manualCoeff.IsChecked.GetValueOrDefault false)
-        then
+        if not duringBuild && not (control.manualCoeff.IsChecked.GetValueOrDefault false) then
             let weights = getConvolutionWeights ()
             let sum = weights |> List.sum
             let sum' = if abs sum < 0.0001 then 1.0 else sum
             control.convolutionCoeff.Value <- Nullable(sum')
 
+    let applyFunctionFilter ctx =
+        if control.functionFilterCheckBox.IsChecked.GetValueOrDefault false then
+            Option.bind (fun rect -> 
+                let filterR = redFunctionDefinition.TranslationArray
+                let filterG = greenFunctionDefinition.TranslationArray
+                let filterB = blueFunctionDefinition.TranslationArray
+                FsRaster.Filters.applyFunctionFilter ctx rect filterR filterG filterB
+                None
+            ) (getRectangle ()) |> ignore
+
     let onRender (renderer : IRenderer) =
         normalizeHistogramOnRender renderer.Context
         convolveImage renderer.Context
+        applyFunctionFilter renderer.Context
         updateHistogram renderer.Context
 
     let prepareWeightControl idx =
@@ -165,5 +174,10 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         control.convolutionFilterSize.SelectedIndex <- 0
 
         control.functionFilterReset.Click.Add clearFunctionDefs
+        control.functionFilterCheckBox.Checked.Add triggerRequestRender
+        control.functionFilterCheckBox.Unchecked.Add triggerRequestRender
+        redFunctionDefinition.FunctionChanged.Add triggerRequestRender
+        greenFunctionDefinition.FunctionChanged.Add triggerRequestRender
+        blueFunctionDefinition.FunctionChanged.Add triggerRequestRender
 
     member this.RequestRender = requestRender.Publish

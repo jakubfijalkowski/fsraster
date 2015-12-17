@@ -15,6 +15,8 @@ open FsRaster.FigureRendering
 type FunctionDef() as self =
     inherit Image()
 
+    let functionChanged = Event<unit>()
+
     let bitmap = BitmapFactory.New(256, 256)
     let points = new List<Point>()
 
@@ -36,6 +38,7 @@ type FunctionDef() as self =
             points.Add((posX, posY))
             points.Sort(fun (x1, _) (x2, _) -> x1.CompareTo(x2))
         render ()
+        functionChanged.Trigger()
 
     do
         self.ResetPoints()
@@ -50,14 +53,20 @@ type FunctionDef() as self =
         points.Add((0,0))
         points.Add((255, 255))
         render ()
+        functionChanged.Trigger()
 
     member this.TranslationArray =
         renderPolyline (points |> Seq.toList, FigureColor.Color 0)
         |> Seq.map (fun rp -> match rp with | PrimPixel (p, c) -> p | _ -> (0, 0))
         |> Seq.toArray
+        |> Array.sortBy fst
+        |> Array.distinctBy fst
+        |> Array.map snd
 
     member this.LineColor
         with get() = lineColor
         and set(value) =
             lineColor <- value
             render ()
+
+    member this.FunctionChanged = functionChanged.Publish
