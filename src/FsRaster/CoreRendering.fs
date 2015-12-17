@@ -154,15 +154,15 @@ let extractYUVPlane ctx plane =
         NativeInterop.NativePtr.set pixels i rgb
 
 let streamPixels ctx rect =
-    let maxW = ctx.Width - 1
-    let maxH = ctx.Height - 1
+    let maxW = ctx.Width
+    let maxH = ctx.Height
     let x1, y1, x2, y2 = clipRect rect maxW maxH
 
     let pixels = ctx.Context.Pixels
     [|
-        for y in [ y1 .. y2 ] do
+        for y in [ y1 .. y2 - 1 ] do
             let scanline = y * ctx.Width
-            for i in [ scanline + x1 .. scanline + x2 ] do
+            for i in [ scanline + x1 .. scanline + x2 - 1 ] do
                 yield NativeInterop.NativePtr.get pixels i 
     |]
 

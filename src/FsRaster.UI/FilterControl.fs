@@ -60,9 +60,9 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         |> List.map (fun idx -> control.convolutionWeights.Children.Item idx :?> DoubleUpDown)
 
     let getConvolutionWeights () =
-        getConvolutionControls () |> List.map (fun c -> c.Value.GetValueOrDefault(0.0))
+        getConvolutionControls () |> List.map (fun c -> double <| c.Value.GetValueOrDefault(0.0))
 
-    let triggerRequestRender _ = requestRender.Trigger()
+    let triggerRequestRender _ = if not duringBuild then requestRender.Trigger()
 
     let normalizeHistogramOnRender ctx =
         if control.normalizeHistogramCheckBox.IsChecked.GetValueOrDefault(false)
@@ -79,6 +79,17 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
             None
         ) (getRectangle ()) |> ignore
 
+    let convolveImage ctx =
+        Option.bind (fun rect ->
+            let size = getConvolutionSize ()
+            if size > 0 then
+                let weights = getConvolutionWeights () |> List.toArray
+                let coeff = control.convolutionCoeff.Value.GetValueOrDefault(1.0)
+                let offset = control.convolutionOffset.Value.GetValueOrDefault(0.0)
+                convolve ctx size weights offset coeff rect
+            None
+        ) (getRectangle ()) |> ignore
+
     let updateCoeffWeight _ =
         if not duringBuild && not (control.manualCoeff.IsChecked.GetValueOrDefault false)
         then
@@ -89,13 +100,14 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
 
     let onRender (renderer : IRenderer) =
         normalizeHistogramOnRender renderer.Context
+        convolveImage renderer.Context
         updateHistogram renderer.Context
 
     let prepareWeightControl idx =
         let ctrl = new DoubleUpDown()
         ctrl.Value <- Nullable(0.0)
         ctrl.ShowButtonSpinner <- false
-        ctrl.ValueChanged.Add updateCoeffWeight
+        ctrl.ValueChanged.Add (updateCoeffWeight >> triggerRequestRender)
         ctrl.Width <- 30.0
         ctrl
 
@@ -110,16 +122,16 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
             let controls = [ 1 .. size * size ] |> List.map prepareWeightControl
             controls.[controls.Length / 2].Value <- Nullable(1.0)
             controls |> List.iter (control.convolutionWeights.Children.Add >> ignore)
-            updateCoeffWeight ()
             duringBuild <- false
+            updateCoeffWeight ()
 
     let onLoadGaussMatrix _ =
+        duringBuild <- true
         let size = getConvolutionSize ()
         let gauss = generateGaussianMatrix size 3.0
         let ctrls = getConvolutionControls ()
-        control.manualCoeff.IsChecked <- Nullable(true)
-        control.convolutionCoeff.Value <- Nullable(1.0)
         ctrls |> List.zip gauss |> List.iter (fun (g, c) -> c.Value <- Nullable(g))
+        duringBuild <- false
 
     do
         render.Add onRender
@@ -131,6 +143,9 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         control.loadGauss.Click.Add onLoadGaussMatrix
 
         control.convolutionFilterSize.SelectionChanged.Add onConvolutionSizeChanged
+        control.convolutionCoeff.ValueChanged.Add triggerRequestRender
+        control.convolutionOffset.ValueChanged.Add triggerRequestRender
+
         control.convolutionNone.Tag <- 0
         control.convolutionSize3.Tag <- 3
         control.convolutionSize5.Tag <- 5
