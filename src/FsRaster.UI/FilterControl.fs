@@ -132,6 +132,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         let ctrls = getConvolutionControls ()
         ctrls |> List.zip gauss |> List.iter (fun (g, c) -> c.Value <- Nullable(g))
         duringBuild <- false
+        updateCoeffWeight ()
 
     do
         render.Add onRender

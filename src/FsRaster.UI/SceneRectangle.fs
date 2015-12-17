@@ -91,9 +91,11 @@ type SceneRectangleController(control : FrameworkElement) =
     member x.IsEnabled
         with get() = Option.isSome rect
         and  set(value) =
-            if value
-            then rect <- Some (getDefaultClipRect ())
-            else rect <- None
-            requestRender.Trigger rect
+            let oldValue = Option.isSome rect
+            if value <> oldValue then
+                if value
+                then rect <- Some (getDefaultClipRect ())
+                else rect <- None
+                requestRender.Trigger rect
 
     member x.RequestRender = requestRender.Publish

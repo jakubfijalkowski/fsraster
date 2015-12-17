@@ -223,12 +223,11 @@ type MainWindowController() =
     let toggleClipping _ =
         clippingRectangle.IsEnabled <- window.clipCheckBox.IsChecked.GetValueOrDefault false
 
-    let toggleFiltering _ =
-        filteringRectangle.IsEnabled <- window.filterExpand.IsExpanded
-
-    let resizeWindowToFitFiltering (e : SizeChangedEventArgs) =
-        let diff = e.NewSize.Height - e.PreviousSize.Height
-        window.Root.Height <- window.Root.Height + diff
+    // Not the best approach, but the easiest one
+    let toggleFiltering (e : SizeChangedEventArgs) =
+        let diff = int e.NewSize.Height - int e.PreviousSize.Height
+        if diff <> 0 then
+            filteringRectangle.IsEnabled <- window.filterExpand.IsExpanded
 
     // FILLING
 
@@ -350,9 +349,7 @@ type MainWindowController() =
         clippingRectangle.IsEnabled <- false
         clippingRectangle.RequestRender.Add render
 
-        window.filterExpand.Collapsed.Add toggleFiltering
-        window.filterExpand.Expanded.Add toggleFiltering
-        window.filterExpand.SizeChanged.Add resizeWindowToFitFiltering
+        window.filterExpand.SizeChanged.Add toggleFiltering
         filteringRectangle.IsEnabled <- false
         filteringRectangle.RequestRender.Add render
 
