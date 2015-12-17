@@ -39,6 +39,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <ComboBox x:Name="histogramChannel" SelectedIndex="0">
@@ -50,14 +51,24 @@
 
         <StackPanel Grid.Column="1" Grid.RowSpan="2" Orientation="Vertical">
             <CheckBox x:Name="normalizeHistogramCheckBox">Normalize histogram</CheckBox>
-            <ComboBox x:Name="convolutionFilterSize" SelectedIndex="0">
-                <ComboBoxItem x:Name="convolutionNone">None</ComboBoxItem>
-                <ComboBoxItem x:Name="convolutionSize3">3</ComboBoxItem>
-                <ComboBoxItem x:Name="convolutionSize5">5</ComboBoxItem>
-                <ComboBoxItem x:Name="convolutionSize7">7</ComboBoxItem>
-            </ComboBox>
-            <CheckBox x:Name="manualCoeff" IsChecked="False">Manual coeff</CheckBox>
-            <Button x:Name="loadGauss">Load Gauss matrix</Button>
+            <GroupBox Header="Convolution">
+                <StackPanel Orientation="Vertical">
+                    <ComboBox x:Name="convolutionFilterSize" SelectedIndex="0">
+                        <ComboBoxItem x:Name="convolutionNone">None</ComboBoxItem>
+                        <ComboBoxItem x:Name="convolutionSize3">3</ComboBoxItem>
+                        <ComboBoxItem x:Name="convolutionSize5">5</ComboBoxItem>
+                        <ComboBoxItem x:Name="convolutionSize7">7</ComboBoxItem>
+                    </ComboBox>
+                    <CheckBox x:Name="manualCoeff" IsChecked="False">Manual coeff</CheckBox>
+                    <Button x:Name="loadGauss">Load Gauss matrix</Button>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Function filter">
+                <StackPanel Orientation="Vertical">
+                    <CheckBox x:Name="functionFilterCheckBox" IsChecked="False">Enabled</CheckBox>
+                    <Button x:Name="functionFilterReset" IsEnabled="{Binding IsChecked, ElementName=functionFilterCheckBox}">Clear</Button>
+                </StackPanel>
+            </GroupBox>
         </StackPanel>
 
         <GroupBox x:Name="convolutionFilter" Header="Convolution filter" Grid.Column="2" Grid.RowSpan="2" IsEnabled="True" Width="300" Height="260">
@@ -76,7 +87,20 @@
                 <xctk:DoubleUpDown x:Name="convolutionOffset" Grid.Row="1" Grid.Column="1" Value="0.0" />
                 <TextBlock Grid.Row="2" Grid.Column="0">Coeff:</TextBlock>
                 <xctk:DoubleUpDown x:Name="convolutionCoeff" Grid.Row="2" Grid.Column="1" Value="0.0" IsEnabled="{Binding IsChecked, ElementName=manualCoeff}" />
-            </Grid>            
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Function definition" Grid.Column="3" Grid.RowSpan="2" IsEnabled="{Binding IsChecked, ElementName=functionFilterCheckBox}">
+            <TabControl>
+                <TabItem Header="R">
+                    <ui:FunctionDef x:Name="redFunctionDefinition" Width="256" Height="256" LineColor="Red" />
+                </TabItem>
+                <TabItem Header="G">
+                    <ui:FunctionDef x:Name="greenFunctionDefinition" Width="256" Height="256" LineColor="Green" />
+                </TabItem>
+                <TabItem Header="B">
+                    <ui:FunctionDef x:Name="blueFunctionDefinition" Width="256" Height="256" LineColor="Blue" />
+                </TabItem>
+            </TabControl>
         </GroupBox>
     </Grid>
 

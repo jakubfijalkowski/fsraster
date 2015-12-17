@@ -19,7 +19,11 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
     let requestRender = Event<unit>()
 
     let mutable duringBuild = false
+
     let histogramControl = control.histogramControl :?> HistogramControl
+    let redFunctionDefinition = control.redFunctionDefinition :?> FunctionDef
+    let greenFunctionDefinition = control.greenFunctionDefinition :?> FunctionDef
+    let blueFunctionDefinition = control.blueFunctionDefinition :?> FunctionDef
 
     let generateGaussianMatrix size sigma' =
         let k = size / 2
@@ -134,6 +138,11 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         duringBuild <- false
         updateCoeffWeight ()
 
+    let clearFunctionDefs _ =
+        redFunctionDefinition.ResetPoints()
+        greenFunctionDefinition.ResetPoints()
+        blueFunctionDefinition.ResetPoints()
+
     do
         render.Add onRender
 
@@ -154,5 +163,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
 
         control.convolutionFilterSize.SelectedIndex <- 1
         control.convolutionFilterSize.SelectedIndex <- 0
+
+        control.functionFilterReset.Click.Add clearFunctionDefs
 
     member this.RequestRender = requestRender.Publish

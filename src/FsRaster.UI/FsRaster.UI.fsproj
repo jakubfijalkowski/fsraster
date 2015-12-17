@@ -71,6 +71,7 @@
     <Compile Include="Utils.fs" />
     <Compile Include="HistogramControl.fs" />
     <Compile Include="SceneRectangle.fs" />
+    <Compile Include="FuntionDef.fs" />
     <Resource Include="FigureInfoPicker.xaml" />
     <Compile Include="FigureInfoPicker.fs" />
     <Resource Include="FilterControl.xaml" />
