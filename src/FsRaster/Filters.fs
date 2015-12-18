@@ -2,6 +2,9 @@
 
 open System.Diagnostics.CodeAnalysis
 
+open System.Windows.Media
+open System.Windows.Media.Imaging
+
 open FsRaster.CoreRendering
 
 #nowarn "9"
@@ -173,3 +176,135 @@ let scaleImage ctx scaleX scaleY rect =
             let dstIdx = y * w + x
             let srcIdx = srcY * srcW + srcX
             NativeInterop.NativePtr.set pixels dstIdx pixelsCopy.[srcIdx]
+
+
+let private prepareWorkImage (left, top, right, bottom) =
+    let w = double (right - left)
+    let h = double (bottom - top)
+    let size = ceil (sqrt (w * w + h * h)) |> int
+    let bmp = BitmapFactory.New(size, size)
+    { Width = size; Height = size; Context = bmp.GetBitmapContext(ReadWriteMode.ReadWrite) }
+
+let private copyBetween src dst (left, top, right, bottom) (offsetX, offsetY) =
+    let srcStride = src.Width
+    let dstStride = dst.Width
+    let w = right - left
+    let h = bottom - top
+    let srcPixels = src.Context.Pixels
+    let dstPixels = dst.Context.Pixels
+    for y in 0 .. h do
+        for x in 0 .. w do
+            let srcIdx = (top + y) * srcStride + left + x
+            let dstIdx = (offsetY + y) * dstStride + offsetX + x
+            let pix = NativeInterop.NativePtr.get srcPixels srcIdx
+            NativeInterop.NativePtr.set dstPixels dstIdx pix
+
+let private getWorkRect (fromLeft, fromTop, fromRight, fromBottom) toCtx =
+    let realW = fromRight - fromLeft
+    let realH = fromBottom - fromTop
+    let cx = toCtx.Width / 2
+    let cy = toCtx.Height / 2
+    let offsetX = cx - realW / 2
+    let offsetY = cy - realH / 2
+    (offsetX, offsetY, offsetX + realW, offsetY + realH)
+
+let private getWorkRectRot (fromLeft, fromTop, fromRight, fromBottom) toCtx =
+    let realW = fromRight - fromLeft
+    let realH = fromBottom - fromTop
+    let cx = toCtx.Width / 2
+    let cy = toCtx.Height / 2
+    let offsetX = cx - realH / 2
+    let offsetY = cy - realW / 2
+    (offsetX, offsetY, offsetX + realH, offsetY + realW)
+
+let private rotate0 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as fromRect) toCtx =
+    let workRect = getWorkRect fromRect toCtx
+    let offsetX, offsetY, _, _ = workRect
+    copyBetween fromCtx toCtx fromRect (offsetX, offsetY)
+    workRect
+
+let private rotate90 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as fromRect) toCtx =
+    let srcStride = fromCtx.Width
+    let dstStride = toCtx.Width
+    let workRect = getWorkRectRot fromRect toCtx
+    let offsetX, offsetY, dstRight, dstBottom = workRect
+    let w = fromRight - fromLeft
+    let h = fromBottom - fromTop
+
+    let srcPixels = fromCtx.Context.Pixels
+    let dstPixels = toCtx.Context.Pixels
+
+    for y in 0 .. h do
+        for x in 0 .. w do
+            let srcIdx = (fromTop + y) * srcStride + fromLeft + x
+            let dstIdx = (offsetY + x) * dstStride + dstRight - y
+            NativeInterop.NativePtr.get srcPixels srcIdx
+            |> NativeInterop.NativePtr.set dstPixels dstIdx
+    workRect
+
+let private rotate180 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as fromRect) toCtx =
+    let srcStride = fromCtx.Width
+    let dstStride = toCtx.Width
+    let workRect = getWorkRect fromRect toCtx
+    let offsetX, offsetY, dstRight, dstBottom = workRect
+    let w = fromRight - fromLeft
+    let h = fromBottom - fromTop
+
+    let srcPixels = fromCtx.Context.Pixels
+    let dstPixels = toCtx.Context.Pixels
+
+    for y in 0 .. h do
+        for x in 0 .. w do
+            let srcIdx = (fromTop + y) * srcStride + fromLeft + x
+            let dstIdx = (dstBottom - y) * dstStride + dstRight - x
+            NativeInterop.NativePtr.get srcPixels srcIdx
+            |> NativeInterop.NativePtr.set dstPixels dstIdx
+    
+    workRect
+
+let private rotate270 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as fromRect) toCtx =
+    let srcStride = fromCtx.Width
+    let dstStride = toCtx.Width
+    let workRect = getWorkRectRot fromRect toCtx
+    let offsetX, offsetY, dstRight, dstBottom = workRect
+    let w = fromRight - fromLeft
+    let h = fromBottom - fromTop
+
+    let srcPixels = fromCtx.Context.Pixels
+    let dstPixels = toCtx.Context.Pixels
+
+    for y in 0 .. h do
+        for x in 0 .. w do
+            let srcIdx = (fromTop + y) * srcStride + fromLeft + x
+            let dstIdx = (dstBottom - x) * dstStride + offsetX + y
+            NativeInterop.NativePtr.get srcPixels srcIdx
+            |> NativeInterop.NativePtr.set dstPixels dstIdx
+    workRect
+
+let private performBaseRotations srcCtx srcRect dstCtx angle =
+    if angle > 45.0 && angle <= 135.0 then
+        (rotate90 srcCtx srcRect dstCtx, angle - 90.0)
+    else if angle > 135.0 && angle <= 225.0 then
+        (rotate180 srcCtx srcRect dstCtx, angle - 180.0)
+    else if angle > 225.0 && angle <= 315.0 then
+        (rotate270 srcCtx srcRect dstCtx, angle - 270.0)
+    else
+        (rotate0 srcCtx srcRect dstCtx, angle)
+
+let rotateImage ctx angle bgColor rect =
+    let w = ctx.Width
+    let h = ctx.Height
+    let inputRect = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
+    let left, top, right, bottom = inputRect
+
+    let workImage = prepareWorkImage inputRect
+    let workRect = getWorkRect inputRect workImage
+    clearBitmap workImage 0xff000000
+
+    let (newRect, angle') = performBaseRotations ctx inputRect workImage angle
+
+    let angleRad = angle' * System.Math.PI / 180.0
+    let alpha = - tan (angleRad / 2.0)
+    let beta = sin angleRad
+
+    copyBetween workImage ctx workRect (left, top)

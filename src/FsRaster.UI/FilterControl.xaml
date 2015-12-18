@@ -130,6 +130,21 @@
                     <xctk:DoubleUpDown x:Name="scaleFactorY" Grid.Row="2" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=scaleCheckBox}" Value="1.0" Increment="0.1" />
                 </Grid>
             </GroupBox>
+            <GroupBox Header="Rotation">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <CheckBox x:Name="rotateCheckBox" Grid.ColumnSpan="2" IsChecked="False">Enabled</CheckBox>
+                    <TextBlock Grid.Row="1">Angle °:</TextBlock>
+                    <xctk:DoubleUpDown x:Name="rotationAngle" Grid.Row="1" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=rotateCheckBox}" Value="0.0" Increment="1" Maximum="360.0" />
+                </Grid>
+            </GroupBox>
         </StackPanel>
     </Grid>
 

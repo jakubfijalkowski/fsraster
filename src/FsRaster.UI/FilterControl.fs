@@ -109,11 +109,18 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
             let scaleY = control.scaleFactorY.Value.GetValueOrDefault 1.0
             withRectangle (scaleImage ctx scaleX scaleY)
 
+    let applyRotation ctx =
+        if control.rotateCheckBox.IsChecked.GetValueOrDefault false then
+            let angleDeg = control.rotationAngle.Value.GetValueOrDefault 0.0
+            let bgColor = FsRaster.Colors.fromUIColor bgColorPicker.SelectedColor
+            withRectangle (rotateImage ctx angleDeg bgColor)
+
     let onRender (renderer : IRenderer) =
         normalizeHistogramOnRender renderer.Context
         convolveImage renderer.Context
         applyFunctionFilter renderer.Context
         applyScaling renderer.Context
+        applyRotation renderer.Context
         updateHistogram renderer.Context
 
     let updateCoeffWeight _ =
@@ -191,5 +198,9 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         control.scaleCheckBox.Unchecked.Add triggerRequestRender
         control.scaleFactorX.ValueChanged.Add triggerRequestRender
         control.scaleFactorY.ValueChanged.Add triggerRequestRender
+
+        control.rotateCheckBox.Checked.Add triggerRequestRender
+        control.rotateCheckBox.Unchecked.Add triggerRequestRender
+        control.rotationAngle.ValueChanged.Add triggerRequestRender
 
     member this.RequestRender = requestRender.Publish
