@@ -412,3 +412,24 @@ let rotateImage ctx angle rect =
 
     copyBetween workImage ctx workRect (left, top)
     workImage.Context.Dispose()
+
+let private gammaCorrectPix gamma pix =
+    let r = double (Colors.getR pix) / 255.0
+    let g = double (Colors.getG pix) / 255.0
+    let b = double (Colors.getB pix) / 255.0
+    let newR = (r ** gamma) * 255.0
+    let newG = (g ** gamma) * 255.0
+    let newB = (b ** gamma) * 255.0
+    Colors.fromRGB (int newR) (int newG) (int newB)
+        
+let gammaCorrect ctx gamma rect =
+    let stride = ctx.Width
+    let left, top, right, bottom = FsRaster.Figures.clipRect rect (ctx.Width - 1) (ctx.Height - 1)
+    
+    let pixels = ctx.Context.Pixels
+    for y in top .. bottom do
+        for x in left .. right do
+            let idx = y * stride + x
+            NativeInterop.NativePtr.get pixels idx
+            |> gammaCorrectPix gamma
+            |> NativeInterop.NativePtr.set pixels idx

@@ -145,6 +145,13 @@
                     <xctk:DoubleUpDown x:Name="rotationAngle" Grid.Row="1" Grid.Column="1" IsEnabled="{Binding IsChecked, ElementName=rotateCheckBox}" Value="0.0" Increment="1" Maximum="360.0" />
                 </Grid>
             </GroupBox>
+            <GroupBox Header="Gamma correction">
+                <StackPanel Orientation="Vertical">
+                    <CheckBox x:Name="gammaCorrectionTextBox" IsChecked="False">Enabled</CheckBox>
+                    <Slider x:Name="gammaValue" Minimum="0.0" Maximum="5.0" Value="1.0" SmallChange="0.1" LargeChange="1.0" />
+                    <TextBlock Text="{Binding Value, ElementName=gammaValue, StringFormat=Current value: {0:0.00}}" />
+                </StackPanel>
+            </GroupBox>
         </StackPanel>
     </Grid>
 

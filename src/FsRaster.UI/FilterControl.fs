@@ -114,10 +114,16 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
             let angleDeg = control.rotationAngle.Value.GetValueOrDefault 0.0
             withRectangle (rotateImage ctx angleDeg)
 
+    let applyGammaCorrection ctx =
+        if control.gammaCorrectionTextBox.IsChecked.GetValueOrDefault false then
+            let gamma = control.gammaValue.Value
+            withRectangle (gammaCorrect ctx gamma)
+
     let onRender (renderer : IRenderer) =
         normalizeHistogramOnRender renderer.Context
         convolveImage renderer.Context
         applyFunctionFilter renderer.Context
+        applyGammaCorrection renderer.Context
         applyScaling renderer.Context
         applyRotation renderer.Context
         updateHistogram renderer.Context
@@ -201,5 +207,9 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
         control.rotateCheckBox.Checked.Add triggerRequestRender
         control.rotateCheckBox.Unchecked.Add triggerRequestRender
         control.rotationAngle.ValueChanged.Add triggerRequestRender
+
+        control.gammaCorrectionTextBox.Checked.Add triggerRequestRender
+        control.gammaCorrectionTextBox.Unchecked.Add triggerRequestRender
+        control.gammaValue.ValueChanged.Add triggerRequestRender
 
     member this.RequestRender = requestRender.Publish
