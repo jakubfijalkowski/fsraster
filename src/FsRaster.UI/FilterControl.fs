@@ -80,7 +80,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
 
     let updateHistogram ctx =
         withRectangle (fun rect ->
-            let histogram = generateHistogram (getBgColor ()) (getHistogramChannel ()) ctx rect
+            let histogram = generateHistogram (getHistogramChannel ()) ctx rect
             histogramControl.UpdateHistogram histogram (getHistogramColor ())
         )
 

@@ -55,7 +55,7 @@ let normalizeHistogram ctx rect =
             let newPix = normalizePixel minC maxC pix
             NativeInterop.NativePtr.set pixels idx newPix
 
-let generateHistogram bg channel ctx rect =
+let generateHistogram channel ctx rect =
     let w = ctx.Width
     let h = ctx.Height
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
@@ -65,9 +65,8 @@ let generateHistogram bg channel ctx rect =
         for x in [ left .. right ] do
             let idx = y * w + x
             let pix = NativeInterop.NativePtr.get pixels idx
-            if pix <> bg then
-                let c = channel pix
-                histogram.[c] <- histogram.[c] + 1
+            let c = channel pix
+            histogram.[c] <- histogram.[c] + 1
     histogram
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
@@ -322,7 +321,7 @@ let private shearX ctx shear (left, top, right, bottom) =
         minSkew <- min minSkew skewi
         maxSkew <- max maxSkew skewi
         let mutable prevPixel = (0, 0, 0)
-        for baseX in 0 .. w - 1 do
+        for baseX in 0 .. w do
             let x = if skew >= 0.0 then right - baseX else left + baseX
             let srcIdx = y * stride + x
             let pix' = NativeInterop.NativePtr.get pixels srcIdx |> toTriple
@@ -333,11 +332,6 @@ let private shearX ctx shear (left, top, right, bottom) =
             if x + skewi >= 0 && x + skewi < ctx.Width then
                 let dstIdx = srcIdx + skewi
                 NativeInterop.NativePtr.set pixels dstIdx (tripleToRGB pix)
-
-        if skewi >= 0 then
-            NativeInterop.NativePtr.set pixels (y * stride + left + skewi) (tripleToRGB prevPixel)
-        else
-            NativeInterop.NativePtr.set pixels (y * stride + right + skewi) (tripleToRGB prevPixel)
 
         if skewi > 0 then
             for x in 0 .. skewi - 1 do
@@ -365,7 +359,7 @@ let private shearY ctx shear (left, top, right, bottom) =
         minSkew <- min minSkew skewi
         maxSkew <- max maxSkew skewi
         let mutable prevPixel = (0, 0, 0)
-        for baseY in 0 .. h - 1 do
+        for baseY in 0 .. h do
             let y = if skew >= 0.0 then bottom - baseY else top + baseY 
             let srcIdx = y * stride + x
             let pix' = NativeInterop.NativePtr.get pixels srcIdx |> toTriple
@@ -376,11 +370,6 @@ let private shearY ctx shear (left, top, right, bottom) =
             if y + skewi >= 0 && y + skewi < ctx.Height then
                 let dstIdx = (y + skewi) * stride + x
                 NativeInterop.NativePtr.set pixels dstIdx (tripleToRGB pix)
-
-        if skewi >= 0 then
-            NativeInterop.NativePtr.set pixels ((top + skewi) * stride + x) (tripleToRGB prevPixel)
-        else
-            NativeInterop.NativePtr.set pixels ((bottom + skewi) * stride + x) (tripleToRGB prevPixel)
 
         if skewi > 0 then
             for y in 0 .. skewi - 1 do
@@ -412,6 +401,7 @@ let rotateImage ctx angle rect =
 
     copyBetween workImage ctx workRect (left, top)
     workImage.Context.Dispose()
+    System.GC.Collect()
 
 let private gammaCorrectPix gamma pix =
     let r = double (Colors.getR pix) / 255.0
