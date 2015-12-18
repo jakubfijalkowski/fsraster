@@ -112,8 +112,7 @@ type FilterControlController(control : FilterControl, rectangle : SceneRectangle
     let applyRotation ctx =
         if control.rotateCheckBox.IsChecked.GetValueOrDefault false then
             let angleDeg = control.rotationAngle.Value.GetValueOrDefault 0.0
-            let bgColor = FsRaster.Colors.fromUIColor bgColorPicker.SelectedColor
-            withRectangle (rotateImage ctx angleDeg bgColor)
+            withRectangle (rotateImage ctx angleDeg)
 
     let onRender (renderer : IRenderer) =
         normalizeHistogramOnRender renderer.Context

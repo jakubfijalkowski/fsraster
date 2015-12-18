@@ -177,11 +177,10 @@ let scaleImage ctx scaleX scaleY rect =
             let srcIdx = srcY * srcW + srcX
             NativeInterop.NativePtr.set pixels dstIdx pixelsCopy.[srcIdx]
 
-
 let private prepareWorkImage (left, top, right, bottom) =
-    let w = double (right - left)
-    let h = double (bottom - top)
-    let size = ceil (sqrt (w * w + h * h)) |> int
+    let w = right - left
+    let h = bottom - top
+    let size = (max w h) * 2
     let bmp = BitmapFactory.New(size, size)
     { Width = size; Height = size; Context = bmp.GetBitmapContext(ReadWriteMode.ReadWrite) }
 
@@ -291,7 +290,107 @@ let private performBaseRotations srcCtx srcRect dstCtx angle =
     else
         (rotate0 srcCtx srcRect dstCtx, angle)
 
-let rotateImage ctx angle bgColor rect =
+let inline private toTriple pix =
+    let r = Colors.getR pix
+    let g = Colors.getG pix
+    let b = Colors.getB pix
+    (r, g, b)
+
+let inline private (%+%) (r1, g1, b1) (r2, g2, b2) = (r1 + r2, g1 + g2, b1 + b2)
+let inline private (%-%) (r1, g1, b1) (r2, g2, b2) = (r1 - r2, g1 - g2, b1 - b2)
+let inline private (%*%) (r, g, b) factor =
+    (int <| double r * factor, int <| double g * factor, int <| double b * factor)
+
+let inline private tripleToRGB (r, g, b) =
+    Colors.fromRGB (Colors.clamp r) (Colors.clamp g) (Colors.clamp b)
+    
+[<SuppressMessage("CyclomaticComplexity", "*")>]
+let private shearX ctx shear (left, top, right, bottom) =
+    let stride = ctx.Width
+    let pixels = ctx.Context.Pixels
+    let h = bottom - top
+    let w = right - left
+    let hTop = h / 2
+    let hBottom = h - hTop
+    let mutable minSkew = 9999
+    let mutable maxSkew = 0
+    for baseY in -hTop .. hBottom do
+        let y = top + baseY + hTop
+        let skew = shear * (double baseY + 0.5)
+        let skewi = int <| floor skew
+        let skewf = if skew < 0.0 then skew - double skewi else double skewi - skew
+        minSkew <- min minSkew skewi
+        maxSkew <- max maxSkew skewi
+        let mutable prevPixel = (0, 0, 0)
+        for baseX in 0 .. w - 1 do
+            let x = if skew >= 0.0 then right - baseX else left + baseX
+            let srcIdx = y * stride + x
+            let pix' = NativeInterop.NativePtr.get pixels srcIdx |> toTriple
+            let leftPix = pix' %*% skewf
+            let pix = pix' %-% (leftPix %-% prevPixel)
+            prevPixel <- leftPix
+
+            if x + skewi >= 0 && x + skewi < ctx.Width then
+                let dstIdx = srcIdx + skewi
+                NativeInterop.NativePtr.set pixels dstIdx (tripleToRGB pix)
+
+        if skewi >= 0 then
+            NativeInterop.NativePtr.set pixels (y * stride + left + skewi) (tripleToRGB prevPixel)
+        else
+            NativeInterop.NativePtr.set pixels (y * stride + right + skewi) (tripleToRGB prevPixel)
+
+        if skewi > 0 then
+            for x in 0 .. skewi - 1 do
+                NativeInterop.NativePtr.set pixels (y * stride + x + left) 0xff000000
+        else if skewi < 0 then
+            for x in right + skewi + 1 .. right do
+                NativeInterop.NativePtr.set pixels (y * stride + x) 0xff000000
+    (left + minSkew, top, right + maxSkew, bottom)
+
+[<SuppressMessage("CyclomaticComplexity", "*")>]
+let private shearY ctx shear (left, top, right, bottom) =
+    let stride = ctx.Width
+    let pixels = ctx.Context.Pixels
+    let h = bottom - top
+    let w = right - left
+    let wLeft = w / 2
+    let wRight = w - wLeft
+    let mutable minSkew = 9999
+    let mutable maxSkew = 0
+    for baseX in -wLeft .. wRight do
+        let x = left + baseX + wLeft
+        let skew = shear * (double baseX + 0.5)
+        let skewi = int <| floor skew
+        let skewf = if skew < 0.0 then skew - double skewi else double skewi - skew
+        minSkew <- min minSkew skewi
+        maxSkew <- max maxSkew skewi
+        let mutable prevPixel = (0, 0, 0)
+        for baseY in 0 .. h - 1 do
+            let y = if skew >= 0.0 then bottom - baseY else top + baseY 
+            let srcIdx = y * stride + x
+            let pix' = NativeInterop.NativePtr.get pixels srcIdx |> toTriple
+            let leftPix = pix' %*% skewf
+            let pix = pix' %-% (leftPix %-% prevPixel)
+            prevPixel <- leftPix
+
+            if y + skewi >= 0 && y + skewi < ctx.Height then
+                let dstIdx = (y + skewi) * stride + x
+                NativeInterop.NativePtr.set pixels dstIdx (tripleToRGB pix)
+
+        if skewi >= 0 then
+            NativeInterop.NativePtr.set pixels ((top + skewi) * stride + x) (tripleToRGB prevPixel)
+        else
+            NativeInterop.NativePtr.set pixels ((bottom + skewi) * stride + x) (tripleToRGB prevPixel)
+
+        if skewi > 0 then
+            for y in 0 .. skewi - 1 do
+                NativeInterop.NativePtr.set pixels ((y + top) * stride + x) 0xff000000
+        else if skewi < 0 then
+            for y in bottom + skewi + 1 .. bottom do
+                NativeInterop.NativePtr.set pixels (y * stride + x) 0xff000000
+    (left, top + minSkew, right, bottom + maxSkew)
+
+let rotateImage ctx angle rect =
     let w = ctx.Width
     let h = ctx.Height
     let inputRect = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
@@ -307,4 +406,9 @@ let rotateImage ctx angle bgColor rect =
     let alpha = - tan (angleRad / 2.0)
     let beta = sin angleRad
 
+    let shearRect1 = shearX workImage alpha newRect
+    let shearRect2 = shearY workImage beta shearRect1
+    shearX workImage alpha shearRect2 |> ignore
+
     copyBetween workImage ctx workRect (left, top)
+    workImage.Context.Dispose()
