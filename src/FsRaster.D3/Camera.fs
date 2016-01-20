@@ -31,6 +31,8 @@ type CameraController(control : FrameworkElement) =
     let mutable downPressed = false
     let mutable forwardPressed = false
     let mutable backwardPressed = false
+    let mutable realUpPressed = false
+    let mutable realDownPressed = false
 
     let mutable lookUpPressed = false
     let mutable lookDownPressed = false
@@ -42,12 +44,14 @@ type CameraController(control : FrameworkElement) =
     let moveCamera dt =
         let forwardVec = (camera.Target - camera.Position).Normal
         let rightVec = (cross3 forwardVec camera.Up).Normal
+        let realUpVec = (cross3 rightVec forwardVec).Normal
 
         let forwardCoeff = getMoveCoeff forwardPressed backwardPressed
         let rightCoeff = getMoveCoeff rightPressed leftPressed
         let upCoeff = getMoveCoeff upPressed downPressed
+        let realUpCoeff = getMoveCoeff realUpPressed realDownPressed
 
-        let moveVec = (forwardVec * forwardCoeff + rightVec * rightCoeff + camera.Up * upCoeff) * dt
+        let moveVec = (forwardVec * forwardCoeff + rightVec * rightCoeff + camera.Up * upCoeff + realUpVec * realUpCoeff) * dt
 
         camera <- camera |> moveBy moveVec |> lookBy moveVec
 
@@ -68,6 +72,8 @@ type CameraController(control : FrameworkElement) =
         | Key.D -> rightPressed <- v
         | Key.W -> forwardPressed <- v
         | Key.S -> backwardPressed <- v
+        | Key.E -> realUpPressed <- v
+        | Key.Q -> realDownPressed <- v
         | Key.Space -> upPressed <- v
         | Key.LeftCtrl -> downPressed <- v
         | Key.NumPad4 -> lookLeftPressed <- v
@@ -85,7 +91,7 @@ type CameraController(control : FrameworkElement) =
 
     member x.Camera = camera
     member x.Update dt =
-        let shouldMove = leftPressed || rightPressed || forwardPressed || backwardPressed || upPressed || downPressed
+        let shouldMove = leftPressed || rightPressed || forwardPressed || backwardPressed || upPressed || downPressed || realUpPressed || realDownPressed
         let shouldRotate = lookLeftPressed || lookRightPressed || lookUpPressed || lookDownPressed
         if shouldMove then moveCamera dt
         if shouldRotate then rotateCamera dt
