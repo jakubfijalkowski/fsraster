@@ -21,9 +21,10 @@ let inline updateMatrix camera = { camera with View = matLookAt camera.Position 
 
 type CameraController(control : FrameworkElement) =
 
-    let RotAngle = System.Math.PI / 2.0
+    [<Literal>]
+    let RotAngle = 1.57079632679 // PI / 2, but I can't use Math.PI / 2.0 in Literals...
 
-    let mutable camera = makeCamera (vec3 0.0 0.0 2.0) (vec3 0.0 0.0 0.0)
+    let mutable camera = makeCamera (vec3 0.0 0.0 8.0) (vec3 0.0 0.0 0.0)
     
     let mutable leftPressed = false
     let mutable rightPressed = false
@@ -66,6 +67,9 @@ type CameraController(control : FrameworkElement) =
         camera <- lookAt (camera.Position + newTarget) camera
         ()
 
+    let shouldMove () = leftPressed || rightPressed || forwardPressed || backwardPressed || upPressed || downPressed || realUpPressed || realDownPressed
+    let shouldRotate () = lookLeftPressed || lookRightPressed || lookUpPressed || lookDownPressed
+
     let updateKeys k v =
         match k with
         | Key.A -> leftPressed <- v
@@ -91,8 +95,6 @@ type CameraController(control : FrameworkElement) =
 
     member x.Camera = camera
     member x.Update dt =
-        let shouldMove = leftPressed || rightPressed || forwardPressed || backwardPressed || upPressed || downPressed || realUpPressed || realDownPressed
-        let shouldRotate = lookLeftPressed || lookRightPressed || lookUpPressed || lookDownPressed
-        if shouldMove then moveCamera dt
-        if shouldRotate then rotateCamera dt
-        shouldMove || shouldRotate
+        if shouldMove () then moveCamera dt
+        if shouldRotate () then rotateCamera dt
+        shouldMove () || shouldRotate ()

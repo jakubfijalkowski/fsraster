@@ -19,6 +19,8 @@ type Renderer3D =
     }
 
 [<Literal>]
+let DefaultFoV = 60.0
+[<Literal>]
 let NearPlane = 0.1
 [<Literal>]
 let FarPlane = 100.0
@@ -40,7 +42,7 @@ let setCameraTo camera renderer =
 
 let updateProjection renderer width height =
     let aspect = double width / double height
-    let newProj = matProjection 90.0 aspect NearPlane FarPlane
+    let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
     { renderer with Projection = newProj }
 
 let inline toggleWireframe renderer =
