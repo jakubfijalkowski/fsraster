@@ -27,7 +27,7 @@ type MainWindowController() =
     
     let window = new MainWindow()
 
-    let mutable model = loadOffFromResources "mushroom"
+    let mutable model = loadOffFromResources "mushroom" |> changeOrientation
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -94,7 +94,10 @@ type MainWindowController() =
         try
             let name = (window.modelSelector.SelectedItem :?> ComboBoxItem).Tag :?> string
             let newModel = loadOffFromResources name
-            model <- newModel
+            if name = "mushroom" then
+                model <- newModel |> changeOrientation
+            else
+                model <- newModel
         with
             | e -> MessageBox.Show(window.Root, "Cannot load model: " + e.Message, "Error") |> ignore
         ()

@@ -72,3 +72,7 @@ let loadOffFromStream (stream : Stream) =
 let loadOffFromResources name =
     use stream = Resources.loadStream name
     loadOffFromStream stream
+
+let changeOrientation model =
+    let newTriangles = model.Triangles |> Array.map (fun (a, b, c) -> (a, c, b))
+    { model with Triangles = newTriangles }
