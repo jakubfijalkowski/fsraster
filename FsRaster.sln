@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster", "src\FsRaster\FsRaster.fsproj", "{713B9713-18A1-4096-A0D2-B0718987DD0F}"
 EndProject
@@ -13,6 +13,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsRaster.UI.ColorPicker", "src\FsRaster.UI.ColorPicker\FsRaster.UI.ColorPicker.csproj", "{8D7ED1FF-3929-42D8-B2EC-02A7EB0EEBDB}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster.UI", "src\FsRaster.UI\FsRaster.UI.fsproj", "{F9343901-F09C-4395-A331-B655D4C8E37E}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster.D3", "src\FsRaster.D3\FsRaster.D3.fsproj", "{5820C0D5-5F6F-48C1-9916-C546081EE5D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,12 @@ Global
 		{F9343901-F09C-4395-A331-B655D4C8E37E}.ProfileRelease|Any CPU.Build.0 = ProfileRelease|Any CPU
 		{F9343901-F09C-4395-A331-B655D4C8E37E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9343901-F09C-4395-A331-B655D4C8E37E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5820C0D5-5F6F-48C1-9916-C546081EE5D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5820C0D5-5F6F-48C1-9916-C546081EE5D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5820C0D5-5F6F-48C1-9916-C546081EE5D8}.ProfileRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{5820C0D5-5F6F-48C1-9916-C546081EE5D8}.ProfileRelease|Any CPU.Build.0 = Release|Any CPU
+		{5820C0D5-5F6F-48C1-9916-C546081EE5D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5820C0D5-5F6F-48C1-9916-C546081EE5D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

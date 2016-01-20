@@ -1,7 +1,5 @@
 // Warning: generated file; your changes could be lost when a new file is generated.
 #I __SOURCE_DIRECTORY__
-#r "../../../packages/FSharp.Collections.ParallelSeq/lib/net40/FSharp.Collections.ParallelSeq.dll"
-#r "../../../packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "PresentationCore.dll"
 #r "PresentationFramework.dll"
 #r "System.Core.dll"
@@ -12,4 +10,6 @@
 #r "System.Xml.Linq.dll"
 #r "UIAutomationTypes.dll"
 #r "WindowsBase.dll"
+#r "../../../packages/FSharp.Collections.ParallelSeq/lib/net40/FSharp.Collections.ParallelSeq.dll"
+#r "../../../packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../../packages/WriteableBitmapEx/lib/net40/WriteableBitmapEx.Wpf.dll"
