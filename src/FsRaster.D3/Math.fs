@@ -50,7 +50,7 @@ let inline vec4 x y z w : Vector4 = { X = x; Y = y; Z = z; W = w }
 
 let zeroVec3 = vec3 0.0 0.0 0.0
 
-let inline toVec4 (a : Vector4) = vec4 a.X a.Y a.Z 1.0
+let inline toVec4 (a : Vector3) = vec4 a.X a.Y a.Z 1.0
 let inline toVec3 (a : Vector4) : Vector3 =
     let n = a.Normalized
     { X = n.X; Y = n.Y; Z = n.Z }
@@ -192,3 +192,52 @@ let matProjection fov a n f =
         M31 = 0.0; M32 = 0.0; M33 = f1  ; M34 = f2 ;
         M41 = 0.0; M42 = 0.0; M43 = -1.0; M44 = 0.0
     }
+
+type Quaternion =
+    { A : double; B : double; C : double; D : double }
+
+    member q.Norm =
+        System.Math.Sqrt(q.A * q.A + q.B * q.B + q.C * q.C + q.D * q.D)
+
+    member q.Conjugate =
+        { A = q.A; B = -q.B; C = -q.C; D = -q.D }
+
+    member q.Reciprocal = q.Conjugate / q.Norm
+
+    member q.Unit = q / q.Norm
+
+    static member (~-) (q : Quaternion) =
+        { A = -q.A; B = -q.B; C = -q.C; D = -q.D }
+
+    static member (+) (a : Quaternion, b : Quaternion) =
+        { A = a.A + b.A; B = a.B + b.B; C = a.C + b.C; D = a.D + b.D }
+
+    static member (*) (q : Quaternion, c : double) =
+        { A = q.A * c; B = q.B * c; C = q.C * c; D = q.D * c }
+
+    static member (*) (c : double, q : Quaternion) =
+        { A = q.A * c; B = q.B * c; C = q.C * c; D = q.D * c }
+
+    static member (*) (a : Quaternion, b : Quaternion) =
+        { A = a.A * b.A - a.B * b.B - a.C * b.C - a.D * b.D;
+          B = a.A * b.B + a.B * b.A + a.C * b.D - a.D * b.C;
+          C = a.A * b.C - a.B * b.D + a.C * b.A + a.D * b.B;
+          D = a.A * b.D + a.B * b.C - a.C * b.B + a.D * b.A }
+
+    static member (/) (q : Quaternion, c : double) =
+        { A = q.A / c; B = q.B / c; C = q.C / c; D = q.D / c }
+
+let inline quat w (v : Vector3) = { A = w; B = v.X; C = v.Y; D = v.Z }
+let inline vecAsQuat v = quat 0.0 v
+let inline quatAsVec (q : Quaternion) = vec3 q.B q.C q.D
+
+let quatRot theta (axis : Vector3) =
+    let c = System.Math.Cos(theta / 2.0)
+    let s = System.Math.Sin(theta / 2.0)
+    quat c (s * axis.Normal)
+
+let vecRotate theta axis v =
+    let q = quatRot theta axis
+    let q' = q.Reciprocal
+    let v' = vecAsQuat v
+    quatAsVec (q * v' * q')

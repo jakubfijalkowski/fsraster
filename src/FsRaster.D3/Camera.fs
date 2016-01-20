@@ -21,6 +21,8 @@ let inline updateMatrix camera = { camera with View = matLookAt camera.Position 
 
 type CameraController(control : FrameworkElement) =
 
+    let RotAngle = System.Math.PI / 2.0
+
     let mutable camera = makeCamera (vec3 0.0 0.0 1.0) (vec3 0.0 0.0 0.0)
     
     let mutable leftPressed = false
@@ -30,7 +32,35 @@ type CameraController(control : FrameworkElement) =
     let mutable forwardPressed = false
     let mutable backwardPressed = false
 
+    let mutable lookUpPressed = false
+    let mutable lookDownPressed = false
+    let mutable lookLeftPressed = false
+    let mutable lookRightPressed = false
+
     let getMoveCoeff a b = if a then 1.0 else if b then -1.0 else 0.0
+
+    let moveCamera dt =
+        let forwardVec = (camera.Target - camera.Position).Normal
+        let rightVec = (cross3 forwardVec camera.Up).Normal
+
+        let forwardCoeff = getMoveCoeff forwardPressed backwardPressed
+        let rightCoeff = getMoveCoeff rightPressed leftPressed
+        let upCoeff = getMoveCoeff upPressed downPressed
+
+        let moveVec = (forwardVec * forwardCoeff + rightVec * rightCoeff + camera.Up * upCoeff) * dt
+
+        camera <- camera |> moveBy moveVec |> lookBy moveVec
+
+    let rotateCamera dt =
+        let forwardVec = (camera.Target - camera.Position).Normal
+        let rightVec = (cross3 forwardVec camera.Up).Normal
+        let realUpVec = (cross3 forwardVec rightVec).Normal
+        let rightAngle = (getMoveCoeff lookRightPressed lookLeftPressed) * RotAngle * dt
+        let upAngle = (getMoveCoeff lookUpPressed lookDownPressed) * RotAngle * dt
+
+        let newTarget = forwardVec |> vecRotate rightAngle realUpVec |> vecRotate upAngle rightVec
+        camera <- lookAt (camera.Position + newTarget) camera
+        ()
 
     let updateKeys k v =
         match k with
@@ -40,6 +70,10 @@ type CameraController(control : FrameworkElement) =
         | Key.S -> backwardPressed <- v
         | Key.Space -> upPressed <- v
         | Key.LeftCtrl -> downPressed <- v
+        | Key.NumPad4 -> lookLeftPressed <- v
+        | Key.NumPad6 -> lookRightPressed <- v
+        | Key.NumPad8 -> lookUpPressed <- v
+        | Key.NumPad2 -> lookDownPressed <- v
         | _ -> ()
 
     let onKeyDown (e : KeyEventArgs) = updateKeys e.Key true
@@ -51,18 +85,8 @@ type CameraController(control : FrameworkElement) =
 
     member x.Camera = camera
     member x.Update dt =
-        if leftPressed || rightPressed || forwardPressed || backwardPressed || upPressed || downPressed then
-            let forwardVec = (camera.Target - camera.Position).Normal
-            let rightVec = (cross3 forwardVec camera.Up).Normal
-
-            let forwardCoeff = getMoveCoeff forwardPressed backwardPressed
-            let rightCoeff = getMoveCoeff rightPressed leftPressed
-            let upCoeff = getMoveCoeff upPressed downPressed
-
-            let moveVec = (forwardVec * forwardCoeff + rightVec * rightCoeff + camera.Up * upCoeff) * dt
-
-            camera <- camera |> moveBy moveVec |> lookBy moveVec
-
-            true
-        else
-            false
+        let shouldMove = leftPressed || rightPressed || forwardPressed || backwardPressed || upPressed || downPressed
+        let shouldRotate = lookLeftPressed || lookRightPressed || lookUpPressed || lookDownPressed
+        if shouldMove then moveCamera dt
+        if shouldRotate then rotateCamera dt
+        shouldMove || shouldRotate
