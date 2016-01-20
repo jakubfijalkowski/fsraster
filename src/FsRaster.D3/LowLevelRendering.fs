@@ -8,25 +8,14 @@ open FsRaster.D3.Renderer
 
 #nowarn "9"
 
-let inline putPixel' ctx x y c =
-    NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
-
-let inline putPixelZAlways' ctx x y z c = putPixel' ctx x y c
-
-[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
-let inline putPixelZ' (zbuffor : double array) ctx x y z c =
-    let idx = x + y * ctx.Width
-    if zbuffor.[idx] > z then
-        zbuffor.[idx] <- z
-        putPixel' ctx x y c
-
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
     let x1' = int v1.X
     let x2' = int v2.X
     let y1' = int v1.Y
     let y2' = int v2.Y
-    if x1' = x2' && y1' = y2' then putPixel' ctx x1' y1' c
+    if x1' = x2' && y1' = y2' then
+        NativeInterop.NativePtr.set ctx.Context.Pixels (x1' + y1' * ctx.Width) c
     else
         let (x1, y1, x2, y2), transform =
             match (x2' - x1', y2' - y1') with
@@ -47,7 +36,7 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
         let rec build d x y =
             if x <= x2 then 
                 let x', y' = transform x y 
-                putPixel' ctx x' y' c
+                NativeInterop.NativePtr.set ctx.Context.Pixels (x' + y' * ctx.Width) c
                 if d < 0 then build (d + incE) (x + 1) y
                 else build (d + incNE) (x + 1) (y + 1)
         build d' x1 y1
@@ -59,7 +48,7 @@ let inline private sortVertices (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
     Array.sortInPlaceBy (fun v -> v.Y) arr
     (arr.[0], arr.[1], arr.[2])
 
-type ActiveEdge = { YMax : int; X : double; Z : double; CoeffX : double; CoeffZ : double }
+type ActiveEdge = { YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
 
 let inline private buildTopTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
     let dy = double (v1.Y - v3.Y)
@@ -101,29 +90,49 @@ let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vecto
     let ae4 = { YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx3; CoeffZ = mz3 }
     [ ae1, ae2; ae3, ae4 ]
 
-let private renderScanline ctx put c ymin (ae1', ae2') =
-    let mutable ae1 = ae1'
-    let mutable ae2 = ae2'
+let private renderScanlineAlways ctx c ymin (ae1, ae2) =
     let ymax = ae1.YMax
     for y = ymin to ymax - 1 do
-        let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
-        let xSign = if ae2.X >= ae1.X then 1 else -1
-        let mutable z = ae1.Z
-        for x in [ int <| round ae1.X .. xSign .. int <| round ae2.X] do
-            put x y z c
-            z <- z + mz
-        ae1 <- { ae1 with X = ae1.X + ae1.CoeffX; Z = ae1.Z + ae1.CoeffZ }
-        ae2 <- { ae2 with X = ae2.X + ae2.CoeffX; Z = ae2.Z + ae2.CoeffZ }
+        let x1 = int <| round ae1.X
+        let x2 = int <| round ae2.X
+        let minX = min x1 x2
+        let maxX = max x1 x2
+        for x = minX to maxX do
+            NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
+        ae1.X <- ae1.X + ae1.CoeffX
+        ae2.X <- ae2.X + ae2.CoeffX
     ymax
 
-let private renderTriangle ctx put (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) c =
+let private renderScanlineZBuffer (zbuffer : double array) ctx c ymin (ae1, ae2) =
+    let ymax = ae1.YMax
+    for y = ymin to ymax - 1 do
+        let x1 = int <| round ae1.X
+        let x2 = int <| round ae2.X
+        let minX = min x1 x2
+        let maxX = max x1 x2
+
+        let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
+        let mutable z = ae1.Z
+        for x = minX to maxX do
+            let idx = y * ctx.Context.Width + x
+            if zbuffer.[idx] > z then
+                NativeInterop.NativePtr.set ctx.Context.Pixels idx c
+                zbuffer.[idx] <- z
+            z <- z + mz
+        ae1.X <- ae1.X + ae1.CoeffX
+        ae1.Z <- ae1.Z + ae1.CoeffZ
+        ae2.X <- ae2.X + ae2.CoeffX
+        ae2.Z <- ae2.Z + ae2.CoeffZ
+    ymax
+
+let private renderTriangle ctx render (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) c =
     let v1, v2, v3 = sortVertices v1' v2' v3'
     let ymin = int v1.Y
     let aes =
         if v1.Y = v2.Y then [ buildTopTriangle v1 v2 v3 ]
         else if v2.Y = v3.Y then [ buildBottomTriangle v1 v2 v3 ]
         else buildProperTriangle v1 v2 v3
-    aes |> List.fold (renderScanline ctx put c) ymin |> ignore
+    aes |> List.fold (render ctx c) ymin |> ignore
 
 let drawModel renderer context model =
     let w = double context.Width
@@ -132,11 +141,11 @@ let drawModel renderer context model =
     if renderer.Wireframe then
         renderWireframe (renderLine context) transformed
     else
-        let put =
+        let render =
             if renderer.ZBuffer then
                 let zBuffer = Array.create (context.Width * context.Height) System.Double.MaxValue
-                putPixelZ' zBuffer
+                renderScanlineZBuffer zBuffer
             else
-                putPixelZAlways'
-        renderFilled (renderTriangle context (put context)) transformed
+                renderScanlineAlways
+        renderFilled (renderTriangle context render) transformed
     ()
