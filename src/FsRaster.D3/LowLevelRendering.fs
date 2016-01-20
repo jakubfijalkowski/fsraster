@@ -93,10 +93,8 @@ let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vecto
 let private renderScanlineAlways ctx c ymin (ae1, ae2) =
     let ymax = ae1.YMax
     for y = ymin to ymax - 1 do
-        let x1 = int <| round ae1.X
-        let x2 = int <| round ae2.X
-        let minX = min x1 x2
-        let maxX = max x1 x2
+        let minX = int <| ceil (min ae1.X ae2.X)
+        let maxX = int <| ceil (max ae1.X ae2.X)
         for x = minX to maxX do
             NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
         ae1.X <- ae1.X + ae1.CoeffX
@@ -106,10 +104,8 @@ let private renderScanlineAlways ctx c ymin (ae1, ae2) =
 let private renderScanlineZBuffer (zbuffer : double array) ctx c ymin (ae1, ae2) =
     let ymax = ae1.YMax
     for y = ymin to ymax - 1 do
-        let x1 = int <| round ae1.X
-        let x2 = int <| round ae2.X
-        let minX = min x1 x2
-        let maxX = max x1 x2
+        let minX = int <| ceil (min ae1.X ae2.X)
+        let maxX = int <| ceil (max ae1.X ae2.X)
 
         let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
         let mutable z = ae1.Z
