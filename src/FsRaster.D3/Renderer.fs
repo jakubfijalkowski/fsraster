@@ -13,9 +13,9 @@ type Renderer3D =
     {
         Model : Matrix4;
         Projection : Matrix4;
-        Cumulative : Matrix4;
         Camera : Camera;
-        Wireframe : bool
+        Wireframe : bool;
+        BackfaceCulling : bool
     }
 
 [<Literal>]
@@ -29,30 +29,35 @@ let defaultRenderer =
     {
         Model = matIdentity;
         Projection = matIdentity;
-        Cumulative = matIdentity;
         Camera = defaultCamera;
-        Wireframe = true
+        Wireframe = true;
+        BackfaceCulling = false
     }
 
 let setCameraTo camera renderer =
     let cam = updateMatrix camera
-    let cumulative = renderer.Projection * cam.View * renderer.Model
-    { renderer with Camera = cam; Cumulative = cumulative }
+    { renderer with Camera = cam }
 
 let updateProjection renderer width height =
     let aspect = double width / double height
     let newProj = matProjection 90.0 aspect NearPlane FarPlane
-    let cumulative = newProj * renderer.Camera.View * renderer.Model
-    { renderer with Projection = newProj; Cumulative = cumulative }
+    { renderer with Projection = newProj }
 
 let inline toggleWireframe renderer =
     { renderer with Wireframe = not renderer.Wireframe }
 
-let private toClipSpace renderer model =
-    let newVerts = model.Vertices |> Array.map (fun v -> (renderer.Cumulative * v).Normalized)
+let inline toggleBackfaceCulling renderer =
+    { renderer with BackfaceCulling = not renderer.BackfaceCulling }
+
+let inline private toCameraSpace renderer model =
+    let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
     { model with Vertices = newVerts }
 
-let private toScreenSpace w h model =
+let inline private toClipSpace renderer model =
+    let newVerts = model.Vertices |> Array.map (fun v -> (renderer.Projection * v).Normalized)
+    { model with Vertices = newVerts }
+
+let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
         vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) v.Z 1.0
     )
@@ -65,12 +70,29 @@ let private clipModel model =
     let newTris =
         model.Triangles
         |> Array.filter(fun (a, b, c) ->
-            let va = model.Vertices.[a]
-            let vb = model.Vertices.[b]
-            let vc = model.Vertices.[c]
-            isInView va && isInView vb && isInView vc
+            let v1 = model.Vertices.[a]
+            let v2 = model.Vertices.[b]
+            let v3 = model.Vertices.[c]
+            isInView v1 && isInView v2 && isInView v3
         )
     { model with Triangles = newTris }
+
+let private cullBackfaces model =
+    let newTris =
+        model.Triangles
+        |> Array.filter (fun (a, b, c) ->
+            let v1 = model.Vertices.[a] |> toVec3
+            let v2 = model.Vertices.[b] |> toVec3
+            let v3 = model.Vertices.[c] |> toVec3
+            let n = cross3 (v2 - v1) (v3 - v1)
+            dot3 (-v1) n < 0.0
+        )
+    { model with Triangles = newTris }
+
+let inline private optionalBackfaceCulling renderer model =
+    if renderer.BackfaceCulling then
+        cullBackfaces model
+    else model
 
 let renderWireframe render model =
     let renderTriangle (a, b, c) =
@@ -83,4 +105,9 @@ let renderWireframe render model =
     Array.iter renderTriangle model.Triangles
 
 let transformModel renderer w h model =
-    model |> toClipSpace renderer |> clipModel |> toScreenSpace w h
+    model
+    |> toCameraSpace renderer
+    |> optionalBackfaceCulling renderer
+    |> toClipSpace renderer
+    |> clipModel
+    |> toScreenSpace w h

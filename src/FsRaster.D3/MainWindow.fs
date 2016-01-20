@@ -99,9 +99,14 @@ type MainWindowController() =
             | e -> MessageBox.Show(window.Root, "Cannot load model: " + e.Message, "Error") |> ignore
         ()
 
+    let onBackfaceCullingToggled _ =
+        renderer <- toggleBackfaceCulling renderer
+
     do
         window.imageContainer.SizeChanged.Add onSizeChanged
         window.modelSelector.SelectionChanged.Add onModelChanged
+        window.backfaceCullingCheckbox.Checked.Add onBackfaceCullingToggled
+        window.backfaceCullingCheckbox.Unchecked.Add onBackfaceCullingToggled
 
         renderer <- setCameraTo (cameraController.Camera) renderer 
 
