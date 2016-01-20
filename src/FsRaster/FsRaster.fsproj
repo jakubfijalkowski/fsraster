@@ -75,9 +75,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Utils.fs" />
     <Compile Include="Resources.fs" />
-    <Compile Include="Colors.fs" />
     <Compile Include="OctTree.fs" />
     <Compile Include="FigureColor.fs" />
     <Compile Include="Figures.fs" />

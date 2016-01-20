@@ -24,6 +24,18 @@ let (|ListNil|ListCons|) lst = if ConsIList.isEmpty lst then ListNil else ListCo
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
+module ConsArray =
+    type ConsArray<'a> =
+        | ConsArray of 'a array * int
+
+    let ofArray arr = ConsArray (arr, 0)
+    let isEmpty (ConsArray (arr, idx)) = arr.Length = idx
+    let nextElement (ConsArray (arr, idx)) = (arr.[idx], ConsArray (arr, idx + 1))
+
+let (|ArrayNil|ArrayCons|) arr = if ConsArray.isEmpty arr then ArrayNil else ArrayCons (ConsArray.nextElement arr)
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
 module UIColors =
     type UIColor = { Color : Color; Name : string }
     let allColors =

@@ -2,9 +2,7 @@
 #I __SOURCE_DIRECTORY__
 #load "load-references-debug.fsx"
 #load "../AssemblyInfo.fs"
-      "../Utils.fs"
       "../Resources.fs"
-      "../Colors.fs"
       "../OctTree.fs"
       "../FigureColor.fs"
       "../Figures.fs"
