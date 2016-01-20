@@ -105,8 +105,12 @@ type MainWindowController() =
     let onBackfaceCullingToggled _ =
         renderer <- toggleBackfaceCulling renderer
 
+    let onImageClick _ =
+        window.imageContainer.Focus() |> ignore
+
     do
         window.imageContainer.SizeChanged.Add onSizeChanged
+        window.imageContainer.MouseDown.Add onImageClick
         window.modelSelector.SelectionChanged.Add onModelChanged
         window.backfaceCullingCheckbox.Checked.Add onBackfaceCullingToggled
         window.backfaceCullingCheckbox.Unchecked.Add onBackfaceCullingToggled

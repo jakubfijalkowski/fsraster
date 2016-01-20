@@ -18,8 +18,8 @@
             <ColumnDefinition Width="150" />
         </Grid.ColumnDefinitions>
 
-        <Grid x:Name="imageContainer">
-            <Image x:Name="mainImage" Margin="5" SnapsToDevicePixels="True" />
+        <Grid x:Name="imageContainer" Focusable="True" Background="Transparent">
+            <Image x:Name="mainImage" Margin="5" SnapsToDevicePixels="True" IsHitTestVisible="False" />
         </Grid>
 
         <StackPanel Grid.Column="1">
