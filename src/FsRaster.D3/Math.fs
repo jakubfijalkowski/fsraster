@@ -155,13 +155,13 @@ let inline matRotZ theta =
         M41 = 0.0; M42 = 0.0; M43 = 0.0; M44 = 1.0
     }
 
-let matView (eye : Vector3) at up =
+let matLookAt (eye : Vector3) at up =
     let zax = (eye - at).Normal
     let xax = (cross3 up zax).Normal
     let yax = cross3 zax xax
-    let dx = dot3 xax eye
-    let dy = dot3 yax eye
-    let dz = dot3 zax eye
+    let dx = -(dot3 xax eye)
+    let dy = -(dot3 yax eye)
+    let dz = -(dot3 zax eye)
     {
         M11 = xax.X; M12 = xax.Y; M13 = xax.Z; M14 = dx;
         M21 = yax.X; M22 = yax.Y; M23 = yax.Z; M24 = dy;
@@ -170,12 +170,13 @@ let matView (eye : Vector3) at up =
     }
 
 let matProjection fov a n f =
-    let e = 1.0 / System.Math.Tan((degToRad fov) / 2.0)
-    let f1 = - (f + n) / (f - n)
-    let f2 = - (2.0 * f * n) / (f - n)
+    let ySc = 1.0 / System.Math.Tan((degToRad fov) / 2.0)
+    let xSc = ySc / a
+    let f1 = f / (n - f)
+    let f2 = (f * n) / (n - f)
     {
-        M11 = e  ; M12 = 0.0; M13 = 0.0 ; M14 = 0.0;
-        M21 = 0.0; M22 = e/a; M23 = 0.0 ; M24 = 0.0;
+        M11 = xSc; M12 = 0.0; M13 = 0.0 ; M14 = 0.0;
+        M21 = 0.0; M22 = ySc; M23 = 0.0 ; M24 = 0.0;
         M31 = 0.0; M32 = 0.0; M33 = f1  ; M34 = f2 ;
         M41 = 0.0; M42 = 0.0; M43 = -1.0; M44 = 0.0
     }

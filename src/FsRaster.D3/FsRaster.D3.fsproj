@@ -55,6 +55,9 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Math.fs" />
+    <Compile Include="Models.fs" />
+    <Compile Include="Renderer.fs" />
+    <Compile Include="LowLevelRendering.fs" />
     <Resource Include="MainWindow.xaml" />
     <Compile Include="MainWindow.fs" />
     <Compile Include="Program.fs" />
