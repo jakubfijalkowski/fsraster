@@ -1,2 +1,3 @@
-﻿nuget WriteableBitmapEx
-nuget FSharp.Collections.ParallelSeq
+﻿WriteableBitmapEx
+FSharp.Collections.ParallelSeq
+FsXaml.Wpf

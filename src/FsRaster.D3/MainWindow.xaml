@@ -1,0 +1,18 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        MinWidth="800" MinHeight="600">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="150" />
+        </Grid.ColumnDefinitions>
+
+        <Grid x:Name="imageContainer">
+            <Image x:Name="mainImage" Margin="5" SnapsToDevicePixels="True" />
+        </Grid>
+
+        <StackPanel Grid.Column="1">
+            <Label x:Name="fpsLabel" Content="FPS: 0" />
+        </StackPanel>
+    </Grid>
+</Window>
