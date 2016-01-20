@@ -105,6 +105,12 @@ type MainWindowController() =
     let onBackfaceCullingToggled _ =
         renderer <- toggleBackfaceCulling renderer
 
+    let onWireframeToggled _ =
+        renderer <- toggleWireframe renderer
+
+    let onZBufferToggled _ =
+        renderer <- toggleZBuffer renderer
+
     let onImageClick _ =
         window.imageContainer.Focus() |> ignore
 
@@ -112,8 +118,15 @@ type MainWindowController() =
         window.imageContainer.SizeChanged.Add onSizeChanged
         window.imageContainer.MouseDown.Add onImageClick
         window.modelSelector.SelectionChanged.Add onModelChanged
+
+        window.wireframeCheckbox.Checked.Add onWireframeToggled
+        window.wireframeCheckbox.Unchecked.Add onWireframeToggled
+
         window.backfaceCullingCheckbox.Checked.Add onBackfaceCullingToggled
         window.backfaceCullingCheckbox.Unchecked.Add onBackfaceCullingToggled
+
+        window.zBufferCheckbox.Checked.Add onZBufferToggled
+        window.zBufferCheckbox.Unchecked.Add onZBufferToggled
 
         renderer <- setCameraTo (cameraController.Camera) renderer 
 

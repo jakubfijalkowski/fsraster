@@ -25,7 +25,9 @@
         <StackPanel Grid.Column="1">
             <Label x:Name="fpsLabel" Content="FPS: 0" />
             <Label x:Name="timeLabel" Content="Render time: 0 ms" />
+            <CheckBox x:Name="wireframeCheckbox" Content="Wireframe" IsChecked="True" />
             <CheckBox x:Name="backfaceCullingCheckbox" Content="Backface culling" IsChecked="False" />
+            <CheckBox x:Name="zBufferCheckbox" Content="Z Buffer" IsChecked="False" />
             <ComboBox x:Name="modelSelector" SelectedIndex="0">
                 <ComboBoxItem Tag="mushroom" Content="Mushroom" />
                 <ComboBoxItem Tag="teapot" Content="Teapot" />

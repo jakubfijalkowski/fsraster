@@ -13,13 +13,29 @@ type Model =
     {
         Vertices : Vector4 array;
         Triangles : (int * int * int) array;
+        Colors : Colors.RawColor array
     }
 
 let sampleTriangle =
     {
         Vertices = [| vec4 0.0 0.0 0.0 1.0; vec4 0.0 0.5 0.0 1.0; vec4 0.5 0.0 0.0 1.0 |];
-        Triangles = [| 0, 1, 2 |]
+        Triangles = [| 0, 1, 2 |];
+        Colors = [||]
     }
+
+let changeOrientation model =
+    let newTriangles = model.Triangles |> Array.map (fun (a, b, c) -> (a, c, b))
+    { model with Triangles = newTriangles }
+
+let colorizeModel model =
+    let rnd = System.Random(0xDEADBEFF)
+    let genColor _ =
+        let r = rnd.Next(0, 256)
+        let g = rnd.Next(0, 256)
+        let b = rnd.Next(0, 256)
+        Colors.fromRGB r g b
+    let colors = Array.init model.Triangles.Length genColor
+    { model with Colors = colors }
 
 let private readAllLines (stream : Stream) =
     let lines = new List<string>()
@@ -67,12 +83,8 @@ let loadOffFromStream (stream : Stream) =
     if triangles |> Array.tryFind (fun (a, b, c) -> a < 0 || a >= vertCount || b < 0 || b >= vertCount || c < 0 || c >= vertCount) |> Option.isSome then
         failwith "Invalid index detected"
 
-    { Vertices = vertices; Triangles = triangles }
+    { Vertices = vertices; Triangles = triangles; Colors = [||] } |> colorizeModel
 
 let loadOffFromResources name =
     use stream = Resources.loadStream name
     loadOffFromStream stream
-
-let changeOrientation model =
-    let newTriangles = model.Triangles |> Array.map (fun (a, b, c) -> (a, c, b))
-    { model with Triangles = newTriangles }

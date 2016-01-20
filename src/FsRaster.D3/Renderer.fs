@@ -15,7 +15,8 @@ type Renderer3D =
         Projection : Matrix4;
         Camera : Camera;
         Wireframe : bool;
-        BackfaceCulling : bool
+        BackfaceCulling : bool;
+        ZBuffer : bool
     }
 
 [<Literal>]
@@ -33,7 +34,8 @@ let defaultRenderer =
         Projection = matIdentity;
         Camera = defaultCamera;
         Wireframe = true;
-        BackfaceCulling = false
+        BackfaceCulling = false;
+        ZBuffer = false
     }
 
 let setCameraTo camera renderer =
@@ -50,6 +52,9 @@ let inline toggleWireframe renderer =
 
 let inline toggleBackfaceCulling renderer =
     { renderer with BackfaceCulling = not renderer.BackfaceCulling }
+
+let inline toggleZBuffer renderer =
+    { renderer with ZBuffer = not renderer.ZBuffer }
 
 let inline private toCameraSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
@@ -105,6 +110,15 @@ let renderWireframe render model =
         render v1 v3 WireframeColor
         render v2 v3 WireframeColor
     Array.iter renderTriangle model.Triangles
+
+let renderFilled render model =
+    let renderTriangle i (a, b, c) =
+        let v1 = model.Vertices.[a]
+        let v2 = model.Vertices.[b]
+        let v3 = model.Vertices.[c]
+        let c = if model.Colors.Length > i then model.Colors.[i] else WireframeColor
+        render v1 v2 v3 c
+    Array.iteri renderTriangle model.Triangles
 
 let transformModel renderer w h model =
     model
