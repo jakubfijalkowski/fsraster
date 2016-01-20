@@ -81,10 +81,10 @@ let private clipModel model =
 
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let private renderLine (v1 : Vector4) (v2 : Vector4) =
-    let x1' = int (round v1.X)
-    let x2' = int (round v2.X)
-    let y1' = int (round v1.Y)
-    let y2' = int (round v2.Y)
+    let x1' = int (floor v1.X)
+    let x2' = int (floor v2.X)
+    let y1' = int (floor v1.Y)
+    let y2' = int (floor v2.Y)
     if x1' = x2' && y1' = y2' then Array.singleton (x1', y1', 0.0)
     else
         let renderOctant x1 y1 x2 y2 =

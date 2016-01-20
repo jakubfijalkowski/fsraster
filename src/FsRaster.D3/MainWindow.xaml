@@ -1,6 +1,17 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         MinWidth="800" MinHeight="600">
+
+    <Window.Resources>
+
+        <Style TargetType="Label">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -13,6 +24,10 @@
 
         <StackPanel Grid.Column="1">
             <Label x:Name="fpsLabel" Content="FPS: 0" />
+            <ComboBox x:Name="modelSelector" SelectedIndex="0">
+                <ComboBoxItem Tag="mushroom" Content="Mushroom" />
+                <ComboBoxItem Tag="teapot" Content="Teapot" />
+            </ComboBox>
         </StackPanel>
     </Grid>
 </Window>

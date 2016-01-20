@@ -26,7 +26,7 @@ type MainWindowController() =
     
     let window = new MainWindow()
 
-    let model = loadOffFromResources "mushroom"
+    let mutable model = loadOffFromResources "mushroom"
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -35,14 +35,18 @@ type MainWindowController() =
     let mutable renderer = defaultRenderer
     let mutable frames = 0
 
+    let mutable lastFpsCheck = 0L
     let mutable lastFrameTime = 0L
 
     let fpsTimer = new DispatcherTimer()
 
-    let calculateFps _ =
-        let fps = frames
-        frames <- 0
-        window.fpsLabel.Content <- sprintf "FPS: %d" fps
+    let updateFps () =
+        let ticks = DateTime.Now.Ticks
+        if ticks - lastFpsCheck > 10000000L then
+            let fps = frames
+            window.fpsLabel.Content <- sprintf "FPS: %d" fps
+            frames <- 0
+            lastFpsCheck <- ticks
 
     let updateCamera dt =
         if cameraController.Update dt then
@@ -54,6 +58,7 @@ type MainWindowController() =
         let dt = double (frameTime - lastFrameTime) / 10000000.0
         lastFrameTime <- frameTime
 
+        updateFps ()
         updateCamera dt
 
         use context = acquireRenderer mainCanvas
@@ -72,13 +77,20 @@ type MainWindowController() =
             renderer <- updateProjection renderer newW newH
             window.mainImage.Source <- mainCanvas
 
+    let onModelChanged _ =
+        try
+            let name = (window.modelSelector.SelectedItem :?> ComboBoxItem).Tag :?> string
+            let newModel = loadOffFromResources name
+            model <- newModel
+        with
+            | e -> MessageBox.Show(window.Root, "Cannot load model: " + e.Message, "Error") |> ignore
+        ()
+
     do
-        renderer <- setCameraTo (cameraController.Camera) renderer 
-
         window.imageContainer.SizeChanged.Add onSizeChanged
+        window.modelSelector.SelectionChanged.Add onModelChanged
 
-        fpsTimer.Interval <- TimeSpan.FromSeconds(1.0)
-        fpsTimer.Tick.Add calculateFps
+        renderer <- setCameraTo (cameraController.Camera) renderer 
 
         CompositionTarget.Rendering.Add renderLoop
 

@@ -121,4 +121,7 @@
   <data name="mushroom" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>mushroom.off;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="teapot" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>teapot.off;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>
