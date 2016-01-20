@@ -12,7 +12,7 @@ open System.Windows.Threading
 open FsXaml
 
 open FsRaster.D3.Math
-open FsRaster.D3.CoreRenderer3D
+open FsRaster.RawRendering
 
 type MainWindow = XAML<"MainWindow.xaml", true>
 
@@ -24,11 +24,6 @@ type MainWindowController() =
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
     let mutable frames = 0
 
-    let point = vec4 0.0 0.0 0.0 1.0
-    let world = matTranslate 0.5 0.0 0.0
-    let view = matView (vec3 0.0 0.0 1.0) (vec3 0.0 0.0 0.0) (vec3 0.0 1.0 0.0)
-    let mutable projection = matProjection 90.0 1.0 0.1 100.0
-
     let fpsTimer = new DispatcherTimer()
 
     let calculateFps _ =
@@ -38,14 +33,7 @@ type MainWindowController() =
 
     let render _ =
         use context = acquireRenderer mainCanvas
-        clearColor context 0xff000000
-        
-        let newPoint = (projection * view * world * point).Normalized
-        let x = (newPoint.X + 1.0) / 2.0 * double context.Context.Width
-        let y = (newPoint.Y + 1.0) / 2.0 * double context.Context.Height
-
-        putPixel context (int x) (int y) 0xffffffff
-
+        clearBitmap context 0xff000000
         frames <- frames + 1
         ()
 
@@ -56,7 +44,6 @@ type MainWindowController() =
         let newH = int e.NewSize.Height
         if oldW <> newW || oldH <> newH then
             mainCanvas <- BitmapFactory.New(newW, newH)
-            projection <- matProjection 90.0 (e.NewSize.Width / e.NewSize.Height) 0.1 100.0
             window.mainImage.Source <- mainCanvas
 
     do

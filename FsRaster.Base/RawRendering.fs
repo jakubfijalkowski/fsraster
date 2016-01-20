@@ -6,11 +6,15 @@ open System.Windows.Media.Imaging
 open System.Diagnostics.CodeAnalysis
 
 // Required to fight thread access exceptions
-type CachedBitmapContext = {
-    Context : BitmapContext;
-    Width : int;
-    Height : int
-}
+type CachedBitmapContext =
+    {
+        Context : BitmapContext;
+        Width : int;
+        Height : int
+    }
+
+    interface IDisposable with
+        member x.Dispose() = x.Context.Dispose()
 
 #nowarn "9"
 
@@ -66,3 +70,7 @@ let getPixel ctx x y =
     let index = y * ctx.Width + x
     let pixels = ctx.Context.Pixels
     NativeInterop.NativePtr.get pixels index
+
+let acquireRenderer (bmp : WriteableBitmap) =
+    let ctx = bmp.GetBitmapContext(ReadWriteMode.ReadWrite)
+    { Context = ctx; Width = ctx.Width; Height = ctx.Height }
