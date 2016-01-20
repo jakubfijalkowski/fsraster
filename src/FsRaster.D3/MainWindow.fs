@@ -26,7 +26,7 @@ type MainWindowController() =
     
     let window = new MainWindow()
 
-    let model = sampleTriangle
+    let model = loadOffFromResources "mushroom"
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 

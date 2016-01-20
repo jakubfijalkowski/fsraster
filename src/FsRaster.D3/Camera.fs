@@ -23,7 +23,7 @@ type CameraController(control : FrameworkElement) =
 
     let RotAngle = System.Math.PI / 2.0
 
-    let mutable camera = makeCamera (vec3 0.0 0.0 1.0) (vec3 0.0 0.0 0.0)
+    let mutable camera = makeCamera (vec3 0.0 0.0 2.0) (vec3 0.0 0.0 0.0)
     
     let mutable leftPressed = false
     let mutable rightPressed = false

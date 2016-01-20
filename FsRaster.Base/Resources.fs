@@ -10,7 +10,8 @@ type private SampleType = SampleType
 let private cursorCache = new Dictionary<string, Cursor> ()
 
 let getResourceManager =
-    new ResourceManager("Resources", typeof<SampleType>.Assembly)
+    let assembly = System.Reflection.Assembly.GetEntryAssembly()
+    new ResourceManager("Resources", assembly)
 
 let loadCursorFile name =
     match cursorCache.TryGetValue name with
@@ -24,3 +25,7 @@ let loadCursorFile name =
 
 let loadString name =
     getResourceManager.GetString(name)
+
+let loadStream name =
+    let data = getResourceManager.GetObject(name) :?> byte []
+    new MemoryStream(data)
