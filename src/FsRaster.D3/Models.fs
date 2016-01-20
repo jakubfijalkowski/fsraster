@@ -12,30 +12,31 @@ open FsRaster.D3.Math
 type Model =
     {
         Vertices : Vector4 array;
-        Triangles : (int * int * int) array;
+        Triangles : (int * int * int * int) array;
         Colors : Colors.RawColor array
     }
 
 let sampleTriangle =
     {
         Vertices = [| vec4 0.0 0.0 0.0 1.0; vec4 0.0 0.5 0.0 1.0; vec4 0.5 0.0 0.0 1.0 |];
-        Triangles = [| 0, 1, 2 |];
+        Triangles = [| 0, 1, 2, -1 |];
         Colors = [||]
     }
 
 let changeOrientation model =
-    let newTriangles = model.Triangles |> Array.map (fun (a, b, c) -> (a, c, b))
+    let newTriangles = model.Triangles |> Array.map (fun (a, b, c, color) -> (a, c, b, color))
     { model with Triangles = newTriangles }
 
 let colorizeModel model =
     let rnd = System.Random(0xDEADBEFF)
     let genColor _ =
-        let r = rnd.Next(0, 256)
-        let g = rnd.Next(0, 256)
-        let b = rnd.Next(0, 256)
+        let r = rnd.Next(50, 256)
+        let g = rnd.Next(50, 256)
+        let b = rnd.Next(50, 256)
         Colors.fromRGB r g b
     let colors = Array.init model.Triangles.Length genColor
-    { model with Colors = colors }
+    let triangles = Array.mapi (fun i (a, b, c, _) -> (a, b, c, i)) model.Triangles
+    { model with Triangles = triangles; Colors = colors }
 
 let private readAllLines (stream : Stream) =
     let lines = new List<string>()
@@ -58,7 +59,7 @@ let private parseFace (line : string) =
     if components |> Array.map fst |> Array.fold (&&) true |> not then failwith "Could not parse face"
     let indices = components |> Array.map snd
     if indices.[0] <> 3 then failwith "Only triangles are supported"
-    (indices.[1], indices.[2], indices.[3])
+    (indices.[1], indices.[2], indices.[3], -1)
 
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let loadOffFromStream (stream : Stream) =
@@ -80,7 +81,7 @@ let loadOffFromStream (stream : Stream) =
     let vertices = lines |> Array.skip 2 |> Array.take vertCount |> Array.map parseVertex
     let triangles = lines |> Array.skip (2 + vertCount) |> Array.map parseFace
 
-    if triangles |> Array.tryFind (fun (a, b, c) -> a < 0 || a >= vertCount || b < 0 || b >= vertCount || c < 0 || c >= vertCount) |> Option.isSome then
+    if triangles |> Array.tryFind (fun (a, b, c, _) -> a < 0 || a >= vertCount || b < 0 || b >= vertCount || c < 0 || c >= vertCount) |> Option.isSome then
         failwith "Invalid index detected"
 
     { Vertices = vertices; Triangles = triangles; Colors = [||] } |> colorizeModel

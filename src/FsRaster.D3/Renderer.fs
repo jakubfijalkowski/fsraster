@@ -76,7 +76,7 @@ let inline private isInView (v : Vector4) =
 let private clipModel model =
     let newTris =
         model.Triangles
-        |> Array.filter(fun (a, b, c) ->
+        |> Array.filter(fun (a, b, c, _) ->
             let v1 = model.Vertices.[a]
             let v2 = model.Vertices.[b]
             let v3 = model.Vertices.[c]
@@ -87,7 +87,7 @@ let private clipModel model =
 let private cullBackfaces model =
     let newTris =
         model.Triangles
-        |> Array.filter (fun (a, b, c) ->
+        |> Array.filter (fun (a, b, c, _) ->
             let v1 = model.Vertices.[a] |> toVec3
             let v2 = model.Vertices.[b] |> toVec3
             let v3 = model.Vertices.[c] |> toVec3
@@ -102,7 +102,7 @@ let inline private optionalBackfaceCulling renderer model =
     else model
 
 let renderWireframe render model =
-    let renderTriangle (a, b, c) =
+    let renderTriangle (a, b, c, _) =
         let v1 = model.Vertices.[a]
         let v2 = model.Vertices.[b]
         let v3 = model.Vertices.[c]
@@ -112,13 +112,13 @@ let renderWireframe render model =
     Array.iter renderTriangle model.Triangles
 
 let renderFilled render model =
-    let renderTriangle i (a, b, c) =
+    let renderTriangle (a, b, c, color) =
         let v1 = model.Vertices.[a]
         let v2 = model.Vertices.[b]
         let v3 = model.Vertices.[c]
-        let c = if model.Colors.Length > i then model.Colors.[i] else WireframeColor
+        let c = if color <> -1 && model.Colors.Length > color then model.Colors.[color] else WireframeColor
         render v1 v2 v3 c
-    Array.iteri renderTriangle model.Triangles
+    Array.iter renderTriangle model.Triangles
 
 let transformModel renderer w h model =
     model
