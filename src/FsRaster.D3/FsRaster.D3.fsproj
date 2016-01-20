@@ -56,6 +56,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Math.fs" />
     <Compile Include="Models.fs" />
+    <Compile Include="Camera.fs" />
     <Compile Include="Renderer.fs" />
     <Compile Include="LowLevelRendering.fs" />
     <Resource Include="MainWindow.xaml" />

@@ -7,16 +7,14 @@ open FsRaster
 open FsRaster.Utils
 open FsRaster.D3.Math
 open FsRaster.D3.Models
+open FsRaster.D3.Camera
 
 type Renderer3D =
     {
         Model : Matrix4;
-        View : Matrix4;
         Projection : Matrix4;
         Cumulative : Matrix4;
-        EyePos : Vector3;
-        EyeTarget : Vector3;
-        EyeUp : Vector3;
+        Camera : Camera;
         Wireframe : bool
     }
 
@@ -37,36 +35,21 @@ let FarPlane = 100.0
 let defaultRenderer =
     {
         Model = matIdentity;
-        View = matIdentity;
         Projection = matIdentity;
         Cumulative = matIdentity;
-        EyePos = vec3 0.0 0.0 0.0;
-        EyeTarget = vec3 0.0 0.0 1.0;
-        EyeUp = vec3 0.0 1.0 0.0;
+        Camera = defaultCamera;
         Wireframe = true
     }
 
-let moveCamera renderer diff =
-    let newPos = renderer.EyePos + diff
-    let newView = matLookAt newPos renderer.EyeTarget renderer.EyeUp
-    let cumulative = renderer.Projection * newView * renderer.Model
-    { renderer with View = newView; Cumulative = cumulative; EyePos = newPos }
-
-let moveTarget renderer diff =
-    let newTarget = renderer.EyeTarget + diff
-    let newView = matLookAt renderer.EyePos newTarget renderer.EyeUp
-    let cumulative = renderer.Projection * newView * renderer.Model
-    { renderer with View = newView; Cumulative = cumulative; EyeTarget = newTarget }
-
-let lookAt renderer eye target =
-    let newView = matLookAt eye target renderer.EyeUp
-    let cumulative = renderer.Projection * newView * renderer.Model
-    { renderer with View = newView; Cumulative = cumulative; EyePos = eye; EyeTarget = target }
+let setCameraTo camera renderer =
+    let cam = updateMatrix camera
+    let cumulative = renderer.Projection * cam.View * renderer.Model
+    { renderer with Camera = cam; Cumulative = cumulative }
 
 let updateProjection renderer width height =
     let aspect = double width / double height
     let newProj = matProjection 90.0 aspect NearPlane FarPlane
-    let cumulative = newProj * renderer.View * renderer.Model
+    let cumulative = newProj * renderer.Camera.View * renderer.Model
     { renderer with Projection = newProj; Cumulative = cumulative }
 
 let inline toggleWireframe renderer =

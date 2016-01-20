@@ -14,6 +14,7 @@ open FsXaml
 open FsRaster.RawRendering
 open FsRaster.D3.Math
 open FsRaster.D3.Models
+open FsRaster.D3.Camera
 open FsRaster.D3.Renderer
 open FsRaster.D3.LowLevelRendering
 
@@ -28,8 +29,13 @@ type MainWindowController() =
     let model = sampleTriangle
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
+
+    let cameraController = CameraController(window.Root)
+
     let mutable renderer = defaultRenderer
     let mutable frames = 0
+
+    let mutable lastFrameTime = 0
 
     let fpsTimer = new DispatcherTimer()
 
@@ -38,7 +44,18 @@ type MainWindowController() =
         frames <- 0
         window.fpsLabel.Content <- sprintf "FPS: %d" fps
 
-    let render _ =
+    let updateCamera dt =
+        if cameraController.Update dt then
+            renderer <- setCameraTo cameraController.Camera renderer
+        ()
+
+    let renderLoop _ =
+        let frameTime = DateTime.UtcNow.Millisecond
+        let dt = double (frameTime - lastFrameTime) / 1000.0
+        lastFrameTime <- frameTime
+
+        updateCamera dt
+
         use context = acquireRenderer mainCanvas
         clearBitmap context 0xff000000
         drawModel renderer context model
@@ -56,14 +73,14 @@ type MainWindowController() =
             window.mainImage.Source <- mainCanvas
 
     do
-        renderer <- lookAt renderer (vec3 0.0 0.0 1.0) (vec3 0.0 0.0 0.0)
+        renderer <- setCameraTo (cameraController.Camera) renderer 
 
         window.imageContainer.SizeChanged.Add onSizeChanged
 
         fpsTimer.Interval <- TimeSpan.FromSeconds(1.0)
         fpsTimer.Tick.Add calculateFps
 
-        CompositionTarget.Rendering.Add render
+        CompositionTarget.Rendering.Add renderLoop
 
         fpsTimer.Start()
 
