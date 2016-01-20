@@ -1,10 +1,13 @@
 ﻿module FsRaster.D3.Math
 
+open System.Diagnostics
+
 // Vector is represented as a column, matrix is row-major
 
 let inline degToRad d = d * System.Math.PI / 180.0
 let inline radToDeg r = r * 180.0 / System.Math.PI
 
+[<DebuggerDisplay("X = {X}; Y = {Y}; Z = {Z}")>]
 type Vector3 =
     { X : double; Y : double; Z : double }
 
@@ -30,6 +33,7 @@ type Vector3 =
     static member (~-) (a : Vector3) =
         { X = -a.X; Y = -a.Y; Z = -a.Z }
 
+[<DebuggerDisplay("X = {X}; Y = {Y}; Z = {Z}; W = {W}")>]
 type Vector4 =
     { X : double; Y : double; Z : double; W : double }
 

@@ -35,7 +35,7 @@ type MainWindowController() =
     let mutable renderer = defaultRenderer
     let mutable frames = 0
 
-    let mutable lastFrameTime = 0
+    let mutable lastFrameTime = 0L
 
     let fpsTimer = new DispatcherTimer()
 
@@ -50,8 +50,8 @@ type MainWindowController() =
         ()
 
     let renderLoop _ =
-        let frameTime = DateTime.UtcNow.Millisecond
-        let dt = double (frameTime - lastFrameTime) / 1000.0
+        let frameTime = DateTime.Now.Ticks
+        let dt = double (frameTime - lastFrameTime) / 10000000.0
         lastFrameTime <- frameTime
 
         updateCamera dt
