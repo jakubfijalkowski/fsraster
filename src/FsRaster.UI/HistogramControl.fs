@@ -3,6 +3,7 @@
 open System.Windows.Media.Imaging
 open System.Windows.Controls
 
+open FsRaster.RawRendering
 open FsRaster.CoreRendering
 
 type HistogramControl() as self =

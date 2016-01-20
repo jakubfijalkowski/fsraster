@@ -6,7 +6,7 @@
 open System
 open System.Windows.Media.Imaging
 
-open FsRaster.CoreRendering
+open FsRaster.RawRendering
 
 type CoreRenderer3D =
     { Context : CachedBitmapContext }
@@ -22,4 +22,4 @@ let acquireRenderer (bmp : WriteableBitmap) =
 
 let clearColor r c = clearBitmap r.Context c
 
-let putPixel r = FsRaster.CoreRendering.putPixel r.Context
+let putPixel r = FsRaster.RawRendering.putPixel r.Context

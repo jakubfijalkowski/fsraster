@@ -5,6 +5,7 @@ open System.Diagnostics.CodeAnalysis
 open System.Windows.Media
 open System.Windows.Media.Imaging
 
+open FsRaster.RawRendering
 open FsRaster.CoreRendering
 
 #nowarn "9"
