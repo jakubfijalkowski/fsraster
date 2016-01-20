@@ -1,6 +1,7 @@
 ﻿namespace FsRaster.D3
 
 open System
+open System.Diagnostics
 
 open System.Windows
 open System.Windows.Data
@@ -40,11 +41,12 @@ type MainWindowController() =
 
     let fpsTimer = new DispatcherTimer()
 
-    let updateFps () =
+    let updateStats rt =
         let ticks = DateTime.Now.Ticks
         if ticks - lastFpsCheck > 10000000L then
             let fps = frames
             window.fpsLabel.Content <- sprintf "FPS: %d" fps
+            window.timeLabel.Content <- sprintf "Render time: %d ms" (int rt)
             frames <- 0
             lastFpsCheck <- ticks
 
@@ -53,12 +55,11 @@ type MainWindowController() =
             renderer <- setCameraTo cameraController.Camera renderer
         ()
 
-    let renderLoop _ =
+    let renderLoop' () =
         let frameTime = DateTime.Now.Ticks
         let dt = double (frameTime - lastFrameTime) / 10000000.0
         lastFrameTime <- frameTime
 
-        updateFps ()
         updateCamera dt
 
         use context = acquireRenderer mainCanvas
@@ -66,6 +67,18 @@ type MainWindowController() =
         drawModel renderer context model
         frames <- frames + 1
         ()
+
+    let renderLoop _ =
+    #if DEBUG
+        let sw = Stopwatch()
+        sw.Start()
+        renderLoop' ()
+        sw.Stop()
+        updateStats sw.ElapsedMilliseconds
+    #else
+        renderLoop' ()
+        updateStats 0
+    #endif
 
     let onSizeChanged (e : SizeChangedEventArgs) =
         let oldW = int e.PreviousSize.Width
