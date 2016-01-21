@@ -14,7 +14,7 @@ type Vector3 =
     member x.Length =
         System.Math.Sqrt(x.X * x.X + x.Y * x.Y + x.Z * x.Z)
 
-    member x.Normal =
+    member x.Normalized =
         let len = x.Length
         { X = x.X / len; Y = x.Y / len; Z = x.Z / len }
 
@@ -67,6 +67,9 @@ let inline cross3 (a : Vector3) (b : Vector3) : Vector3 =
     let y = a.Z * b.X - a.X * b.Z
     let z = a.X * b.Y - a.Y * b.X
     { X = x; Y = y; Z = z }
+
+let inline computeNormal3 v1 v2 v3 = cross3 (v2 - v1) (v3 - v1)
+let inline computeNormal4 v1 v2 v3 = computeNormal3 (toVec3 v1) (toVec3 v2) (toVec3 v3)
 
 type Matrix4 =
     {
@@ -169,8 +172,8 @@ let inline matRotZ theta =
     }
 
 let matLookAt (eye : Vector3) at up =
-    let zax = (eye - at).Normal
-    let xax = (cross3 up zax).Normal
+    let zax = (eye - at).Normalized
+    let xax = (cross3 up zax).Normalized
     let yax = cross3 zax xax
     let dx = -(dot3 xax eye)
     let dy = -(dot3 yax eye)
@@ -235,7 +238,7 @@ let inline quatAsVec (q : Quaternion) = vec3 q.B q.C q.D
 let quatRot theta (axis : Vector3) =
     let c = System.Math.Cos(theta / 2.0)
     let s = System.Math.Sin(theta / 2.0)
-    quat c (s * axis.Normal)
+    quat c (s * axis.Normalized)
 
 let vecRotate theta axis v =
     let q = quatRot theta axis

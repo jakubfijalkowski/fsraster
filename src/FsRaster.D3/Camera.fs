@@ -43,9 +43,9 @@ type CameraController(control : FrameworkElement) =
     let getMoveCoeff a b = if a then 1.0 else if b then -1.0 else 0.0
 
     let moveCamera dt =
-        let forwardVec = (camera.Target - camera.Position).Normal
-        let rightVec = (cross3 forwardVec camera.Up).Normal
-        let realUpVec = (cross3 rightVec forwardVec).Normal
+        let forwardVec = (camera.Target - camera.Position).Normalized
+        let rightVec = (cross3 forwardVec camera.Up).Normalized
+        let realUpVec = (cross3 rightVec forwardVec).Normalized
 
         let forwardCoeff = getMoveCoeff forwardPressed backwardPressed
         let rightCoeff = getMoveCoeff rightPressed leftPressed
@@ -57,9 +57,9 @@ type CameraController(control : FrameworkElement) =
         camera <- camera |> moveBy moveVec |> lookBy moveVec
 
     let rotateCamera dt =
-        let forwardVec = (camera.Target - camera.Position).Normal
-        let rightVec = (cross3 forwardVec camera.Up).Normal
-        let realUpVec = (cross3 forwardVec rightVec).Normal
+        let forwardVec = (camera.Target - camera.Position).Normalized
+        let rightVec = (cross3 forwardVec camera.Up).Normalized
+        let realUpVec = (cross3 forwardVec rightVec).Normalized
         let rightAngle = (getMoveCoeff lookRightPressed lookLeftPressed) * RotAngle * dt
         let upAngle = (getMoveCoeff lookUpPressed lookDownPressed) * RotAngle * dt
 

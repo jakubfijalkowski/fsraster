@@ -108,7 +108,7 @@ let private cullBackfaces model =
             let v1 = model.Vertices.[t.V1] |> toVec3
             let v2 = model.Vertices.[t.V2] |> toVec3
             let v3 = model.Vertices.[t.V3] |> toVec3
-            let n = cross3 (v2 - v1) (v3 - v1)
+            let n = computeNormal3 v1 v2 v3
             dot3 (-v1) n < 0.0
         )
     { model with Triangles = newTris }

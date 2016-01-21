@@ -9,12 +9,7 @@ open System.Diagnostics.CodeAnalysis
 open FsRaster
 open FsRaster.D3.Math
 
-type Triangle =
-    {
-        V1 : int; V2 : int; V3: int;
-        N1 : Vector4; N2 : Vector4; N3 : Vector4;
-        Color : int;
-    }
+type Triangle = { V1 : int; V2 : int; V3: int; Color : int; }
 
 type RenderTriangle =
     {
@@ -26,13 +21,15 @@ type RenderTriangle =
 type Model =
     {
         Vertices : Vector4 array;
+        Normals : Vector4 array;
         Triangles : Triangle array;
     }
 
-let inline triEmpty v1 v2 v3 : Triangle = { V1 = v1; V2 = v2; V3 = v3; N1 = vec4Zero; N2 = vec4Zero; N3 = vec4Zero; Color = 0xff000000 }
+let inline triEmpty v1 v2 v3 : Triangle = { V1 = v1; V2 = v2; V3 = v3; Color = 0xff000000 }
 let inline toRenderTriangle model (t : Triangle) : RenderTriangle =
     { V1 = model.Vertices.[t.V1]; V2 = model.Vertices.[t.V2]; V3 = model.Vertices.[t.V3];
-      N1 = t.N1; N2 = t.N2; N3 = t.N3; Color = t.Color }
+      N1 = model.Normals.[t.V1] ; N2 = model.Normals.[t.V2] ; N3 = model.Normals.[t.V3];
+      Color = t.Color }
 
 let changeOrientation model =
     let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2 })
@@ -55,6 +52,22 @@ let makeItBlack model =
 let makeItWhite model =
     let triangles = model.Triangles |> Array.map (fun t -> { t with Color = 0xffffffff })
     { model with Triangles = triangles }
+
+let private performNormalMapping model =
+    let updateNormals (normals : Vector3 array) (t : Triangle) =
+        let v1 = model.Vertices.[t.V1]
+        let v2 = model.Vertices.[t.V2]
+        let v3 = model.Vertices.[t.V3]
+        let n = computeNormal4 v1 v2 v3
+        normals.[t.V1] <- normals.[t.V1] + n
+        normals.[t.V2] <- normals.[t.V2] + n
+        normals.[t.V3] <- normals.[t.V3] + n
+        normals
+    let normals =
+        model.Triangles
+        |> Array.fold updateNormals (Array.create model.Vertices.Length vec3Zero)
+        |> Array.map (fun n -> toVec4 n.Normalized)
+    { model with Normals = normals }
 
 let private readAllLines (stream : Stream) =
     let lines = new List<string>()
@@ -102,7 +115,7 @@ let loadOffFromStream (stream : Stream) =
     if triangles |> Array.tryFind (fun t -> t.V1 < 0 || t.V1 >= vertCount || t.V2 < 0 || t.V2 >= vertCount || t.V3 < 0 || t.V3 >= vertCount) |> Option.isSome then
         failwith "Invalid index detected"
 
-    { Vertices = vertices; Triangles = triangles } |> randomlyColorizeModel
+    { Vertices = vertices; Triangles = triangles; Normals = [||] } |> performNormalMapping
 
 let loadOffFromResources name =
     use stream = Resources.loadStream name
