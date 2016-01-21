@@ -38,7 +38,7 @@ let changeOrientation model =
     let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2 })
     { model with Triangles = newTriangles }
 
-let colorizeModel model =
+let randomlyColorizeModel model =
     let rnd = System.Random(0xDEADBEFF)
     let genColor _ =
         let r = rnd.Next(50, 256)
@@ -102,7 +102,7 @@ let loadOffFromStream (stream : Stream) =
     if triangles |> Array.tryFind (fun t -> t.V1 < 0 || t.V1 >= vertCount || t.V2 < 0 || t.V2 >= vertCount || t.V3 < 0 || t.V3 >= vertCount) |> Option.isSome then
         failwith "Invalid index detected"
 
-    { Vertices = vertices; Triangles = triangles } |> colorizeModel
+    { Vertices = vertices; Triangles = triangles } |> randomlyColorizeModel
 
 let loadOffFromResources name =
     use stream = Resources.loadStream name

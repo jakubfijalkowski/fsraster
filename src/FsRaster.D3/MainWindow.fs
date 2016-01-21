@@ -80,6 +80,12 @@ type MainWindowController() =
         updateStats 0
     #endif
 
+    let colorizeModel model =
+        match window.modelColorModeSelector.SelectedIndex with
+        | 0 -> randomlyColorizeModel model
+        | 1 -> makeItBlack model
+        | _ -> makeItWhite model
+
     let onSizeChanged (e : SizeChangedEventArgs) =
         let oldW = int e.PreviousSize.Width
         let oldH = int e.PreviousSize.Height
@@ -95,9 +101,9 @@ type MainWindowController() =
             let name = (window.modelSelector.SelectedItem :?> ComboBoxItem).Tag :?> string
             let newModel = loadOffFromResources name
             if name = "mushroom" then
-                model <- newModel |> changeOrientation
+                model <- newModel |> changeOrientation |> colorizeModel
             else
-                model <- newModel
+                model <- newModel |> colorizeModel
         with
             | e -> MessageBox.Show(window.Root, "Cannot load model: " + e.Message, "Error") |> ignore
         ()
@@ -114,6 +120,9 @@ type MainWindowController() =
     let onZBufferToggled _ =
         renderer <- toggleZBuffer renderer
 
+    let onColorModeChanged _ =
+        model <- model |> colorizeModel
+
     let onImageClick _ =
         window.imageContainer.Focus() |> ignore
 
@@ -121,6 +130,7 @@ type MainWindowController() =
         window.imageContainer.SizeChanged.Add onSizeChanged
         window.imageContainer.MouseDown.Add onImageClick
         window.modelSelector.SelectionChanged.Add onModelChanged
+        window.modelColorModeSelector.SelectionChanged.Add onColorModeChanged
 
         window.wireframeCheckbox.Checked.Add onWireframeToggled
         window.wireframeCheckbox.Unchecked.Add onWireframeToggled
@@ -134,6 +144,7 @@ type MainWindowController() =
         window.zBufferCheckbox.Checked.Add onZBufferToggled
         window.zBufferCheckbox.Unchecked.Add onZBufferToggled
 
+        model <- model |> colorizeModel
         renderer <- setCameraTo (cameraController.Camera) renderer 
 
         CompositionTarget.Rendering.Add renderLoop
