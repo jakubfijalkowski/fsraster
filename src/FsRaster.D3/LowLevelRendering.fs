@@ -95,38 +95,6 @@ let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vecto
     let ae4 = { YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx3; CoeffZ = mz3 }
     [ ae1, ae2; ae3, ae4 ]
 
-let private renderScanlineAlways ctx c ymin (ae1, ae2) =
-    let ymax = ae1.YMax
-    for y = ymin to ymax - 1 do
-        let minX = int (min ae1.X ae2.X)
-        let maxX = int <| ceil (max ae1.X ae2.X)
-        for x = minX to maxX do
-            NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
-        ae1.X <- ae1.X + ae1.CoeffX
-        ae2.X <- ae2.X + ae2.CoeffX
-    ymax
-
-let private renderScanlineZBuffer (zbuffer : ZBufferType array) ctx c ymin (ae1, ae2) =
-    let ymax = ae1.YMax
-    for y = ymin to ymax - 1 do
-        let minX = int (min ae1.X ae2.X)
-        let maxX = int <| ceil (max ae1.X ae2.X)
-
-        let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
-        let mutable z = ae1.Z
-        for x = minX to maxX do
-            let idx = y * ctx.Context.Width + x
-            let z' = uint32 z
-            if zbuffer.[idx] > z' then
-                NativeInterop.NativePtr.set ctx.Context.Pixels idx c
-                zbuffer.[idx] <- z'
-            z <- z + mz
-        ae1.X <- ae1.X + ae1.CoeffX
-        ae1.Z <- ae1.Z + ae1.CoeffZ
-        ae2.X <- ae2.X + ae2.CoeffX
-        ae2.Z <- ae2.Z + ae2.CoeffZ
-    ymax
-
 let private getAEs (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) =
     let v1, v2, v3 = sortVertices v1' v2' v3'
     let ymin = int v1.Y

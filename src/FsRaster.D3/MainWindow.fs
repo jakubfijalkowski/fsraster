@@ -69,7 +69,7 @@ type MainWindowController() =
         ()
 
     let renderLoop _ =
-    #if DEBUG
+    #if DEBUG || PROFILE
         let sw = Stopwatch()
         sw.Start()
         renderLoop' ()
