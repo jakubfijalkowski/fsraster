@@ -14,7 +14,7 @@ open FsXaml
 
 open FsRaster.RawRendering
 open FsRaster.D3.Math
-open FsRaster.D3.Models
+open FsRaster.D3.Model
 open FsRaster.D3.Camera
 open FsRaster.D3.Renderer
 open FsRaster.D3.LowLevelRendering

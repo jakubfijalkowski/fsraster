@@ -198,16 +198,27 @@ let matInvLookAt m =
     let rotInv = matTranspose { m with M14 = 0.0; M24 = 0.0; M34 = 0.0 }
     transInv * rotInv
 
-let matProjection fov a n f =
-    let ySc = 1.0 / System.Math.Tan((degToRad fov) / 2.0)
-    let xSc = ySc / a
-    let f1 = f / (n - f)
-    let f2 = (f * n) / (n - f)
+let matProjection fovy aspect near far =
+    let f = 1.0 / System.Math.Tan((degToRad fovy) / 2.0)
+    let f1 = (far + near) / (near - far)
+    let f2 = (2.0 * far * near) / (near - far)
     {
-        M11 = xSc; M12 = 0.0; M13 = 0.0 ; M14 = 0.0;
-        M21 = 0.0; M22 = ySc; M23 = 0.0 ; M24 = 0.0;
-        M31 = 0.0; M32 = 0.0; M33 = f1  ; M34 = f2 ;
-        M41 = 0.0; M42 = 0.0; M43 = -1.0; M44 = 0.0
+        M11 = f / aspect; M12 = 0.0; M13 = 0.0 ; M14 = 0.0;
+        M21 = 0.0       ; M22 = f  ; M23 = 0.0 ; M24 = 0.0;
+        M31 = 0.0       ; M32 = 0.0; M33 = f1  ; M34 = f2 ;
+        M41 = 0.0       ; M42 = 0.0; M43 = -1.0; M44 = 0.0
+    }
+
+// Source - http://www.gamedev.net/topic/478055-perspective-projection-matrix/
+let matInvProjection fovy aspect near far =
+    let f = 1.0 / System.Math.Tan((degToRad fovy) / 2.0)
+    let f1 = (near - far) / (2.0 * far * near)
+    let f2 = (near + far) / (2.0 * far * near)
+    {
+        M11 = aspect / f; M12 = 0.0     ; M13 = 0.0; M14 =  0.0 ;
+        M21 = 0.0       ; M22 = 1.0 / f ; M23 = 0.0; M24 =  0.0 ;
+        M31 = 0.0       ; M32 = 0.0     ; M33 = 0.0; M34 = -1.0;
+        M41 = 0.0       ; M42 = 0.0     ; M43 = f1 ; M44 = f2
     }
 
 type Quaternion =

@@ -6,13 +6,14 @@ open FSharp.Collections.ParallelSeq
 open FsRaster
 open FsRaster.Utils
 open FsRaster.D3.Math
-open FsRaster.D3.Models
+open FsRaster.D3.Model
 open FsRaster.D3.Camera
 
 type Renderer3D =
     {
         Model : Matrix4;
         Projection : Matrix4;
+        InvProjection : Matrix4;
         Camera : Camera;
         Wireframe : bool;
         FrustumCulling : bool;
@@ -36,6 +37,7 @@ let defaultRenderer =
     {
         Model = matIdentity;
         Projection = matIdentity;
+        InvProjection = matIdentity;
         Camera = defaultCamera;
         Wireframe = true;
         FrustumCulling = false;
@@ -71,16 +73,20 @@ let setCameraTo camera renderer =
 let updateSize renderer width height =
     let aspect = double width / double height
     let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
-    { renderer with Projection = newProj; Width = width; Height = height } |> updateZBuffer
+    let newInvProj = matInvProjection DefaultFoV aspect NearPlane FarPlane
+    { renderer with Projection = newProj; InvProjection = newInvProj; Width = width; Height = height } |> updateZBuffer
 
 let inline private toEyeSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
-    let newNormals = model.Normals |> Array.map (fun v -> toVec3 (renderer.Camera.InvView * toVec4 v))
-    { model with Vertices = newVerts; Normals = newNormals }
+    { model with Vertices = newVerts }
 
 let inline private toClipSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> (renderer.Projection * v).Normalized)
     { model with Vertices = newVerts }
+
+let inline private normalsToScreenSpace renderer model =
+    let newNormals = model.Normals |> Array.map (fun v -> toVec3 (renderer.InvProjection * renderer.Camera.InvView * toVec4 v))
+    { model with Normals = newNormals }
 
 let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
@@ -139,3 +145,4 @@ let transformModel renderer w h model =
     |> toClipSpace renderer
     |> if renderer.FrustumCulling then clipModel else id
     |> toScreenSpace w h
+    |> normalsToScreenSpace renderer

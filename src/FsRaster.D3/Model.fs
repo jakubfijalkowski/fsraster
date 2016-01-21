@@ -1,4 +1,4 @@
-﻿module FsRaster.D3.Models
+﻿module FsRaster.D3.Model
 
 open System
 open System.Globalization
@@ -21,7 +21,7 @@ type RenderTriangle =
 type Model =
     {
         Vertices : Vector4 array;
-        Normals : Vector3 array; // To simplify math, this will be at most in an eye space and won't be transformed into screen space
+        Normals : Vector3 array;
         Triangles : Triangle array;
     }
 

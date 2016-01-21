@@ -182,7 +182,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Math.fs" />
-    <Compile Include="Models.fs" />
+    <Compile Include="Model.fs" />
     <Compile Include="Camera.fs" />
     <Compile Include="Renderer.fs" />
     <Compile Include="LowLevelRendering.fs" />
