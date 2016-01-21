@@ -9,10 +9,6 @@ open FsRaster.D3.Math
 open FsRaster.D3.Models
 open FsRaster.D3.Camera
 
-
-type ZBufferType = System.UInt32
-let zBufferMaxValue = double ZBufferType.MaxValue
-
 type Renderer3D =
     {
         Model : Matrix4;
@@ -23,7 +19,7 @@ type Renderer3D =
         ZBufferEnabled : bool;
         Width : int;
         Height : int;
-        ZBuffer : ZBufferType array // using option would complicate already complicated code in low-level rendering
+        ZBuffer : double array // using option would complicate already complicated code in low-level rendering
     }
 
 [<Literal>]
@@ -82,7 +78,7 @@ let inline private toClipSpace renderer model =
 
 let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
-        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((v.Z + 1.0) / 2.0 * zBufferMaxValue) 1.0
+        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) v.Z 1.0
     )
     { model with Vertices = newVerts }
 

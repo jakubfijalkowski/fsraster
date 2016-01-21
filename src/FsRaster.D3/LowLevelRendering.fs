@@ -116,7 +116,7 @@ let private renderTriangleAlways renderer ctx v1 v2 v3 c =
         let ymax = ae1.YMax
         for y = ymin to ymax - 1 do
             let minX = int (min ae1.X ae2.X)
-            let maxX = int <| ceil (max ae1.X ae2.X)
+            let maxX = int (max ae1.X ae2.X)
             for x = minX to maxX do
                 NativeInterop.NativePtr.set pixels (x + y * ctx.Width) c
             ae1.X <- ae1.X + ae1.CoeffX
@@ -136,16 +136,15 @@ let private renderTriangleZBuffer renderer ctx v1 v2 v3 c =
         let ymax = ae1.YMax
         for y = ymin to ymax - 1 do
             let minX = int (min ae1.X ae2.X)
-            let maxX = int <| ceil (max ae1.X ae2.X)
+            let maxX = int (max ae1.X ae2.X)
 
-            let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
-            let mutable z = ae1.Z
+            let mz = if minX <> maxX then (ae2.Z - ae1.Z) / (ae2.X - ae1.X) else 0.0
+            let mutable z = if ae1.X <= ae2.X then ae1.Z else ae2.Z
             for x = minX to maxX do
                 let idx = y * w + x
-                let z' = uint32 z
-                if zBuffer.[idx] > z' then
+                if zBuffer.[idx] > z then
                     NativeInterop.NativePtr.set pixels idx c
-                    zBuffer.[idx] <- z'
+                    zBuffer.[idx] <- z
                 z <- z + mz
             ae1.X <- ae1.X + ae1.CoeffX
             ae1.Z <- ae1.Z + ae1.CoeffZ
@@ -162,7 +161,7 @@ let drawModel renderer (context : CachedBitmapContext) model =
     else
         let render =
             if renderer.ZBufferEnabled then
-                Array.fastFill renderer.ZBuffer ZBufferType.MaxValue
+                Array.fastFill renderer.ZBuffer System.Double.MaxValue
                 renderTriangleZBuffer
             else renderTriangleAlways
         renderFilled (render renderer context) transformed
