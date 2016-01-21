@@ -19,8 +19,10 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
     let x2' = int v2.X
     let y1' = int v1.Y
     let y2' = int v2.Y
+    let pixels = ctx.Context.Pixels
+    let w = ctx.Width
     if x1' = x2' && y1' = y2' then
-        NativeInterop.NativePtr.set ctx.Context.Pixels (x1' + y1' * ctx.Width) c
+        NativeInterop.NativePtr.set pixels (x1' + y1' * w) c
     else
         let (x1, y1, x2, y2), transform =
             match (x2' - x1', y2' - y1') with
@@ -41,7 +43,7 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
         let rec build d x y =
             if x <= x2 then 
                 let x', y' = transform x y 
-                NativeInterop.NativePtr.set ctx.Context.Pixels (x' + y' * ctx.Width) c
+                NativeInterop.NativePtr.set pixels (x' + y' * w) c
                 if d < 0 then build (d + incE) (x + 1) y
                 else build (d + incNE) (x + 1) (y + 1)
         build d' x1 y1
@@ -104,7 +106,9 @@ let private getAEs (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) =
         else buildProperTriangle v1 v2 v3
     (ymin, aes)
 
+[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
 let private renderTriangleAlways renderer ctx v1 v2 v3 c =
+    let pixels = ctx.Context.Pixels
     let ymin', aes = getAEs v1 v2 v3
 
     let mutable ymin = ymin'
@@ -114,13 +118,17 @@ let private renderTriangleAlways renderer ctx v1 v2 v3 c =
             let minX = int (min ae1.X ae2.X)
             let maxX = int <| ceil (max ae1.X ae2.X)
             for x = minX to maxX do
-                NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
+                NativeInterop.NativePtr.set pixels (x + y * ctx.Width) c
             ae1.X <- ae1.X + ae1.CoeffX
             ae2.X <- ae2.X + ae2.CoeffX
         ymin <- ymax
 
-let private renderTriangleZBuffer renderer ctx v1 v2 v3 c =
+[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
+let private renderTriangleZBuffer renderer ctx v1 v2 v3 c = 
     let zBuffer = renderer.ZBuffer
+    let pixels = ctx.Context.Pixels
+    let w = ctx.Width
+
     let ymin', aes = getAEs v1 v2 v3
 
     let mutable ymin = ymin'
@@ -133,10 +141,10 @@ let private renderTriangleZBuffer renderer ctx v1 v2 v3 c =
             let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
             let mutable z = ae1.Z
             for x = minX to maxX do
-                let idx = y * ctx.Context.Width + x
+                let idx = y * w + x
                 let z' = uint32 z
                 if zBuffer.[idx] > z' then
-                    NativeInterop.NativePtr.set ctx.Context.Pixels idx c
+                    NativeInterop.NativePtr.set pixels idx c
                     zBuffer.[idx] <- z'
                 z <- z + mz
             ae1.X <- ae1.X + ae1.CoeffX
