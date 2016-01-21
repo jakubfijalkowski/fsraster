@@ -48,7 +48,8 @@ type Vector4 =
 let inline vec3 x y z : Vector3 = { X = x; Y = y; Z = z }
 let inline vec4 x y z w : Vector4 = { X = x; Y = y; Z = z; W = w }
 
-let zeroVec3 = vec3 0.0 0.0 0.0
+let vec3Zero = vec3 0.0 0.0 0.0
+let vec4Zero = vec4 0.0 0.0 0.0 1.0
 
 let inline toVec4 (a : Vector3) = vec4 a.X a.Y a.Z 1.0
 let inline toVec3 (a : Vector4) : Vector3 =

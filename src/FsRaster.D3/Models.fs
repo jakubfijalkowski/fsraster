@@ -9,22 +9,33 @@ open System.Diagnostics.CodeAnalysis
 open FsRaster
 open FsRaster.D3.Math
 
+type Triangle =
+    {
+        V1 : int; V2 : int; V3: int;
+        N1 : Vector4; N2 : Vector4; N3 : Vector4;
+        Color : int;
+    }
+
+type RenderTriangle =
+    {
+        V1 : Vector4; V2 : Vector4; V3 : Vector4;
+        N1 : Vector4; N2 : Vector4; N3 : Vector4;
+        Color : int
+    }
+
 type Model =
     {
         Vertices : Vector4 array;
-        Triangles : (int * int * int * int) array;
-        Colors : Colors.RawColor array
+        Triangles : Triangle array;
     }
 
-let sampleTriangle =
-    {
-        Vertices = [| vec4 0.0 0.0 0.0 1.0; vec4 0.0 0.5 0.0 1.0; vec4 0.5 0.0 0.0 1.0 |];
-        Triangles = [| 0, 1, 2, -1 |];
-        Colors = [||]
-    }
+let inline triEmpty v1 v2 v3 : Triangle = { V1 = v1; V2 = v2; V3 = v3; N1 = vec4Zero; N2 = vec4Zero; N3 = vec4Zero; Color = 0xff000000 }
+let inline toRenderTriangle model (t : Triangle) : RenderTriangle =
+    { V1 = model.Vertices.[t.V1]; V2 = model.Vertices.[t.V2]; V3 = model.Vertices.[t.V3];
+      N1 = t.N1; N2 = t.N2; N3 = t.N3; Color = t.Color }
 
 let changeOrientation model =
-    let newTriangles = model.Triangles |> Array.map (fun (a, b, c, color) -> (a, c, b, color))
+    let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2 })
     { model with Triangles = newTriangles }
 
 let colorizeModel model =
@@ -34,9 +45,16 @@ let colorizeModel model =
         let g = rnd.Next(50, 256)
         let b = rnd.Next(50, 256)
         Colors.fromRGB r g b
-    let colors = Array.init model.Triangles.Length genColor
-    let triangles = Array.mapi (fun i (a, b, c, _) -> (a, b, c, i)) model.Triangles
-    { model with Triangles = triangles; Colors = colors }
+    let triangles = model.Triangles |> Array.map (fun t -> { t with Color = genColor () })
+    { model with Triangles = triangles }
+
+let makeItBlack model =
+    let triangles = model.Triangles |> Array.map (fun t -> { t with Color = 0xff000000 })
+    { model with Triangles = triangles }
+
+let makeItWhite model =
+    let triangles = model.Triangles |> Array.map (fun t -> { t with Color = 0xffffffff })
+    { model with Triangles = triangles }
 
 let private readAllLines (stream : Stream) =
     let lines = new List<string>()
@@ -59,7 +77,7 @@ let private parseFace (line : string) =
     if components |> Array.map fst |> Array.fold (&&) true |> not then failwith "Could not parse face"
     let indices = components |> Array.map snd
     if indices.[0] <> 3 then failwith "Only triangles are supported"
-    (indices.[1], indices.[2], indices.[3], -1)
+    triEmpty indices.[1] indices.[2] indices.[3]
 
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let loadOffFromStream (stream : Stream) =
@@ -81,10 +99,10 @@ let loadOffFromStream (stream : Stream) =
     let vertices = lines |> Array.skip 2 |> Array.take vertCount |> Array.map parseVertex
     let triangles = lines |> Array.skip (2 + vertCount) |> Array.map parseFace
 
-    if triangles |> Array.tryFind (fun (a, b, c, _) -> a < 0 || a >= vertCount || b < 0 || b >= vertCount || c < 0 || c >= vertCount) |> Option.isSome then
+    if triangles |> Array.tryFind (fun t -> t.V1 < 0 || t.V1 >= vertCount || t.V2 < 0 || t.V2 >= vertCount || t.V3 < 0 || t.V3 >= vertCount) |> Option.isSome then
         failwith "Invalid index detected"
 
-    { Vertices = vertices; Triangles = triangles; Colors = [||] } |> colorizeModel
+    { Vertices = vertices; Triangles = triangles } |> colorizeModel
 
 let loadOffFromResources name =
     use stream = Resources.loadStream name

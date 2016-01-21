@@ -93,10 +93,10 @@ let inline private isInView (v : Vector4) =
 let private clipModel model =
     let newTris =
         model.Triangles
-        |> Array.filter(fun (a, b, c, _) ->
-            let v1 = model.Vertices.[a]
-            let v2 = model.Vertices.[b]
-            let v3 = model.Vertices.[c]
+        |> Array.filter(fun t ->
+            let v1 = model.Vertices.[t.V1]
+            let v2 = model.Vertices.[t.V2]
+            let v3 = model.Vertices.[t.V3]
             isInView v1 && isInView v2 && isInView v3
         )
     { model with Triangles = newTris }
@@ -104,10 +104,10 @@ let private clipModel model =
 let private cullBackfaces model =
     let newTris =
         model.Triangles
-        |> Array.filter (fun (a, b, c, _) ->
-            let v1 = model.Vertices.[a] |> toVec3
-            let v2 = model.Vertices.[b] |> toVec3
-            let v3 = model.Vertices.[c] |> toVec3
+        |> Array.filter (fun t ->
+            let v1 = model.Vertices.[t.V1] |> toVec3
+            let v2 = model.Vertices.[t.V2] |> toVec3
+            let v3 = model.Vertices.[t.V3] |> toVec3
             let n = cross3 (v2 - v1) (v3 - v1)
             dot3 (-v1) n < 0.0
         )
@@ -119,23 +119,17 @@ let inline private optionalBackfaceCulling renderer model =
     else model
 
 let renderWireframe render model =
-    let renderTriangle (a, b, c, _) =
-        let v1 = model.Vertices.[a]
-        let v2 = model.Vertices.[b]
-        let v3 = model.Vertices.[c]
+    let renderTriangle (t : Triangle) =
+        let v1 = model.Vertices.[t.V1]
+        let v2 = model.Vertices.[t.V2]
+        let v3 = model.Vertices.[t.V3]
         render v1 v2 WireframeColor
         render v1 v3 WireframeColor
         render v2 v3 WireframeColor
     Array.iter renderTriangle model.Triangles
 
 let renderFilled render model =
-    let renderTriangle (a, b, c, color) =
-        let v1 = model.Vertices.[a]
-        let v2 = model.Vertices.[b]
-        let v3 = model.Vertices.[c]
-        let c = if color <> -1 && model.Colors.Length > color then model.Colors.[color] else WireframeColor
-        render v1 v2 v3 c
-    Array.iter renderTriangle model.Triangles
+    model.Triangles |> Array.iter (toRenderTriangle model >> render)
 
 let transformModel renderer w h model =
     model

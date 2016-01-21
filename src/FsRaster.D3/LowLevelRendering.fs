@@ -5,6 +5,7 @@ open System.Diagnostics.CodeAnalysis
 open FsRaster.Utils
 open FsRaster.RawRendering
 open FsRaster.D3.Math
+open FsRaster.D3.Models
 open FsRaster.D3.Renderer
 
 
@@ -55,58 +56,61 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
         ()
 
 // Scanline algorithm, but adjusted to triangles in 3D - should be faster than scanline from FsRaster.FigureRendering
-let inline private sortVertices (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let arr = [| v1; v2; v3 |]
-    Array.sortInPlaceBy (fun v -> v.Y) arr
-    (arr.[0], arr.[1], arr.[2])
+let inline private sortByY (t : RenderTriangle) =
+    let arr = [| (t.V1, t.N1); (t.V2, t.N2); (t.V3, t.N3) |]
+    Array.sortInPlaceBy (fun (v, _) -> v.Y) arr
+    { V1 = fst arr.[0]; N1 = snd arr.[0];
+      V2 = fst arr.[1]; N2 = snd arr.[1];
+      V3 = fst arr.[2]; N3 = snd arr.[2];
+      Color = t.Color }
 
 type ActiveEdge = { YMin : int; YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
 
-let inline private buildTopTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let dy = (v1.Y - v3.Y)
-    let mx1 = (v1.X - v3.X) / dy
-    let mz1 = (v1.Z - v3.Z) / dy
-    let mx2 = (v2.X - v3.X) / dy
-    let mz2 = (v2.Z - v3.Z) / dy
-    let ae1 = { YMin = int v1.Y; YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMin = int v1.Y; YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx2; CoeffZ = mz2 }
+let inline private buildTopTriangle t =
+    let dy = (t.V1.Y - t.V3.Y)
+    let mx1 = (t.V1.X - t.V3.X) / dy
+    let mz1 = (t.V1.Z - t.V3.Z) / dy
+    let mx2 = (t.V2.X - t.V3.X) / dy
+    let mz2 = (t.V2.Z - t.V3.Z) / dy
+    let ae1 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae2 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V2.X; Z = t.V2.Z; CoeffX = mx2; CoeffZ = mz2 }
     (ae1, ae2)
 
-let inline private buildBottomTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let dy = (v1.Y - v3.Y)
-    let mx1 = (v1.X - v3.X) / dy
-    let mz1 = (v1.Z - v3.Z) / dy
-    let mx2 = (v1.X - v2.X) / dy
-    let mz2 = (v1.Z - v2.Z) / dy
-    let ae1 = { YMin = int v1.Y; YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMin = int v1.Y; YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
+let inline private buildBottomTriangle t =
+    let dy = (t.V1.Y - t.V3.Y)
+    let mx1 = (t.V1.X - t.V3.X) / dy
+    let mz1 = (t.V1.Z - t.V3.Z) / dy
+    let mx2 = (t.V1.X - t.V2.X) / dy
+    let mz2 = (t.V1.Z - t.V2.Z) / dy
+    let ae1 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae2 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx2; CoeffZ = mz2 }
     (ae1, ae2)
 
-let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let dy13 = (v1.Y - v3.Y)
-    let dy12 = (v1.Y - v2.Y)
-    let dy23 = (v2.Y - v3.Y)
-    let mx1 = (v1.X - v3.X) / dy13
-    let mz1 = (v1.Z - v3.Z) / dy13
-    let mx2 = (v1.X - v2.X) / dy12
-    let mz2 = (v1.Z - v2.Z) / dy12
-    let mx3 = (v2.X - v3.X) / dy23
-    let mz3 = (v2.Z - v3.Z) / dy23
+let inline private buildProperTriangle t =
+    let dy13 = (t.V1.Y - t.V3.Y)
+    let dy12 = (t.V1.Y - t.V2.Y)
+    let dy23 = (t.V2.Y - t.V3.Y)
+    let mx1 = (t.V1.X - t.V3.X) / dy13
+    let mz1 = (t.V1.Z - t.V3.Z) / dy13
+    let mx2 = (t.V1.X - t.V2.X) / dy12
+    let mz2 = (t.V1.Z - t.V2.Z) / dy12
+    let mx3 = (t.V2.X - t.V3.X) / dy23
+    let mz3 = (t.V2.Z - t.V3.Z) / dy23
 
-    let midX = v1.X - mx1 * dy12
+    let midX = t.V1.X - mx1 * dy12
 
-    let ae1 = { YMin = int v1.Y; YMax = int v2.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMin = int v1.Y; YMax = int v2.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
+    let ae1 = { YMin = int t.V1.Y; YMax = int t.V2.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae2 = { YMin = int t.V1.Y; YMax = int t.V2.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx2; CoeffZ = mz2 }
 
-    let ae3 = { YMin = int v2.Y; YMax = int v3.Y; X = midX; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae4 = { YMin = int v2.Y; YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx3; CoeffZ = mz3 }
+    let ae3 = { YMin = int t.V2.Y; YMax = int t.V3.Y; X = midX; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae4 = { YMin = int t.V2.Y; YMax = int t.V3.Y; X = t.V2.X; Z = t.V2.Z; CoeffX = mx3; CoeffZ = mz3 }
     [ ae1, ae2; ae3, ae4 ]
 
-let private getAEs (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) =
-    let v1, v2, v3 = sortVertices v1' v2' v3'
-    if v1.Y = v2.Y then [ buildTopTriangle v1 v2 v3 ]
-    else if v2.Y = v3.Y then [ buildBottomTriangle v1 v2 v3 ]
-    else buildProperTriangle v1 v2 v3
+let private getAEs t' =
+    let t = sortByY t'
+    if t.V1.Y = t.V2.Y then [ buildTopTriangle t ]
+    else if t.V2.Y = t.V3.Y then [ buildBottomTriangle t ]
+    else buildProperTriangle t
 
 let private adjustXPositions orgY newY ae1 ae2 =
     if orgY <> newY then
@@ -115,12 +119,13 @@ let private adjustXPositions orgY newY ae1 ae2 =
         ae2.X <- ae2.X + diff * ae2.CoeffX
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
-let private renderTriangleAlways renderer ctx v1 v2 v3 c =
+let private renderTriangleAlways renderer ctx t =
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
     let h = ctx.Height
+    let c = t.Color
 
-    let aes = getAEs v1 v2 v3
+    let aes = getAEs t
 
     for ae1, ae2 in aes do
         let ymin = clampScreen h ae1.YMin
@@ -135,13 +140,14 @@ let private renderTriangleAlways renderer ctx v1 v2 v3 c =
             ae2.X <- ae2.X + ae2.CoeffX
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
-let private renderTriangleZBuffer renderer ctx v1 v2 v3 c = 
+let private renderTriangleZBuffer renderer ctx t = 
     let zBuffer = renderer.ZBuffer
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
     let h = ctx.Height
+    let c = t.Color
 
-    let aes = getAEs v1 v2 v3
+    let aes = getAEs t
 
     for ae1, ae2 in aes do
         let ymin = clampScreen h ae1.YMin
