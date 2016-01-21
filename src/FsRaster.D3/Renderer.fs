@@ -75,7 +75,8 @@ let updateSize renderer width height =
 
 let inline private toCameraSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
-    { model with Vertices = newVerts }
+    let newNormals = model.Normals |> Array.map (fun v -> toVec3 (renderer.Camera.InvView * toVec4 v))
+    { model with Vertices = newVerts; Normals = newNormals }
 
 let inline private toClipSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> (renderer.Projection * v).Normalized)

@@ -129,6 +129,14 @@ let matIdentity =
         M41 = 0.0; M42 = 0.0; M43 = 0.0; M44 = 1.0
     }
 
+let inline matTranspose m =
+    {
+        M11 = m.M11; M12 = m.M21; M13 = m.M31; M14 = m.M41;
+        M21 = m.M12; M22 = m.M22; M23 = m.M32; M24 = m.M42;
+        M31 = m.M13; M32 = m.M23; M33 = m.M33; M34 = m.M43;
+        M41 = m.M14; M42 = m.M24; M43 = m.M34; M44 = m.M44
+    }
+
 let inline matTranslate x y z = 
     {
         M11 = 1.0; M12 = 0.0; M13 = 0.0; M14 = x;
@@ -184,6 +192,11 @@ let matLookAt (eye : Vector3) at up =
         M31 = zax.X; M32 = zax.Y; M33 = zax.Z; M34 = dz;
         M41 = 0.0  ; M42 = 0.0  ; M43 = 0.0  ; M44 = 1.0
     }
+
+let matInvLookAt m =
+    let transInv = { matIdentity with M14 = -m.M14; M24 = -m.M24; M34 = -m.M34 }
+    let rotInv = matTranspose { m with M14 = 0.0; M24 = 0.0; M34 = 0.0 }
+    transInv * rotInv
 
 let matProjection fov a n f =
     let ySc = 1.0 / System.Math.Tan((degToRad fov) / 2.0)

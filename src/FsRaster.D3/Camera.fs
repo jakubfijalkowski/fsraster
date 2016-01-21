@@ -5,11 +5,11 @@ open System.Windows.Input
 
 open FsRaster.D3.Math
 
-type Camera = { Position : Vector3; Target : Vector3; Up : Vector3; View : Matrix4 }
+type Camera = { Position : Vector3; Target : Vector3; Up : Vector3; View : Matrix4; InvView : Matrix4 }
 
-let defaultCamera = { Position = vec3 0.0 0.0 0.0; Target = vec3 0.0 0.0 1.0; Up = vec3 0.0 1.0 0.0; View = matIdentity }
+let defaultCamera = { Position = vec3 0.0 0.0 0.0; Target = vec3 0.0 0.0 1.0; Up = vec3 0.0 1.0 0.0; View = matIdentity; InvView = matIdentity }
 
-let inline makeCamera eye target = { Position = eye; Target = target; Up = vec3 0.0 1.0 0.0; View = matIdentity }
+let inline makeCamera eye target = { defaultCamera with Position = eye; Target = target; Up = vec3 0.0 1.0 0.0 }
 
 let inline moveTo pos camera = { camera with Position = pos }
 let inline moveBy diff camera = { camera with Position = camera.Position + diff }
@@ -17,7 +17,10 @@ let inline moveBy diff camera = { camera with Position = camera.Position + diff 
 let inline lookAt target camera = { camera with Target = target }
 let inline lookBy diff camera = { camera with Target = camera.Target + diff }
 
-let inline updateMatrix camera = { camera with View = matLookAt camera.Position camera.Target camera.Up }
+let inline updateMatrix camera =
+    let view = matLookAt camera.Position camera.Target camera.Up
+    let invView = matInvLookAt view
+    { camera with View = view; InvView = invView }
 
 type CameraController(control : FrameworkElement) =
 

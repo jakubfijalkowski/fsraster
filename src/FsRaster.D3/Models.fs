@@ -14,14 +14,14 @@ type Triangle = { V1 : int; V2 : int; V3: int; Color : int; }
 type RenderTriangle =
     {
         V1 : Vector4; V2 : Vector4; V3 : Vector4;
-        N1 : Vector4; N2 : Vector4; N3 : Vector4;
+        N1 : Vector3; N2 : Vector3; N3 : Vector3;
         Color : int
     }
 
 type Model =
     {
         Vertices : Vector4 array;
-        Normals : Vector4 array;
+        Normals : Vector3 array; // To simplify math, this will be at most in an eye space and won't be transformed into screen space
         Triangles : Triangle array;
     }
 
@@ -66,7 +66,7 @@ let private performNormalMapping model =
     let normals =
         model.Triangles
         |> Array.fold updateNormals (Array.create model.Vertices.Length vec3Zero)
-        |> Array.map (fun n -> toVec4 n.Normalized)
+        |> Array.map (fun n -> n.Normalized)
     { model with Normals = normals }
 
 let private readAllLines (stream : Stream) =
