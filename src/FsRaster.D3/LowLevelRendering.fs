@@ -2,9 +2,14 @@
 
 open System.Diagnostics.CodeAnalysis
 
+open FsRaster.Utils
 open FsRaster.RawRendering
 open FsRaster.D3.Math
 open FsRaster.D3.Renderer
+
+
+// Unfortunately, having global (ie. bound to renderer) z-buffer makes it usable.
+// Allocating it for every frame is extremely inefficient.
 
 #nowarn "9"
 
@@ -51,35 +56,35 @@ let inline private sortVertices (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
 type ActiveEdge = { YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
 
 let inline private buildTopTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let dy = double (v1.Y - v3.Y)
-    let mx1 = double (v1.X - v3.X) / dy
-    let mz1 = double (v1.Z - v3.Z) / dy
-    let mx2 = double (v2.X - v3.X) / dy
-    let mz2 = double (v2.Z - v3.Z) / dy
+    let dy = (v1.Y - v3.Y)
+    let mx1 = (v1.X - v3.X) / dy
+    let mz1 = (v1.Z - v3.Z) / dy
+    let mx2 = (v2.X - v3.X) / dy
+    let mz2 = (v2.Z - v3.Z) / dy
     let ae1 = { YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
     let ae2 = { YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx2; CoeffZ = mz2 }
     (ae1, ae2)
 
 let inline private buildBottomTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let dy = double (v1.Y - v3.Y)
-    let mx1 = double (v1.X - v3.X) / dy
-    let mz1 = double (v1.Z - v3.Z) / dy
-    let mx2 = double (v1.X - v2.X) / dy
-    let mz2 = double (v1.Z - v2.Z) / dy
+    let dy = (v1.Y - v3.Y)
+    let mx1 = (v1.X - v3.X) / dy
+    let mz1 = (v1.Z - v3.Z) / dy
+    let mx2 = (v1.X - v2.X) / dy
+    let mz2 = (v1.Z - v2.Z) / dy
     let ae1 = { YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
     let ae2 = { YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
     (ae1, ae2)
 
 let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
-    let dy13 = double (v1.Y - v3.Y)
-    let dy12 = double (v1.Y - v2.Y)
-    let dy23 = double (v2.Y - v3.Y)
-    let mx1 = double (v1.X - v3.X) / dy13
-    let mz1 = double (v1.Z - v3.Z) / dy13
-    let mx2 = double (v1.X - v2.X) / dy12
-    let mz2 = double (v1.Z - v2.Z) / dy12
-    let mx3 = double (v2.X - v3.X) / dy23
-    let mz3 = double (v2.Z - v3.Z) / dy23
+    let dy13 = (v1.Y - v3.Y)
+    let dy12 = (v1.Y - v2.Y)
+    let dy23 = (v2.Y - v3.Y)
+    let mx1 = (v1.X - v3.X) / dy13
+    let mz1 = (v1.Z - v3.Z) / dy13
+    let mx2 = (v1.X - v2.X) / dy12
+    let mz2 = (v1.Z - v2.Z) / dy12
+    let mx3 = (v2.X - v3.X) / dy23
+    let mz3 = (v2.Z - v3.Z) / dy23
 
     let midX = v1.X - mx1 * dy12
 
@@ -93,7 +98,7 @@ let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vecto
 let private renderScanlineAlways ctx c ymin (ae1, ae2) =
     let ymax = ae1.YMax
     for y = ymin to ymax - 1 do
-        let minX = int <| ceil (min ae1.X ae2.X)
+        let minX = int (min ae1.X ae2.X)
         let maxX = int <| ceil (max ae1.X ae2.X)
         for x = minX to maxX do
             NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
@@ -101,19 +106,20 @@ let private renderScanlineAlways ctx c ymin (ae1, ae2) =
         ae2.X <- ae2.X + ae2.CoeffX
     ymax
 
-let private renderScanlineZBuffer (zbuffer : double array) ctx c ymin (ae1, ae2) =
+let private renderScanlineZBuffer (zbuffer : ZBufferType array) ctx c ymin (ae1, ae2) =
     let ymax = ae1.YMax
     for y = ymin to ymax - 1 do
-        let minX = int <| ceil (min ae1.X ae2.X)
+        let minX = int (min ae1.X ae2.X)
         let maxX = int <| ceil (max ae1.X ae2.X)
 
         let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
         let mutable z = ae1.Z
         for x = minX to maxX do
             let idx = y * ctx.Context.Width + x
-            if zbuffer.[idx] > z then
+            let z' = uint32 z
+            if zbuffer.[idx] > z' then
                 NativeInterop.NativePtr.set ctx.Context.Pixels idx c
-                zbuffer.[idx] <- z
+                zbuffer.[idx] <- z'
             z <- z + mz
         ae1.X <- ae1.X + ae1.CoeffX
         ae1.Z <- ae1.Z + ae1.CoeffZ
@@ -121,16 +127,57 @@ let private renderScanlineZBuffer (zbuffer : double array) ctx c ymin (ae1, ae2)
         ae2.Z <- ae2.Z + ae2.CoeffZ
     ymax
 
-let private renderTriangle ctx render (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) c =
+let private getAEs (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) =
     let v1, v2, v3 = sortVertices v1' v2' v3'
     let ymin = int v1.Y
     let aes =
         if v1.Y = v2.Y then [ buildTopTriangle v1 v2 v3 ]
         else if v2.Y = v3.Y then [ buildBottomTriangle v1 v2 v3 ]
         else buildProperTriangle v1 v2 v3
-    aes |> List.fold (render ctx c) ymin |> ignore
+    (ymin, aes)
 
-let drawModel renderer context model =
+let private renderTriangleAlways renderer ctx v1 v2 v3 c =
+    let ymin', aes = getAEs v1 v2 v3
+
+    let mutable ymin = ymin'
+    for ae1, ae2 in aes do
+        let ymax = ae1.YMax
+        for y = ymin to ymax - 1 do
+            let minX = int (min ae1.X ae2.X)
+            let maxX = int <| ceil (max ae1.X ae2.X)
+            for x = minX to maxX do
+                NativeInterop.NativePtr.set ctx.Context.Pixels (x + y * ctx.Width) c
+            ae1.X <- ae1.X + ae1.CoeffX
+            ae2.X <- ae2.X + ae2.CoeffX
+        ymin <- ymax
+
+let private renderTriangleZBuffer renderer ctx v1 v2 v3 c =
+    let zBuffer = renderer.ZBuffer
+    let ymin', aes = getAEs v1 v2 v3
+
+    let mutable ymin = ymin'
+    for ae1, ae2 in aes do
+        let ymax = ae1.YMax
+        for y = ymin to ymax - 1 do
+            let minX = int (min ae1.X ae2.X)
+            let maxX = int <| ceil (max ae1.X ae2.X)
+
+            let mz = (ae2.Z - ae1.Z) / (ae2.X - ae1.X) 
+            let mutable z = ae1.Z
+            for x = minX to maxX do
+                let idx = y * ctx.Context.Width + x
+                let z' = uint32 z
+                if zBuffer.[idx] > z' then
+                    NativeInterop.NativePtr.set ctx.Context.Pixels idx c
+                    zBuffer.[idx] <- z'
+                z <- z + mz
+            ae1.X <- ae1.X + ae1.CoeffX
+            ae1.Z <- ae1.Z + ae1.CoeffZ
+            ae2.X <- ae2.X + ae2.CoeffX
+            ae2.Z <- ae2.Z + ae2.CoeffZ
+        ymin <- ymax
+
+let drawModel renderer (context : CachedBitmapContext) model =
     let w = double context.Width
     let h = double context.Height
     let transformed = transformModel renderer w h model
@@ -138,10 +185,8 @@ let drawModel renderer context model =
         renderWireframe (renderLine context) transformed
     else
         let render =
-            if renderer.ZBuffer then
-                let zBuffer = Array.create (context.Width * context.Height) System.Double.MaxValue
-                renderScanlineZBuffer zBuffer
-            else
-                renderScanlineAlways
-        renderFilled (renderTriangle context render) transformed
-    ()
+            if renderer.ZBufferEnabled then
+                Array.fastFill renderer.ZBuffer ZBufferType.MaxValue
+                renderTriangleZBuffer
+            else renderTriangleAlways
+        renderFilled (render renderer context) transformed

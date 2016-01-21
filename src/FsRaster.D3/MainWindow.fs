@@ -87,7 +87,7 @@ type MainWindowController() =
         let newH = int e.NewSize.Height
         if oldW <> newW || oldH <> newH then
             mainCanvas <- BitmapFactory.New(newW, newH)
-            renderer <- updateProjection renderer newW newH
+            renderer <- updateSize renderer newW newH
             window.mainImage.Source <- mainCanvas
 
     let onModelChanged _ =

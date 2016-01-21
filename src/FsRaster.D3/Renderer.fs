@@ -9,6 +9,10 @@ open FsRaster.D3.Math
 open FsRaster.D3.Models
 open FsRaster.D3.Camera
 
+
+type ZBufferType = System.UInt32
+let zBufferMaxValue = double ZBufferType.MaxValue
+
 type Renderer3D =
     {
         Model : Matrix4;
@@ -16,7 +20,10 @@ type Renderer3D =
         Camera : Camera;
         Wireframe : bool;
         BackfaceCulling : bool;
-        ZBuffer : bool
+        ZBufferEnabled : bool;
+        Width : int;
+        Height : int;
+        ZBuffer : ZBufferType array // using option would complicate already complicated code in low-level rendering
     }
 
 [<Literal>]
@@ -35,17 +42,17 @@ let defaultRenderer =
         Camera = defaultCamera;
         Wireframe = true;
         BackfaceCulling = false;
-        ZBuffer = false
+        ZBufferEnabled = false;
+        Width = 1;
+        Height = 1;
+        ZBuffer = null
     }
 
-let setCameraTo camera renderer =
-    let cam = updateMatrix camera
-    { renderer with Camera = cam }
-
-let updateProjection renderer width height =
-    let aspect = double width / double height
-    let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
-    { renderer with Projection = newProj }
+let inline private updateZBuffer renderer =
+    if renderer.ZBufferEnabled then
+        let newBuffer = Array.zeroCreate (renderer.Width * renderer.Height)
+        { renderer with ZBuffer = newBuffer }
+    else { renderer with ZBuffer = null }
 
 let inline toggleWireframe renderer =
     { renderer with Wireframe = not renderer.Wireframe }
@@ -54,7 +61,16 @@ let inline toggleBackfaceCulling renderer =
     { renderer with BackfaceCulling = not renderer.BackfaceCulling }
 
 let inline toggleZBuffer renderer =
-    { renderer with ZBuffer = not renderer.ZBuffer }
+    { renderer with ZBufferEnabled = not renderer.ZBufferEnabled } |> updateZBuffer
+
+let setCameraTo camera renderer =
+    let cam = updateMatrix camera
+    { renderer with Camera = cam }
+
+let updateSize renderer width height =
+    let aspect = double width / double height
+    let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
+    { renderer with Projection = newProj; Width = width; Height = height } |> updateZBuffer
 
 let inline private toCameraSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
@@ -66,7 +82,7 @@ let inline private toClipSpace renderer model =
 
 let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
-        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) v.Z 1.0
+        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((v.Z + 1.0) / 2.0 * zBufferMaxValue) 1.0
     )
     { model with Vertices = newVerts }
 

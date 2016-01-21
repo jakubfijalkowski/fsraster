@@ -1,5 +1,6 @@
 ﻿module FsRaster.Utils
 
+open System
 open System.Collections
 
 open System.Windows.Controls
@@ -63,13 +64,24 @@ module List =
 [<RequireQualifiedAccess>]
 module Array =
     let takeWhileState f s (lst: 'T array) =
-      let rec findIndex currIdx s =
-        if currIdx = lst.Length then (s, currIdx)
-        else
-          let s', acc = f s lst.[currIdx]
-          if acc then findIndex (currIdx + 1) s' else (s, currIdx)
-      let s, lastIndex = findIndex 0 s
-      s, Array.sub lst 0 lastIndex
+        let rec findIndex currIdx s =
+          if currIdx = lst.Length then (s, currIdx)
+          else
+            let s', acc = f s lst.[currIdx]
+            if acc then findIndex (currIdx + 1) s' else (s, currIdx)
+        let s, lastIndex = findIndex 0 s
+        s, Array.sub lst 0 lastIndex
+
+    // Based on https://github.com/mykohsu/Extensions/blob/master/ArrayExtensions.cs
+    let fastFill (arr : 'a array) (value : 'a) =
+        arr.[0] <- value
+        let mutable copyLength = 1
+        let mutable nextCopyLength = copyLength <<< 1
+        while nextCopyLength < arr.Length do
+            Array.Copy(arr, 0, arr, copyLength, copyLength)
+            copyLength <- nextCopyLength
+            nextCopyLength <- copyLength <<< 1
+        Array.Copy(arr, 0, arr, copyLength, arr.Length - copyLength)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 [<RequireQualifiedAccess>]
