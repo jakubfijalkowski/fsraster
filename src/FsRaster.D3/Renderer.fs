@@ -73,7 +73,7 @@ let updateSize renderer width height =
     let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
     { renderer with Projection = newProj; Width = width; Height = height } |> updateZBuffer
 
-let inline private toCameraSpace renderer model =
+let inline private toEyeSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
     let newNormals = model.Normals |> Array.map (fun v -> toVec3 (renderer.Camera.InvView * toVec4 v))
     { model with Vertices = newVerts; Normals = newNormals }
@@ -134,7 +134,7 @@ let renderFilled render model =
 
 let transformModel renderer w h model =
     model
-    |> toCameraSpace renderer
+    |> toEyeSpace renderer
     |> optionalBackfaceCulling renderer
     |> toClipSpace renderer
     |> if renderer.FrustumCulling then clipModel else id
