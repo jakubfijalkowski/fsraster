@@ -15,6 +15,7 @@ type Renderer3D =
         Projection : Matrix4;
         Camera : Camera;
         Wireframe : bool;
+        FrustumCulling : bool;
         BackfaceCulling : bool;
         ZBufferEnabled : bool;
         Width : int;
@@ -37,6 +38,7 @@ let defaultRenderer =
         Projection = matIdentity;
         Camera = defaultCamera;
         Wireframe = true;
+        FrustumCulling = false;
         BackfaceCulling = false;
         ZBufferEnabled = false;
         Width = 1;
@@ -52,6 +54,9 @@ let inline private updateZBuffer renderer =
 
 let inline toggleWireframe renderer =
     { renderer with Wireframe = not renderer.Wireframe }
+
+let inline toggleFrustumCulling renderer =
+    { renderer with FrustumCulling = not renderer.FrustumCulling }
 
 let inline toggleBackfaceCulling renderer =
     { renderer with BackfaceCulling = not renderer.BackfaceCulling }
@@ -137,5 +142,5 @@ let transformModel renderer w h model =
     |> toCameraSpace renderer
     |> optionalBackfaceCulling renderer
     |> toClipSpace renderer
-    |> clipModel
+    |> if renderer.FrustumCulling then clipModel else id
     |> toScreenSpace w h

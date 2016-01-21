@@ -13,6 +13,8 @@ open FsRaster.D3.Renderer
 
 #nowarn "9"
 
+let inline private clampScreen m v = min (max 0 v) (m - 1)
+
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
     let x1' = int v1.X
@@ -21,8 +23,10 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
     let y2' = int v2.Y
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
+    let h = ctx.Height
     if x1' = x2' && y1' = y2' then
-        NativeInterop.NativePtr.set pixels (x1' + y1' * w) c
+        if x1' >= 0 && x1' < w && y1' >= 0 && y1' < h then
+            NativeInterop.NativePtr.set pixels (x1' + y1' * w) c
     else
         let (x1, y1, x2, y2), transform =
             match (x2' - x1', y2' - y1') with
@@ -43,7 +47,8 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
         let rec build d x y =
             if x <= x2 then 
                 let x', y' = transform x y 
-                NativeInterop.NativePtr.set pixels (x' + y' * w) c
+                if x' >= 0 && x' < w && y' >= 0 && y' < h then
+                    NativeInterop.NativePtr.set pixels (x' + y' * w) c
                 if d < 0 then build (d + incE) (x + 1) y
                 else build (d + incNE) (x + 1) (y + 1)
         build d' x1 y1
@@ -55,7 +60,7 @@ let inline private sortVertices (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
     Array.sortInPlaceBy (fun v -> v.Y) arr
     (arr.[0], arr.[1], arr.[2])
 
-type ActiveEdge = { YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
+type ActiveEdge = { YMin : int; YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
 
 let inline private buildTopTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
     let dy = (v1.Y - v3.Y)
@@ -63,8 +68,8 @@ let inline private buildTopTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4)
     let mz1 = (v1.Z - v3.Z) / dy
     let mx2 = (v2.X - v3.X) / dy
     let mz2 = (v2.Z - v3.Z) / dy
-    let ae1 = { YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx2; CoeffZ = mz2 }
+    let ae1 = { YMin = int v1.Y; YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae2 = { YMin = int v1.Y; YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx2; CoeffZ = mz2 }
     (ae1, ae2)
 
 let inline private buildBottomTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
@@ -73,8 +78,8 @@ let inline private buildBottomTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vecto
     let mz1 = (v1.Z - v3.Z) / dy
     let mx2 = (v1.X - v2.X) / dy
     let mz2 = (v1.Z - v2.Z) / dy
-    let ae1 = { YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
+    let ae1 = { YMin = int v1.Y; YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae2 = { YMin = int v1.Y; YMax = int v3.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
     (ae1, ae2)
 
 let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vector4) =
@@ -90,53 +95,62 @@ let inline private buildProperTriangle (v1 : Vector4) (v2 : Vector4) (v3 : Vecto
 
     let midX = v1.X - mx1 * dy12
 
-    let ae1 = { YMax = int v2.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMax = int v2.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
+    let ae1 = { YMin = int v1.Y; YMax = int v2.Y; X = v1.X; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae2 = { YMin = int v1.Y; YMax = int v2.Y; X = v1.X; Z = v1.Z; CoeffX = mx2; CoeffZ = mz2 }
 
-    let ae3 = { YMax = int v3.Y; X = midX; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae4 = { YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx3; CoeffZ = mz3 }
+    let ae3 = { YMin = int v2.Y; YMax = int v3.Y; X = midX; Z = v1.Z; CoeffX = mx1; CoeffZ = mz1 }
+    let ae4 = { YMin = int v2.Y; YMax = int v3.Y; X = v2.X; Z = v2.Z; CoeffX = mx3; CoeffZ = mz3 }
     [ ae1, ae2; ae3, ae4 ]
 
 let private getAEs (v1' : Vector4) (v2' : Vector4) (v3' : Vector4) =
     let v1, v2, v3 = sortVertices v1' v2' v3'
-    let ymin = int v1.Y
-    let aes =
-        if v1.Y = v2.Y then [ buildTopTriangle v1 v2 v3 ]
-        else if v2.Y = v3.Y then [ buildBottomTriangle v1 v2 v3 ]
-        else buildProperTriangle v1 v2 v3
-    (ymin, aes)
+    if v1.Y = v2.Y then [ buildTopTriangle v1 v2 v3 ]
+    else if v2.Y = v3.Y then [ buildBottomTriangle v1 v2 v3 ]
+    else buildProperTriangle v1 v2 v3
+
+let private adjustXPositions orgY newY ae1 ae2 =
+    if orgY <> newY then
+        let diff = double (newY - orgY)
+        ae1.X <- ae1.X + diff * ae1.CoeffX
+        ae2.X <- ae2.X + diff * ae2.CoeffX
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
 let private renderTriangleAlways renderer ctx v1 v2 v3 c =
     let pixels = ctx.Context.Pixels
-    let ymin', aes = getAEs v1 v2 v3
+    let w = ctx.Width
+    let h = ctx.Height
 
-    let mutable ymin = ymin'
+    let aes = getAEs v1 v2 v3
+
     for ae1, ae2 in aes do
-        let ymax = ae1.YMax
+        let ymin = clampScreen h ae1.YMin
+        let ymax = clampScreen h ae1.YMax
+        adjustXPositions ae1.YMin ymin ae1 ae2
         for y = ymin to ymax - 1 do
-            let minX = int (min ae1.X ae2.X)
-            let maxX = int (max ae1.X ae2.X)
+            let minX = clampScreen w (int (min ae1.X ae2.X))
+            let maxX = clampScreen w (int (max ae1.X ae2.X))
             for x = minX to maxX do
-                NativeInterop.NativePtr.set pixels (x + y * ctx.Width) c
+                NativeInterop.NativePtr.set pixels (x + y * w) c
             ae1.X <- ae1.X + ae1.CoeffX
             ae2.X <- ae2.X + ae2.CoeffX
-        ymin <- ymax
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
 let private renderTriangleZBuffer renderer ctx v1 v2 v3 c = 
     let zBuffer = renderer.ZBuffer
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
+    let h = ctx.Height
 
-    let ymin', aes = getAEs v1 v2 v3
+    let aes = getAEs v1 v2 v3
 
-    let mutable ymin = ymin'
     for ae1, ae2 in aes do
-        let ymax = ae1.YMax
+        let ymin = clampScreen h ae1.YMin
+        let ymax = clampScreen h ae1.YMax
+        adjustXPositions ae1.YMin ymin ae1 ae2
+
         for y = ymin to ymax - 1 do
-            let minX = int (min ae1.X ae2.X)
-            let maxX = int (max ae1.X ae2.X)
+            let minX = clampScreen w (int (min ae1.X ae2.X))
+            let maxX = clampScreen w (int (max ae1.X ae2.X))
 
             let mz = if minX <> maxX then (ae2.Z - ae1.Z) / (ae2.X - ae1.X) else 0.0
             let mutable z = if ae1.X <= ae2.X then ae1.Z else ae2.Z
@@ -150,7 +164,6 @@ let private renderTriangleZBuffer renderer ctx v1 v2 v3 c =
             ae1.Z <- ae1.Z + ae1.CoeffZ
             ae2.X <- ae2.X + ae2.CoeffX
             ae2.Z <- ae2.Z + ae2.CoeffZ
-        ymin <- ymax
 
 let drawModel renderer (context : CachedBitmapContext) model =
     let w = double context.Width

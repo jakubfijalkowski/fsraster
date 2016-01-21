@@ -105,6 +105,9 @@ type MainWindowController() =
     let onBackfaceCullingToggled _ =
         renderer <- toggleBackfaceCulling renderer
 
+    let onFrustumCullingToggled _ =
+        renderer <- toggleFrustumCulling renderer
+
     let onWireframeToggled _ =
         renderer <- toggleWireframe renderer
 
@@ -121,6 +124,9 @@ type MainWindowController() =
 
         window.wireframeCheckbox.Checked.Add onWireframeToggled
         window.wireframeCheckbox.Unchecked.Add onWireframeToggled
+
+        window.frustumCullingCheckbox.Checked.Add onFrustumCullingToggled
+        window.frustumCullingCheckbox.Unchecked.Add onFrustumCullingToggled
 
         window.backfaceCullingCheckbox.Checked.Add onBackfaceCullingToggled
         window.backfaceCullingCheckbox.Unchecked.Add onBackfaceCullingToggled
