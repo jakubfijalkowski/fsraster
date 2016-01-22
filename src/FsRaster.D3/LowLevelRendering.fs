@@ -2,6 +2,7 @@
 
 open System.Diagnostics.CodeAnalysis
 
+open FsRaster
 open FsRaster.Utils
 open FsRaster.RawRendering
 open FsRaster.D3.Math
@@ -64,7 +65,19 @@ let inline private sortByY (t : RenderTriangle) =
           V2 = fst arr.[1]; N2 = snd arr.[1];
           V3 = fst arr.[2]; N3 = snd arr.[2] }
 
-type ActiveEdge = { YMin : int; YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
+type ActiveEdge =
+    {
+        YMin : int;
+        YMax : int;
+
+        mutable X : double;
+        mutable Z : double;
+        mutable Normal : Vector3;
+
+        CoeffX : double;
+        CoeffZ : double;
+        CoeffNormal : Vector3
+    }
 
 let inline private buildTopTriangle t =
     let dy = (t.V1.Y - t.V3.Y)
@@ -72,8 +85,36 @@ let inline private buildTopTriangle t =
     let mz1 = (t.V1.Z - t.V3.Z) / dy
     let mx2 = (t.V2.X - t.V3.X) / dy
     let mz2 = (t.V2.Z - t.V3.Z) / dy
-    let ae1 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V2.X; Z = t.V2.Z; CoeffX = mx2; CoeffZ = mz2 }
+
+    let mn1 = (t.N1 - t.N3) / dy
+    let mn2 = (t.N2 - t.N3) / dy
+
+    let ae1 =
+        {
+            YMin = int t.V1.Y;
+            YMax = int t.V3.Y;
+
+            X = t.V1.X;
+            Z = t.V1.Z;
+            Normal = t.N1;
+
+            CoeffX = mx1;
+            CoeffZ = mz1;
+            CoeffNormal = mn1
+        }
+    let ae2 =
+        {
+            YMin = int t.V1.Y;
+            YMax = int t.V3.Y;
+
+            X = t.V2.X;
+            Z = t.V2.Z;
+            Normal = t.N2;
+
+            CoeffX = mx2;
+            CoeffZ = mz2;
+            CoeffNormal = mn2
+        }
     (ae1, ae2)
 
 let inline private buildBottomTriangle t =
@@ -82,8 +123,36 @@ let inline private buildBottomTriangle t =
     let mz1 = (t.V1.Z - t.V3.Z) / dy
     let mx2 = (t.V1.X - t.V2.X) / dy
     let mz2 = (t.V1.Z - t.V2.Z) / dy
-    let ae1 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMin = int t.V1.Y; YMax = int t.V3.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx2; CoeffZ = mz2 }
+
+    let mn1 = (t.N1 - t.N3) / dy
+    let mn2 = (t.N1 - t.N2) / dy
+
+    let ae1 =
+        {
+            YMin = int t.V1.Y;
+            YMax = int t.V3.Y;
+
+            X = t.V1.X;
+            Z = t.V1.Z;
+            Normal = t.N1;
+
+            CoeffX = mx1;
+            CoeffZ = mz1
+            CoeffNormal = mn1
+        }
+    let ae2 =
+        {
+            YMin = int t.V1.Y;
+            YMax = int t.V3.Y;
+
+            X = t.V1.X;
+            Z = t.V1.Z;
+            Normal = t.N1;
+
+            CoeffX = mx2;
+            CoeffZ = mz2;
+            CoeffNormal = mn2
+        }
     (ae1, ae2)
 
 let inline private buildProperTriangle t =
@@ -97,13 +166,66 @@ let inline private buildProperTriangle t =
     let mx3 = (t.V2.X - t.V3.X) / dy23
     let mz3 = (t.V2.Z - t.V3.Z) / dy23
 
+    let mn1 = (t.N1 - t.N3) / dy13
+    let mn2 = (t.N1 - t.N2) / dy12
+    let mn3 = (t.N2 - t.N3) / dy23
+
     let midX = t.V1.X - mx1 * dy12
+    let midN = t.N1 - mn1 * dy12
 
-    let ae1 = { YMin = int t.V1.Y; YMax = int t.V2.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae2 = { YMin = int t.V1.Y; YMax = int t.V2.Y; X = t.V1.X; Z = t.V1.Z; CoeffX = mx2; CoeffZ = mz2 }
+    let ae1 =
+        {
+            YMin = int t.V1.Y;
+            YMax = int t.V2.Y;
 
-    let ae3 = { YMin = int t.V2.Y; YMax = int t.V3.Y; X = midX; Z = t.V1.Z; CoeffX = mx1; CoeffZ = mz1 }
-    let ae4 = { YMin = int t.V2.Y; YMax = int t.V3.Y; X = t.V2.X; Z = t.V2.Z; CoeffX = mx3; CoeffZ = mz3 }
+            X = t.V1.X;
+            Z = t.V1.Z;
+            Normal = t.N1;
+
+            CoeffX = mx1;
+            CoeffZ = mz1;
+            CoeffNormal = mn1
+        }
+    let ae2 =
+        {
+            YMin = int t.V1.Y;
+            YMax = int t.V2.Y;
+
+            X = t.V1.X;
+            Z = t.V1.Z;
+            Normal = t.N1;
+
+            CoeffX = mx2;
+            CoeffZ = mz2
+            CoeffNormal = mn1
+        }
+
+    let ae3 =
+        {
+            YMin = int t.V2.Y;
+            YMax = int t.V3.Y;
+
+            X = midX;
+            Z = t.V1.Z;
+            Normal = midN;
+
+            CoeffX = mx1;
+            CoeffZ = mz1
+            CoeffNormal = mn1
+        }
+    let ae4 =
+        {
+            YMin = int t.V2.Y;
+            YMax = int t.V3.Y;
+
+            X = t.V2.X;
+            Z = t.V2.Z;
+            Normal = t.N2;
+
+            CoeffX = mx3;
+            CoeffZ = mz3
+            CoeffNormal = mn3
+        }
     [ ae1, ae2; ae3, ae4 ]
 
 let private getAEs t' =
@@ -119,6 +241,25 @@ let private adjustXPositions orgY newY ae1 ae2 =
         ae2.X <- ae2.X + diff * ae2.CoeffX
 
 [<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
+let private phongShading renderer (t : RenderTriangle) w h x y z (n : Vector3) c =
+    let pos = vec3 (double x / w) (double y / h) z
+    let l = (pos - renderer.Light.Position).Normalized
+    let dt = dot3 l n.Normalized
+    let dCoeff = max 0.0 dt
+    let aR = int (t.Material.AmbientCoeff * renderer.Light.AmbientR)
+    let aG = int (t.Material.AmbientCoeff * renderer.Light.AmbientG)
+    let aB = int (t.Material.AmbientCoeff * renderer.Light.AmbientB)
+    let dR = int (t.Material.DiffuseCoeff * renderer.Light.DiffuseR * dCoeff)
+    let dG = int (t.Material.DiffuseCoeff * renderer.Light.DiffuseG * dCoeff)
+    let dB = int (t.Material.DiffuseCoeff * renderer.Light.DiffuseB * dCoeff)
+    let r = Colors.clamp (aR + dR + Colors.getR c)
+    let g = Colors.clamp (aG + dG + Colors.getG c)
+    let b = Colors.clamp (aB + dB + Colors.getB c)
+    Colors.fromRGB r g b
+    
+// This is too much of copy-paste, but extracting small, inlineable methods would not help
+// readability and redesigning this would make it less performant
+
 let private renderTriangleAlways renderer ctx t =
     let pixels = ctx.Context.Pixels
     let w = ctx.Width
@@ -139,7 +280,46 @@ let private renderTriangleAlways renderer ctx t =
             ae1.X <- ae1.X + ae1.CoeffX
             ae2.X <- ae2.X + ae2.CoeffX
 
-[<SuppressMessage("NumberOfItems", "MaxNumberOfFunctionParameters")>]
+let private renderTriangleAlwaysPhong renderer ctx t =
+    let pixels = ctx.Context.Pixels
+    let w = ctx.Width
+    let w' = double w
+    let h = ctx.Height
+    let h' = double h
+    let c = t.Color
+
+    let aes = getAEs t
+
+    for ae1, ae2 in aes do
+        let ymin = clampScreen h ae1.YMin
+        let ymax = clampScreen h ae1.YMax
+        adjustXPositions ae1.YMin ymin ae1 ae2
+        for y = ymin to ymax - 1 do
+            let minX = clampScreen w (int (min ae1.X ae2.X))
+            let maxX = clampScreen w (int (max ae1.X ae2.X))
+
+            let mz = if minX <> maxX then (ae2.Z - ae1.Z) / (ae2.X - ae1.X) else 0.0
+            let mutable z = if ae1.X <= ae2.X then ae1.Z else ae2.Z
+
+            let mn = if minX <> maxX then (ae2.Normal - ae1.Normal) / (ae2.X - ae1.X) else vec3Zero
+            let mutable normal = if ae1.X <= ae2.X then ae1.Normal else ae2.Normal
+
+            for x = minX to maxX do
+                let c' = phongShading renderer t w' h' x y z normal c
+                NativeInterop.NativePtr.set pixels (x + y * w) c'
+
+                normal <- vec3Add normal mn
+                z <- z + mz
+
+            ae1.X <- ae1.X + ae1.CoeffX
+            ae2.X <- ae2.X + ae2.CoeffX
+
+            ae1.Z <- ae1.Z + ae1.CoeffZ
+            ae2.Z <- ae2.Z + ae2.CoeffZ
+
+            ae1.Normal <- ae1.Normal + ae1.CoeffNormal
+            ae2.Normal <- ae2.Normal + ae2.CoeffNormal
+
 let private renderTriangleZBuffer renderer ctx t = 
     let zBuffer = renderer.ZBuffer
     let pixels = ctx.Context.Pixels
@@ -171,16 +351,48 @@ let private renderTriangleZBuffer renderer ctx t =
             ae2.X <- ae2.X + ae2.CoeffX
             ae2.Z <- ae2.Z + ae2.CoeffZ
 
-let drawModel renderer (context : CachedBitmapContext) model =
+let private renderTriangleZBufferPhong renderer ctx t = 
+    let zBuffer = renderer.ZBuffer
+    let pixels = ctx.Context.Pixels
+    let w = ctx.Width
+    let h = ctx.Height
+    let c = t.Color
+
+    let aes = getAEs t
+
+    for ae1, ae2 in aes do
+        let ymin = clampScreen h ae1.YMin
+        let ymax = clampScreen h ae1.YMax
+        adjustXPositions ae1.YMin ymin ae1 ae2
+
+        for y = ymin to ymax - 1 do
+            let minX = clampScreen w (int (min ae1.X ae2.X))
+            let maxX = clampScreen w (int (max ae1.X ae2.X))
+
+            let mz = if minX <> maxX then (ae2.Z - ae1.Z) / (ae2.X - ae1.X) else 0.0
+            let mutable z = if ae1.X <= ae2.X then ae1.Z else ae2.Z
+            for x = minX to maxX do
+                let idx = y * w + x
+                if zBuffer.[idx] > z then
+                    NativeInterop.NativePtr.set pixels idx c
+                    zBuffer.[idx] <- z
+                z <- z + mz
+            ae1.X <- ae1.X + ae1.CoeffX
+            ae1.Z <- ae1.Z + ae1.CoeffZ
+            ae2.X <- ae2.X + ae2.CoeffX
+            ae2.Z <- ae2.Z + ae2.CoeffZ
+
+let drawModel renderer' (context : CachedBitmapContext) model' =
     let w = double context.Width
     let h = double context.Height
-    let transformed = transformModel renderer w h model
+    let renderer, model = transformModel renderer' w h model'
     if renderer.Wireframe then
-        renderWireframe (renderLine context) transformed
+        renderWireframe (renderLine context) model
     else
         let render =
             if renderer.ZBufferEnabled then
                 Array.fastFill renderer.ZBuffer System.Double.MaxValue
-                renderTriangleZBuffer
-            else renderTriangleAlways
-        renderFilled (render renderer context) transformed
+                if renderer.LightEnabled then renderTriangleZBufferPhong else renderTriangleZBuffer
+            else
+                if renderer.LightEnabled then renderTriangleAlwaysPhong else renderTriangleAlways
+        renderFilled (render renderer context) model

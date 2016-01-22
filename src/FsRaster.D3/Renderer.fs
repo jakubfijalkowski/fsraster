@@ -88,6 +88,8 @@ let setCameraTo camera renderer =
 
 let updateSize renderer width height =
     let aspect = double width / double height
+    let newProj = matIdentity
+    let newInvProj = matIdentity
     let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
     let newInvProj = matInvProjection DefaultFoV aspect NearPlane FarPlane
     { renderer with Projection = newProj; InvProjection = newInvProj; Width = width; Height = height } |> updateZBuffer
@@ -100,18 +102,26 @@ let inline private toClipSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> (renderer.Projection * v).Normalized)
     { model with Vertices = newVerts }
 
-let inline private normalsToScreenSpace renderer model =
-    let newNormals = model.Normals |> Array.map (fun v -> toVec3 (renderer.InvProjection * renderer.Camera.InvView * toVec4 v))
+let private normalsToScreenSpace renderer model =
+    let newNormals = model.Normals |> Array.map (fun v -> toVec3 (renderer.InvProjection * renderer.Camera.View * toVec4 v))
     { model with Normals = newNormals }
 
 let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
-        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) v.Z 1.0
+        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((v.Z + 1.0) / 2.0) 1.0
     )
     { model with Vertices = newVerts }
 
 let inline private isInView (v : Vector4) =
     v.X >= -1.0 && v.X <= 1.0 && v.Y >= -1.0 && v.Y <= 1.0 && v.Z >= -1.0 && v.Z <= 1.0
+
+let inline private transformLight w h renderer =
+    let newPos = renderer.Projection * renderer.Camera.View * (toVec4 renderer.Light.Position) |> toVec3
+    let newX = (newPos.X + 1.0) / 2.0
+    let newY = (-newPos.Y + 1.0) / 2.0
+    let newZ = (newPos.Z + 1.0) / 2.0
+    let newLight = { renderer.Light with Position = vec3 newX newY newZ }
+    { renderer with Light = newLight }
 
 let private clipModel model =
     let newTris =
@@ -132,14 +142,9 @@ let private cullBackfaces model =
             let v2 = model.Vertices.[t.V2] |> toVec3
             let v3 = model.Vertices.[t.V3] |> toVec3
             let n = computeNormal3 v1 v2 v3
-            dot3 (-v1) n < 0.0
+            dot3 (-v1) n >= 0.0
         )
     { model with Triangles = newTris }
-
-let inline private optionalBackfaceCulling renderer model =
-    if renderer.BackfaceCulling then
-        cullBackfaces model
-    else model
 
 let renderWireframe render model =
     let renderTriangle (t : Triangle) =
@@ -155,10 +160,17 @@ let renderFilled render model =
     model.Triangles |> Array.iter (toRenderTriangle model >> render)
 
 let transformModel renderer w h model =
-    model
-    |> toEyeSpace renderer
-    |> optionalBackfaceCulling renderer
-    |> toClipSpace renderer
-    |> if renderer.FrustumCulling then clipModel else id
-    |> toScreenSpace w h
-    |> normalsToScreenSpace renderer
+    let model' =
+        model
+        |> toEyeSpace renderer
+        |> if renderer.BackfaceCulling then cullBackfaces else id
+        |> toClipSpace renderer
+        |> if renderer.FrustumCulling then clipModel else id
+        |> toScreenSpace w h
+        |> normalsToScreenSpace renderer
+
+    let renderer' =
+        if renderer.LightEnabled then
+            renderer |> transformLight w h
+        else renderer
+    (renderer', model')

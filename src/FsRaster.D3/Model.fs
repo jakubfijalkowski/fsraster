@@ -122,3 +122,11 @@ let loadOffFromStream (stream : Stream) =
 let loadOffFromResources name =
     use stream = Resources.loadStream name
     loadOffFromStream stream
+
+let simpleTriangle =
+    {
+        Vertices = [| vec4Zero; vec4 1.0 0.0 0.0 1.0; vec4 0.0 1.0 0.0 1.0 |];
+        Triangles = [|triEmpty 0 1 2|];
+        Normals = [||];
+        Material = defaultMaterial
+    } |> performNormalMapping

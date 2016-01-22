@@ -27,7 +27,7 @@ type MainWindowController() =
     
     let window = new MainWindow()
 
-    let mutable model = loadOffFromResources "mushroom" |> changeOrientation
+    let mutable model = loadOffFromResources "mushroom"
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
@@ -100,7 +100,7 @@ type MainWindowController() =
         try
             let name = (window.modelSelector.SelectedItem :?> ComboBoxItem).Tag :?> string
             let newModel = loadOffFromResources name
-            if name = "mushroom" then
+            if name = "teapot" then
                 model <- newModel |> changeOrientation |> colorizeModel
             else
                 model <- newModel |> colorizeModel

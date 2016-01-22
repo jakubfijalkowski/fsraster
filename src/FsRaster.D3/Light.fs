@@ -1,5 +1,6 @@
 ﻿module FsRaster.D3.Light
 
+open FsRaster
 open FsRaster.D3.Math
 open FsRaster.D3.Camera
 
@@ -11,18 +12,37 @@ type Material =
         Shininess : double
     }
 
-let defaultMaterial = { SpecularCoeff = 0.0; DiffuseCoeff = 0.5; AmbientCoeff = 0.5; Shininess = 50.0 }
+let defaultMaterial = { SpecularCoeff = 0.0; DiffuseCoeff = 0.5; AmbientCoeff = 0.3; Shininess = 50.0 }
 
 type Light =
     {
         Position : Vector3;
-        Ambient : int;
-        Diffuse : int;
-        Specular : int
+        AmbientR : double;
+        AmbientG : double;
+        AmbientB : double;
+        DiffuseR : double;
+        DiffuseG : double;
+        DiffuseB : double;
+        SpecularR : double;
+        SpecularG : double;
+        SpecularB : double
     }
 
-let inline makeLight pos a d s = { Position = pos; Ambient = a; Diffuse = d; Specular = s }
+let inline makeLight pos a d s =
+    {
+        Position = pos;
+        AmbientR = double (Colors.getR a);
+        AmbientG = double (Colors.getG a);
+        AmbientB = double (Colors.getB a);
+        DiffuseR = double (Colors.getR d);
+        DiffuseG = double (Colors.getG d);
+        DiffuseB = double (Colors.getB d);
+        SpecularR = double (Colors.getR s);
+        SpecularG = double (Colors.getG s);
+        SpecularB = double (Colors.getB s)
+    }
+
 let inline lightToCamera (light : Light) = makeCamera light.Position vec3Zero
 let inline updateLight (light : Light) (cam : Camera) = { light with Position = cam.Position }
 
-let defaultLight = makeLight (vec3 10.0 10.0 10.0) 0xff0000ff 0xff00ff00 0xffffffff
+let defaultLight = makeLight (vec3 0.0 0.0 2.0) 0xff0000ff 0xff00ff00 0xffffffff

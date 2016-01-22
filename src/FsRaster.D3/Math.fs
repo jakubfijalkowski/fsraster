@@ -24,6 +24,9 @@ type Vector3 =
     static member (*) (b : Vector3, a : double) =
         { X = a * b.X; Y = a * b.Y; Z = a * b.Z }
 
+    static member (/) (b : Vector3, a : double) =
+        { X = b.X / a; Y = b.Y / a; Z = b.Z / a }
+
     static member (+) (a : Vector3, b : Vector3) =
         { X = a.X + b.X; Y = a.Y + b.Y; Z = a.Z + b.Z }
 
@@ -70,6 +73,8 @@ let inline cross3 (a : Vector3) (b : Vector3) : Vector3 =
 
 let inline computeNormal3 v1 v2 v3 = cross3 (v2 - v1) (v3 - v1)
 let inline computeNormal4 v1 v2 v3 = computeNormal3 (toVec3 v1) (toVec3 v2) (toVec3 v3)
+
+let inline vec3Add (v1 : Vector3) (v2 : Vector3) : Vector3 = { X = v1.X + v2.X; Y = v1.Y + v2.Y; Z = v1.Z + v2.Z }
 
 type Matrix4 =
     {
@@ -144,6 +149,14 @@ let inline matTranslate x y z =
         M31 = 0.0; M32 = 0.0; M33 = 1.0; M34 = z;
         M41 = 0.0; M42 = 0.0; M43 = 0.0; M44 = 1.0
     }
+let inline matTranslateVec (v : Vector3) = 
+    {
+        M11 = 1.0; M12 = 0.0; M13 = 0.0; M14 = v.X;
+        M21 = 0.0; M22 = 1.0; M23 = 0.0; M24 = v.Y;
+        M31 = 0.0; M32 = 0.0; M33 = 1.0; M34 = v.Z;
+        M41 = 0.0; M42 = 0.0; M43 = 0.0; M44 = 1.0
+    }
+
 let inline matScale x y z =
     {
         M11 = x  ; M12 = 0.0; M13 = 0.0; M14 = 0.0;
@@ -193,10 +206,19 @@ let matLookAt (eye : Vector3) at up =
         M41 = 0.0  ; M42 = 0.0  ; M43 = 0.0  ; M44 = 1.0
     }
 
-let matInvLookAt m =
-    let transInv = { matIdentity with M14 = -m.M14; M24 = -m.M24; M34 = -m.M34 }
-    let rotInv = matTranspose { m with M14 = 0.0; M24 = 0.0; M34 = 0.0 }
-    transInv * rotInv
+let matInvLookAt (eye : Vector3) at up =
+    let zax = (eye - at).Normalized
+    let xax = (cross3 up zax).Normalized
+    let yax = cross3 zax xax
+    let dx = dot3 xax eye
+    let dy = dot3 yax eye
+    let dz = dot3 zax eye
+    {
+        M11 = xax.X; M12 = yax.X; M13 = zax.X; M14 = dx;
+        M21 = xax.Y; M22 = yax.Y; M23 = zax.Y; M24 = dy;
+        M31 = xax.Z; M32 = yax.Z; M33 = zax.Z; M34 = dz;
+        M41 = 0.0  ; M42 = 0.0  ; M43 = 0.0  ; M44 = 1.0
+    }
 
 let matProjection fovy aspect near far =
     let f = 1.0 / System.Math.Tan((degToRad fovy) / 2.0)
