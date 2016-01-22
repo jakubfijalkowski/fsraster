@@ -10,8 +10,10 @@ open FsRaster.CoreRendering
 
 #nowarn "9"
 
+open System.Runtime.InteropServices
+
 let minMaxColor ctx w (left, top, right, bottom) = 
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let mutable minR, minG, minB = 255, 255, 255
     let mutable maxR, maxG, maxB = (0, 0, 0)
     for y in [ top .. bottom ] do
@@ -46,7 +48,7 @@ let normalizePixel (minR, minG, minB) (maxR, maxG, maxB) c =
 let normalizeHistogram ctx rect =
     let w = ctx.Width
     let h = ctx.Height
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
     let minC, maxC = minMaxColor ctx w (left, top, right, bottom)
     for y in [ top .. bottom ] do
@@ -60,7 +62,7 @@ let generateHistogram channel ctx rect =
     let w = ctx.Width
     let h = ctx.Height
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let histogram = Array.zeroCreate 256
     for y in [ top .. bottom ] do
         for x in [ left .. right ] do
@@ -93,7 +95,7 @@ let convolvePixel size (matrix : double array) (copy : int array) w h x y =
 let convolve ctx size matrix offset coeff rect =
     let w = ctx.Width
     let h = ctx.Height
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
     let pixelsCopy = streamPixels ctx (left, top, right, bottom)
     let rectW = right - left
@@ -111,7 +113,7 @@ let convolve ctx size matrix offset coeff rect =
 let applyFunctionFilter ctx rect (filterR : int array) (filterG : int array) (filterB : int array) =
     let w = ctx.Width
     let h = ctx.Height
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (w - 1) (h - 1)
     for y in top .. bottom do
         for x in left .. right do
@@ -142,7 +144,7 @@ let scaleImage ctx scaleX scaleY rect =
     let topOffset = max 0 (srcH - dstH) / 2
     let bottomOffset = max 0 (srcH - topOffset - dstH)
 
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     // Black background
     //  Top
     for y in top .. top + topOffset - 1 do
@@ -181,16 +183,16 @@ let private prepareWorkImage (left, top, right, bottom) =
     let w = right - left
     let h = bottom - top
     let size = (max w h) * 2
-    let bmp = BitmapFactory.New(size, size)
-    { Width = size; Height = size; Context = bmp.GetBitmapContext(ReadWriteMode.ReadWrite) }
+    let pixels = Marshal.AllocHGlobal(size * size * 4) |> NativeInterop.NativePtr.ofNativeInt
+    { Width = size; Height = size; Pixels = pixels }
 
 let private copyBetween src dst (left, top, right, bottom) (offsetX, offsetY) =
     let srcStride = src.Width
     let dstStride = dst.Width
     let w = right - left
     let h = bottom - top
-    let srcPixels = src.Context.Pixels
-    let dstPixels = dst.Context.Pixels
+    let srcPixels = src.Pixels
+    let dstPixels = dst.Pixels
     for y in 0 .. h do
         for x in 0 .. w do
             let srcIdx = (top + y) * srcStride + left + x
@@ -230,8 +232,8 @@ let private rotate90 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as from
     let w = fromRight - fromLeft
     let h = fromBottom - fromTop
 
-    let srcPixels = fromCtx.Context.Pixels
-    let dstPixels = toCtx.Context.Pixels
+    let srcPixels = fromCtx.Pixels
+    let dstPixels = toCtx.Pixels
 
     for y in 0 .. h do
         for x in 0 .. w do
@@ -249,8 +251,8 @@ let private rotate180 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as fro
     let w = fromRight - fromLeft
     let h = fromBottom - fromTop
 
-    let srcPixels = fromCtx.Context.Pixels
-    let dstPixels = toCtx.Context.Pixels
+    let srcPixels = fromCtx.Pixels
+    let dstPixels = toCtx.Pixels
 
     for y in 0 .. h do
         for x in 0 .. w do
@@ -269,8 +271,8 @@ let private rotate270 fromCtx ((fromLeft, fromTop, fromRight, fromBottom) as fro
     let w = fromRight - fromLeft
     let h = fromBottom - fromTop
 
-    let srcPixels = fromCtx.Context.Pixels
-    let dstPixels = toCtx.Context.Pixels
+    let srcPixels = fromCtx.Pixels
+    let dstPixels = toCtx.Pixels
 
     for y in 0 .. h do
         for x in 0 .. w do
@@ -307,7 +309,7 @@ let inline private tripleToRGB (r, g, b) =
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let private shearX ctx shear (left, top, right, bottom) =
     let stride = ctx.Width
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let h = bottom - top
     let w = right - left
     let hTop = h / 2
@@ -345,7 +347,7 @@ let private shearX ctx shear (left, top, right, bottom) =
 [<SuppressMessage("CyclomaticComplexity", "*")>]
 let private shearY ctx shear (left, top, right, bottom) =
     let stride = ctx.Width
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let h = bottom - top
     let w = right - left
     let wLeft = w / 2
@@ -401,7 +403,7 @@ let rotateImage ctx angle rect =
     shearX workImage alpha shearRect2 |> ignore
 
     copyBetween workImage ctx workRect (left, top)
-    workImage.Context.Dispose()
+    Marshal.FreeHGlobal(NativeInterop.NativePtr.toNativeInt workImage.Pixels)
     System.GC.Collect()
 
 let private gammaCorrectPix gamma pix =
@@ -417,7 +419,7 @@ let gammaCorrect ctx gamma rect =
     let stride = ctx.Width
     let left, top, right, bottom = FsRaster.Figures.clipRect rect (ctx.Width - 1) (ctx.Height - 1)
     
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     for y in top .. bottom do
         for x in left .. right do
             let idx = y * stride + x

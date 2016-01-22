@@ -67,7 +67,8 @@ type MainWindowController() =
 
         updateCamera dt
 
-        use context = acquireRenderer mainCanvas
+        use bmpContext = mainCanvas.GetBitmapContext(ReadWriteMode.ReadWrite)
+        let context = { Width = bmpContext.Width; Height = bmpContext.Height; Pixels = bmpContext.Pixels }
         clearBitmap context 0xff000000
         drawModel renderer context model
         frames <- frames + 1

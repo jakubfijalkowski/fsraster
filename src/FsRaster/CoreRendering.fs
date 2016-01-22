@@ -4,7 +4,11 @@ open System
 open System.Windows.Media
 open System.Windows.Media.Imaging
 open System.Diagnostics.CodeAnalysis
+
+open Microsoft.FSharp.NativeInterop
+
 open FSharp.Collections.ParallelSeq
+
 open FsRaster.RawRendering
 open FsRaster.Figures
 open FsRaster.FigureRendering
@@ -19,7 +23,7 @@ let putSolidLine ctx x1' y x2' c =
     if x2 >= 0 && x1 < ctx.Width && y >= 0 && y < ctx.Height && w >= 0 then 
         // Here, we operate on ints (as pixels is nativeptr<int>)
         let startIdx = y * ctx.Width + x1
-        let pixels = ctx.Context.Pixels
+        let pixels = ctx.Pixels
         for i in [ 0..min w (initialBlockSize - 1) ] do
             NativeInterop.NativePtr.set pixels (startIdx + i) c
         // But here, we must switch to bytes, as BlockCopy operates on bytes, not on ints
@@ -28,7 +32,7 @@ let putSolidLine ctx x1' y x2' c =
         let mutable index = (startIdx + initialBlockSize) * 4
         let mutable block = initialBlockSize * 4
         while index <= endIndex do
-            BitmapContext.BlockCopy(ctx.Context, startIdx', ctx.Context, index, min block (endIndex - index + 4))
+            copyMemory ctx.Pixels startIdx' ctx.Pixels index (min block (endIndex - index + 4))
             index <- index + block
             block <- block * 2
 
@@ -42,13 +46,13 @@ let putTexLine ctx prim =
     let w = x2 - x1
     if x2 >= 0 && x1 < ctx.Width && y >= 0 && y < ctx.Height && w >= 0 then 
         let startIdx = y * ctx.Width
-        let pixels = ctx.Context.Pixels
+        let pixels = ctx.Pixels
         let originX, originY = prim.Origin
         let texY = abs ((originY - y) % prim.Texture.Height)
         for x in x1..x2 do
             let texX = abs (x - originX) % prim.Texture.Width
             let c = FigureColor.getTexPixel prim.Texture texX texY
-            NativeInterop.NativePtr.set pixels (startIdx + x) c
+            NativePtr.set pixels (startIdx + x) c
 
 let putPrimitive ctx = 
     function 
@@ -83,31 +87,31 @@ let yuvToRGB (y, u, v) =
     Colors.fromRGB (int r) (int g) (int b)
 
 let extractYUVPlane ctx plane = 
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let h = ctx.Height
     let len = w * h - 1
     for i in 0..len do
-        let pix = NativeInterop.NativePtr.get pixels i
+        let pix = NativePtr.get pixels i
         let yuv = getYUVFromPixel pix |> getPlane plane
         let rgb = yuvToRGB yuv
-        NativeInterop.NativePtr.set pixels i rgb
+        NativePtr.set pixels i rgb
 
 let streamPixels ctx rect = 
     let maxW = ctx.Width
     let maxH = ctx.Height
     let x1, y1, x2, y2 = clipRect rect maxW maxH
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     [| for y in [ y1..y2 - 1 ] do
            let scanline = y * ctx.Width
            for i in [ scanline + x1..scanline + x2 - 1 ] do
-               yield NativeInterop.NativePtr.get pixels i |]
+               yield NativePtr.get pixels i |]
 
 let mapPixelsXY ctx rect f = 
     let maxW = ctx.Width - 1
     let maxH = ctx.Height - 1
     let x1, y1, x2, y2 = clipRect rect maxW maxH
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     for y in [ y1..y2 ] do
         for x in [ x1..x2 ] do
             let i = y * ctx.Width + x
@@ -119,7 +123,7 @@ let foldPixelsXY ctx rect f state =
     let maxW = ctx.Width - 1
     let maxH = ctx.Height - 1
     let x1, y1, x2, y2 = clipRect rect maxW maxH
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let mutable state' = state
     for y in [ y1..y2 ] do
         for x in [ x1..x2 ] do
@@ -143,12 +147,12 @@ type IRenderer =
     abstract MapXY : Rectangle -> (int -> int -> int -> int) -> unit
     abstract Fold : Rectangle -> ('a -> int -> 'a) -> 'a -> 'a
     abstract FoldXY : Rectangle -> ('a -> int -> int -> int -> 'a) -> 'a -> 'a
-    abstract Context : CachedBitmapContext
+    abstract Context : PixelBufferContext
 
 type BitmapRenderer(context : BitmapContext) = 
     
     let cachedContext = 
-        { Context = context
+        { Pixels = context.Pixels
           Width = context.Width
           Height = context.Height }
     

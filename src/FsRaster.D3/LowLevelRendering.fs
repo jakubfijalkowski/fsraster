@@ -23,7 +23,7 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
     let x2' = int v2.X
     let y1' = int v1.Y
     let y2' = int v2.Y
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let h = ctx.Height
     if x1' = x2' && y1' = y2' then
@@ -301,7 +301,7 @@ let private adjustXPositions orgY newY ae1 ae2 =
 // readability and redesigning this would make it less performant
 
 let private renderTriangleAlways renderer ctx t =
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let h = ctx.Height
     let c = t.C1
@@ -321,7 +321,7 @@ let private renderTriangleAlways renderer ctx t =
             ae2.X <- ae2.X + ae2.CoeffX
 
 let private renderTriangleAlwaysInterpolate renderer ctx t =
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let w' = double w
     let h = ctx.Height
@@ -368,7 +368,7 @@ let private renderTriangleAlwaysInterpolate renderer ctx t =
 
 let private renderTriangleZBuffer renderer ctx t = 
     let zBuffer = renderer.ZBuffer
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let h = ctx.Height
     let c = t.C1
@@ -399,7 +399,7 @@ let private renderTriangleZBuffer renderer ctx t =
 
 let private renderTriangleZBufferInterpolate renderer ctx t =
     let zBuffer = renderer.ZBuffer
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let w' = double w
     let h = ctx.Height
@@ -451,7 +451,7 @@ let private renderTriangleZBufferInterpolate renderer ctx t =
             ae1.B <- ae1.B + ae1.CoeffB
             ae2.B <- ae2.B + ae2.CoeffB
 
-let drawModel renderer (context : CachedBitmapContext) model' =
+let drawModel renderer (context : PixelBufferContext) model' =
     let w = double context.Width
     let h = double context.Height
     let model = transformModel renderer w h model'

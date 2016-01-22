@@ -18,7 +18,7 @@ type HistogramControl() as self =
         let scale = data |> Array.max |> double
         use bitmapCtx = bitmap.GetBitmapContext(ReadWriteMode.ReadWrite)
         bitmapCtx.Clear()
-        let ctx = { Width = bitmap.PixelWidth; Height = bitmap.PixelHeight; Context = bitmapCtx }
+        let ctx = { Width = bitmap.PixelWidth; Height = bitmap.PixelHeight; Pixels = bitmapCtx.Pixels }
         for x in 0 .. 255 do
             if data.[x] > 0 then
                 let height = int (255.0 * (double data.[x] / scale))

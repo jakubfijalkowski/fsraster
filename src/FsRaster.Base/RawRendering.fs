@@ -4,34 +4,41 @@ open System
 open System.Windows.Media
 open System.Windows.Media.Imaging
 open System.Diagnostics.CodeAnalysis
+open System.Runtime.InteropServices
 
-// Required to fight thread access exceptions
-type CachedBitmapContext =
+open Microsoft.FSharp.NativeInterop
+
+#nowarn "9"
+
+type PixelBufferContext =
     {
-        Context : BitmapContext;
+        Pixels : int nativeptr;
         Width : int;
         Height : int
     }
 
-    interface IDisposable with
-        member x.Dispose() = x.Context.Dispose()
+[<DllImport("kernel32.dll", EntryPoint = "CopyMemory")>]
+extern void CopyMemoryNative(void *dest, void *src, UIntPtr size);
 
-#nowarn "9"
+let inline copyMemory (src : 'a nativeptr) srcOffset (dst : 'a nativeptr) dstOffset (length : int) =
+    let src' = NativePtr.toNativeInt (NativePtr.add src srcOffset)
+    let dst' = NativePtr.toNativeInt (NativePtr.add dst dstOffset)
+    CopyMemoryNative(dst', src', UIntPtr(uint32 (length * 4)))
 
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L79-L105
 let clearBitmap ctx c =
-    let pixels = ctx.Context.Pixels
+    let pixels = ctx.Pixels
     let w = ctx.Width
     let h = ctx.Height
-    let len = w * 4 //SizeOfArgb
+    let len = w
 
     for x = 0 to w do
-        NativeInterop.NativePtr.set pixels x c
+        NativePtr.set pixels x c
 
     let mutable blockHeight = 1
     let mutable y = 1
     while y < h do
-        BitmapContext.BlockCopy(ctx.Context, 0, ctx.Context, y * len, blockHeight * len)
+        copyMemory pixels 0 pixels (y * len) (blockHeight * len)
         y <- y + blockHeight
         blockHeight <- min (2 * blockHeight) (h - y)
 
@@ -48,15 +55,15 @@ let blendPixels r1 g1 b1 r2 g2 b2 a' =
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L392-L398
 let putPixel ctx x y c =
     if x >= 0 && y >= 0 && x < ctx.Width && y < ctx.Height then
-        let pixels = ctx.Context.Pixels
+        let pixels = ctx.Pixels
         let index = y * ctx.Width + x
-        NativeInterop.NativePtr.set pixels index c
+        NativePtr.set pixels index c
 
 let putPixelAlpha ctx x y c =
     if x >= 0 && y >= 0 && x < ctx.Width && y < ctx.Height then
         let index = y * ctx.Width + x
-        let pixels = ctx.Context.Pixels
-        let color = NativeInterop.NativePtr.get pixels index : int
+        let pixels = ctx.Pixels
+        let color = NativePtr.get pixels index : int
         let b1 = Colors.getB color
         let g1 = Colors.getG color
         let r1 = Colors.getR color
@@ -64,13 +71,9 @@ let putPixelAlpha ctx x y c =
         let g2 = Colors.getG c
         let r2 = Colors.getR c
         let a = Colors.getA c
-        NativeInterop.NativePtr.set pixels index (blendPixels r1 g1 b1 r2 g2 b2 a)
+        NativePtr.set pixels index (blendPixels r1 g1 b1 r2 g2 b2 a)
 
-let getPixel ctx x y =
+let inline getPixel ctx x y =
     let index = y * ctx.Width + x
-    let pixels = ctx.Context.Pixels
-    NativeInterop.NativePtr.get pixels index
-
-let acquireRenderer (bmp : WriteableBitmap) =
-    let ctx = bmp.GetBitmapContext(ReadWriteMode.ReadWrite)
-    { Context = ctx; Width = ctx.Width; Height = ctx.Height }
+    let pixels = ctx.Pixels
+    NativePtr.get pixels index
