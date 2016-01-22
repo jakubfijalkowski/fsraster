@@ -12,6 +12,7 @@ type Material =
         Shininess : double
     }
 
+let makeMaterial s d a sh = { SpecularCoeff = s; DiffuseCoeff = d; AmbientCoeff = a; Shininess = sh }
 let defaultMaterial = { SpecularCoeff = 0.8; DiffuseCoeff = 0.5; AmbientCoeff = 0.3; Shininess = 2.0 }
 
 type Light =
@@ -43,6 +44,8 @@ let inline makeLight pos a d s =
     }
 
 let inline lightToCamera (light : Light) = makeCamera light.Position vec3Zero
-let inline updateLight (light : Light) (cam : Camera) = { light with Position = cam.Position }
+let inline updateLightFromCamera (light : Light) (cam : Camera) = { light with Position = cam.Position }
+
+let inline updateLightColors (light : Light) = makeLight light.Position
 
 let defaultLight = makeLight (vec3 0.0 5.0 3.0) 0xff0000ff 0xff00ff00 0xffffffff

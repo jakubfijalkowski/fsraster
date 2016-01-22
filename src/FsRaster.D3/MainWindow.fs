@@ -12,6 +12,7 @@ open System.Windows.Threading
 
 open FsXaml
 
+open FsRaster
 open FsRaster.RawRendering
 open FsRaster.D3.Math
 open FsRaster.D3.Model
@@ -55,7 +56,7 @@ type MainWindowController() =
         if cameraController.Update dt then
             renderer <- setCameraTo cameraController.Camera renderer
             if window.cameraSelector.SelectedIndex > 0 then
-                let newLight = Light.updateLight renderer.Light cameraController.Camera
+                let newLight = Light.updateLightFromCamera renderer.Light cameraController.Camera
                 renderer <- setLightTo newLight renderer
         ()
 
@@ -141,6 +142,20 @@ type MainWindowController() =
     let onImageClick _ =
         window.imageContainer.Focus() |> ignore
 
+    let updateLightProperties _ =
+        let ambient = Colors.fromUIColor window.ambientColorPicker.SelectedColor.Value
+        let diffuse = Colors.fromUIColor window.diffuseColorPicker.SelectedColor.Value
+        let specular = Colors.fromUIColor window.specularColorPicker.SelectedColor.Value
+        let newLight = Light.updateLightColors renderer.Light ambient diffuse specular
+        renderer <- setLightTo newLight renderer
+
+        let ambCoeff = window.ambientCoefficient.Value.Value
+        let diffCoeff = window.diffuseCoefficient.Value.Value
+        let specCoeff = window.specularCoefficient.Value.Value
+        let shininess = window.shininessCoefficient.Value.Value
+        let material = Light.makeMaterial specCoeff diffCoeff ambCoeff shininess
+        model <- { model with Material = material }
+
     do
         window.imageContainer.SizeChanged.Add onSizeChanged
         window.imageContainer.MouseDown.Add onImageClick
@@ -162,6 +177,14 @@ type MainWindowController() =
 
         window.lightCheckbox.Checked.Add onLightToggled
         window.lightCheckbox.Unchecked.Add onLightToggled
+
+        window.ambientColorPicker.SelectedColorChanged.Add updateLightProperties
+        window.diffuseColorPicker.SelectedColorChanged.Add updateLightProperties
+        window.specularColorPicker.SelectedColorChanged.Add updateLightProperties
+        window.ambientCoefficient.ValueChanged.Add updateLightProperties
+        window.diffuseCoefficient.ValueChanged.Add updateLightProperties
+        window.specularCoefficient.ValueChanged.Add updateLightProperties
+        window.shininessCoefficient.ValueChanged.Add updateLightProperties
 
         model <- model |> colorizeModel
         renderer <- setCameraTo (cameraController.Camera) renderer 
