@@ -5,9 +5,9 @@ open System.Windows.Input
 
 open FsRaster.D3.Math
 
-type Camera = { Position : Vector3; Target : Vector3; Up : Vector3; View : Matrix4 }
+type Camera = { Position : Vector3; Target : Vector3; Up : Vector3; View : Matrix4; InvView : Matrix4 }
 
-let defaultCamera = { Position = vec3 0.0 0.0 0.0; Target = vec3 0.0 0.0 1.0; Up = vec3 0.0 1.0 0.0; View = matIdentity }
+let defaultCamera = { Position = vec3 0.0 0.0 0.0; Target = vec3 0.0 0.0 1.0; Up = vec3 0.0 1.0 0.0; View = matIdentity; InvView = matIdentity }
 
 let inline makeCamera eye target = { defaultCamera with Position = eye; Target = target; Up = vec3 0.0 1.0 0.0 }
 
@@ -19,14 +19,15 @@ let inline lookBy diff camera = { camera with Target = camera.Target + diff }
 
 let inline updateMatrix camera =
     let view = matLookAt camera.Position camera.Target camera.Up
-    { camera with View = view }
+    let invView = matTranspose <| matInvLookAt camera.Position camera.Target camera.Up
+    { camera with View = view; InvView = invView }
 
 type CameraController(control : FrameworkElement) =
 
     [<Literal>]
     let RotAngle = 1.57079632679 // PI / 2, but I can't use Math.PI / 2.0 in Literals...
 
-    let mutable camera = makeCamera (vec3 0.0 0.0 8.0) (vec3 0.0 0.0 0.0)
+    let mutable camera = makeCamera (vec3 0.0 5.0 3.0) (vec3 0.0 0.0 0.0)
     
     let mutable leftPressed = false
     let mutable rightPressed = false

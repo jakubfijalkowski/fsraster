@@ -34,7 +34,7 @@
                 <ComboBoxItem Tag="mushroom" Content="Mushroom" />
                 <ComboBoxItem Tag="teapot" Content="Teapot" />
             </ComboBox>
-            <ComboBox x:Name="modelColorModeSelector" SelectedIndex="0">
+            <ComboBox x:Name="modelColorModeSelector" SelectedIndex="1">
                 <ComboBoxItem Content="Random colors" />
                 <ComboBoxItem Content="Black" />
                 <ComboBoxItem Content="White" />

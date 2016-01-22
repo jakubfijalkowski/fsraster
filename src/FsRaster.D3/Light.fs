@@ -45,4 +45,4 @@ let inline makeLight pos a d s =
 let inline lightToCamera (light : Light) = makeCamera light.Position vec3Zero
 let inline updateLight (light : Light) (cam : Camera) = { light with Position = cam.Position }
 
-let defaultLight = makeLight (vec3 0.0 0.0 2.0) 0xff0000ff 0xff00ff00 0xffffffff
+let defaultLight = makeLight (vec3 0.0 2.0 0.0) 0xff0000ff 0xff00ff00 0xffffffff

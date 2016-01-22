@@ -55,6 +55,8 @@ let vec3Zero = vec3 0.0 0.0 0.0
 let vec4Zero = vec4 0.0 0.0 0.0 1.0
 
 let inline toVec4 (a : Vector3) = vec4 a.X a.Y a.Z 1.0
+let inline toVec40 (a : Vector3) = vec4 a.X a.Y a.Z 0.0
+let inline toVec4w (a : Vector3) w = vec4 a.X a.Y a.Z w
 let inline toVec3 (a : Vector4) : Vector3 =
     let n = a.Normalized
     { X = n.X; Y = n.Y; Z = n.Z }
