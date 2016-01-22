@@ -27,8 +27,9 @@ type CameraController(control : FrameworkElement) =
     [<Literal>]
     let RotAngle = 1.57079632679 // PI / 2, but I can't use Math.PI / 2.0 in Literals...
 
-    let mutable camera = makeCamera (vec3 0.0 5.0 3.0) (vec3 0.0 0.0 0.0)
-    
+    let mutable camera = makeCamera (vec3 0.0 5.0 3.0) vec3Zero
+    let mutable cameraUpdated = false
+
     let mutable leftPressed = false
     let mutable rightPressed = false
     let mutable upPressed = false
@@ -96,8 +97,15 @@ type CameraController(control : FrameworkElement) =
         control.KeyDown.Add onKeyDown
         control.KeyUp.Add onKeyUp
 
-    member x.Camera = camera
+    member x.Camera
+        with get() = camera
+        and set v =
+            camera <- v
+            cameraUpdated <- true
+
     member x.Update dt =
         if shouldMove () then moveCamera dt
         if shouldRotate () then rotateCamera dt
-        shouldMove () || shouldRotate ()
+        let r = shouldMove () || shouldRotate () || cameraUpdated
+        cameraUpdated <- false
+        r

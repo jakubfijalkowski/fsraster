@@ -31,6 +31,7 @@ type MainWindowController() =
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
 
+    let mutable savedCamera = defaultCamera
     let cameraController = CameraController(window.Root)
 
     let mutable renderer = defaultRenderer
@@ -53,6 +54,9 @@ type MainWindowController() =
     let updateCamera dt =
         if cameraController.Update dt then
             renderer <- setCameraTo cameraController.Camera renderer
+            if window.cameraSelector.SelectedIndex > 0 then
+                let newLight = Light.updateLight renderer.Light cameraController.Camera
+                renderer <- setLightTo newLight renderer
         ()
 
     let renderLoop' () =
@@ -108,6 +112,14 @@ type MainWindowController() =
             | e -> MessageBox.Show(window.Root, "Cannot load model: " + e.Message, "Error") |> ignore
         ()
 
+    let onCameraChanged _ =
+        match window.cameraSelector.SelectedIndex with
+        | 0 ->
+            cameraController.Camera <- savedCamera
+        | _ ->
+            savedCamera <- cameraController.Camera
+            cameraController.Camera <- Light.lightToCamera renderer.Light
+
     let onBackfaceCullingToggled _ =
         renderer <- toggleBackfaceCulling renderer
 
@@ -134,6 +146,7 @@ type MainWindowController() =
         window.imageContainer.MouseDown.Add onImageClick
         window.modelSelector.SelectionChanged.Add onModelChanged
         window.modelColorModeSelector.SelectionChanged.Add onColorModeChanged
+        window.cameraSelector.SelectionChanged.Add onCameraChanged
 
         window.wireframeCheckbox.Checked.Add onWireframeToggled
         window.wireframeCheckbox.Unchecked.Add onWireframeToggled

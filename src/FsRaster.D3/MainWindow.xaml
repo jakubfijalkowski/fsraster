@@ -39,6 +39,10 @@
                 <ComboBoxItem Content="Black" />
                 <ComboBoxItem Content="White" />
             </ComboBox>
+            <ComboBox x:Name="cameraSelector" SelectedIndex="0">
+                <ComboBoxItem Content="Free cam" />
+                <ComboBoxItem Content="Light cam" />
+            </ComboBox>
         </StackPanel>
     </Grid>
 </Window>

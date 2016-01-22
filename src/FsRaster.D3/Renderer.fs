@@ -86,6 +86,9 @@ let setCameraTo camera renderer =
     let cam = updateMatrix camera
     { renderer with Camera = cam }
 
+let inline setLightTo light renderer =
+    { renderer with Light = light }
+
 let updateSize renderer width height =
     let aspect = double width / double height
     let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
