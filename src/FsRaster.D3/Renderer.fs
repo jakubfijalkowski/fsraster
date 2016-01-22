@@ -14,7 +14,6 @@ type Renderer3D =
     {
         Model : Matrix4;
         Projection : Matrix4;
-        InvProjection : Matrix4;
 
         Camera : Camera;
         Wireframe : bool;
@@ -44,7 +43,6 @@ let defaultRenderer =
     {
         Model = matIdentity;
         Projection = matIdentity;
-        InvProjection = matIdentity;
 
         Camera = defaultCamera;
         Wireframe = true;
@@ -92,8 +90,7 @@ let inline setLightTo light renderer =
 let updateSize renderer width height =
     let aspect = double width / double height
     let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
-    let newInvProj = matTranspose <| matInvProjection DefaultFoV aspect NearPlane FarPlane
-    { renderer with Projection = newProj; InvProjection = newInvProj; Width = width; Height = height } |> updateZBuffer
+    { renderer with Projection = newProj; Width = width; Height = height } |> updateZBuffer
 
 let inline private toEyeSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
@@ -108,9 +105,6 @@ let inline private toScreenSpace w h model =
         vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((v.Z + 1.0) / 2.0) 1.0
     )
     { model with Vertices = newVerts }
-
-let inline private isInView (v : Vector4) =
-    v.X >= -1.0 && v.X <= 1.0 && v.Y >= -1.0 && v.Y <= 1.0 && v.Z >= -1.0 && v.Z <= 1.0
 
 let private calculateLightning renderer model =
     let calculatePhong i c =
@@ -143,6 +137,9 @@ let private calculateLightning renderer model =
     let newColors = model.Colors |> Array.mapi calculatePhong
     { model with Colors = newColors }
 
+let inline private isInView (v : Vector4) =
+    v.X >= -1.0 && v.X <= 1.0 && v.Y >= -1.0 && v.Y <= 1.0 && v.Z >= -1.0 && v.Z <= 1.0
+
 let private clipModel model =
     let newTris =
         model.Triangles
@@ -151,6 +148,17 @@ let private clipModel model =
             let v2 = model.Vertices.[t.V2]
             let v3 = model.Vertices.[t.V3]
             isInView v1 && isInView v2 && isInView v3
+        )
+    { model with Triangles = newTris }
+
+let private hideInvisibleFaces model = 
+    let newTris =
+        model.Triangles
+        |> Array.filter(fun t ->
+            let v1 = model.Vertices.[t.V1]
+            let v2 = model.Vertices.[t.V2]
+            let v3 = model.Vertices.[t.V3]
+            isInView v1 || isInView v2 || isInView v3
         )
     { model with Triangles = newTris }
 
@@ -185,5 +193,5 @@ let transformModel renderer w h model =
     |> toEyeSpace renderer
     |> if renderer.BackfaceCulling then cullBackfaces else id
     |> toClipSpace renderer
-    |> if renderer.FrustumCulling then clipModel else id
+    |> if renderer.FrustumCulling then clipModel else hideInvisibleFaces
     |> toScreenSpace w h
