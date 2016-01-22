@@ -120,6 +120,9 @@ type MainWindowController() =
     let onZBufferToggled _ =
         renderer <- toggleZBuffer renderer
 
+    let onLightToggled _ =
+        renderer <- toggleLight renderer
+
     let onColorModeChanged _ =
         model <- model |> colorizeModel
 
@@ -143,6 +146,9 @@ type MainWindowController() =
 
         window.zBufferCheckbox.Checked.Add onZBufferToggled
         window.zBufferCheckbox.Unchecked.Add onZBufferToggled
+
+        window.lightCheckbox.Checked.Add onLightToggled
+        window.lightCheckbox.Unchecked.Add onLightToggled
 
         model <- model |> colorizeModel
         renderer <- setCameraTo (cameraController.Camera) renderer 

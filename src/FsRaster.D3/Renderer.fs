@@ -6,18 +6,25 @@ open FSharp.Collections.ParallelSeq
 open FsRaster
 open FsRaster.Utils
 open FsRaster.D3.Math
-open FsRaster.D3.Model
 open FsRaster.D3.Camera
+open FsRaster.D3.Light
+open FsRaster.D3.Model
 
 type Renderer3D =
     {
         Model : Matrix4;
         Projection : Matrix4;
         InvProjection : Matrix4;
+
         Camera : Camera;
         Wireframe : bool;
+
         FrustumCulling : bool;
         BackfaceCulling : bool;
+
+        LightEnabled : bool;
+        Light : Light;
+
         ZBufferEnabled : bool;
         Width : int;
         Height : int;
@@ -38,10 +45,16 @@ let defaultRenderer =
         Model = matIdentity;
         Projection = matIdentity;
         InvProjection = matIdentity;
+
         Camera = defaultCamera;
         Wireframe = true;
+
         FrustumCulling = false;
         BackfaceCulling = false;
+
+        LightEnabled = false;
+        Light = defaultLight;
+
         ZBufferEnabled = false;
         Width = 1;
         Height = 1;
@@ -65,6 +78,9 @@ let inline toggleBackfaceCulling renderer =
 
 let inline toggleZBuffer renderer =
     { renderer with ZBufferEnabled = not renderer.ZBufferEnabled } |> updateZBuffer
+
+let inline toggleLight renderer =
+    { renderer with LightEnabled = not renderer.LightEnabled }
 
 let setCameraTo camera renderer =
     let cam = updateMatrix camera

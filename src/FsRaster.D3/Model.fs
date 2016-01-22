@@ -8,6 +8,7 @@ open System.Diagnostics.CodeAnalysis
 
 open FsRaster
 open FsRaster.D3.Math
+open FsRaster.D3.Light
 
 type Triangle = { V1 : int; V2 : int; V3: int; Color : int; }
 
@@ -15,7 +16,7 @@ type RenderTriangle =
     {
         V1 : Vector4; V2 : Vector4; V3 : Vector4;
         N1 : Vector3; N2 : Vector3; N3 : Vector3;
-        Color : int
+        Color : int; Material : Material
     }
 
 type Model =
@@ -23,13 +24,14 @@ type Model =
         Vertices : Vector4 array;
         Normals : Vector3 array;
         Triangles : Triangle array;
+        Material : Material
     }
 
 let inline triEmpty v1 v2 v3 : Triangle = { V1 = v1; V2 = v2; V3 = v3; Color = 0xff000000 }
 let inline toRenderTriangle model (t : Triangle) : RenderTriangle =
     { V1 = model.Vertices.[t.V1]; V2 = model.Vertices.[t.V2]; V3 = model.Vertices.[t.V3];
       N1 = model.Normals.[t.V1] ; N2 = model.Normals.[t.V2] ; N3 = model.Normals.[t.V3];
-      Color = t.Color }
+      Color = t.Color; Material = model.Material }
 
 let changeOrientation model =
     let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2 })
@@ -115,7 +117,7 @@ let loadOffFromStream (stream : Stream) =
     if triangles |> Array.tryFind (fun t -> t.V1 < 0 || t.V1 >= vertCount || t.V2 < 0 || t.V2 >= vertCount || t.V3 < 0 || t.V3 >= vertCount) |> Option.isSome then
         failwith "Invalid index detected"
 
-    { Vertices = vertices; Triangles = triangles; Normals = [||] } |> performNormalMapping
+    { Vertices = vertices; Triangles = triangles; Normals = [||]; Material = defaultMaterial } |> performNormalMapping
 
 let loadOffFromResources name =
     use stream = Resources.loadStream name

@@ -29,6 +29,7 @@
             <CheckBox x:Name="frustumCullingCheckbox" Content="Frustum culling" IsChecked="False" />
             <CheckBox x:Name="backfaceCullingCheckbox" Content="Backface culling" IsChecked="False" />
             <CheckBox x:Name="zBufferCheckbox" Content="Z Buffer" IsChecked="False" />
+            <CheckBox x:Name="lightCheckbox" Content="Light" IsChecked="False" />
             <ComboBox x:Name="modelSelector" SelectedIndex="0">
                 <ComboBoxItem Tag="mushroom" Content="Mushroom" />
                 <ComboBoxItem Tag="teapot" Content="Teapot" />

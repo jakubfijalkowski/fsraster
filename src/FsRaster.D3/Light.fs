@@ -24,3 +24,5 @@ type Light =
 let inline makeLight pos a d s = { Position = pos; Ambient = a; Diffuse = d; Specular = s }
 let inline lightToCamera (light : Light) = makeCamera light.Position vec3Zero
 let inline updateLight (light : Light) (cam : Camera) = { light with Position = cam.Position }
+
+let defaultLight = makeLight (vec3 10.0 10.0 10.0) 0xff0000ff 0xff00ff00 0xffffffff

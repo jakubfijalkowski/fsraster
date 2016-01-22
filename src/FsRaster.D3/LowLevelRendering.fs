@@ -59,10 +59,10 @@ let private renderLine ctx (v1 : Vector4) (v2 : Vector4) c =
 let inline private sortByY (t : RenderTriangle) =
     let arr = [| (t.V1, t.N1); (t.V2, t.N2); (t.V3, t.N3) |]
     Array.sortInPlaceBy (fun (v, _) -> v.Y) arr
-    { V1 = fst arr.[0]; N1 = snd arr.[0];
-      V2 = fst arr.[1]; N2 = snd arr.[1];
-      V3 = fst arr.[2]; N3 = snd arr.[2];
-      Color = t.Color }
+    { t with
+          V1 = fst arr.[0]; N1 = snd arr.[0];
+          V2 = fst arr.[1]; N2 = snd arr.[1];
+          V3 = fst arr.[2]; N3 = snd arr.[2] }
 
 type ActiveEdge = { YMin : int; YMax : int; mutable X : double; mutable Z : double; CoeffX : double; CoeffZ : double }
 
