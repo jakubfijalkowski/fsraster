@@ -27,7 +27,6 @@
             <Label x:Name="fpsLabel" Content="FPS: 0" />
             <Label x:Name="timeLabel" Content="Render time: 0 ms" />
             <CheckBox x:Name="wireframeCheckbox" Content="Wireframe" IsChecked="True" />
-            <CheckBox x:Name="frustumCullingCheckbox" Content="Frustum culling" IsChecked="False" />
             <CheckBox x:Name="backfaceCullingCheckbox" Content="Backface culling" IsChecked="False" />
             <CheckBox x:Name="zBufferCheckbox" Content="Z Buffer" IsChecked="False" />
             <CheckBox x:Name="lightCheckbox" Content="Light" IsChecked="False" />

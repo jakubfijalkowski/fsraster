@@ -18,7 +18,6 @@ type Renderer3D =
         Camera : Camera;
         Wireframe : bool;
 
-        FrustumCulling : bool;
         BackfaceCulling : bool;
 
         LightEnabled : bool;
@@ -47,7 +46,6 @@ let defaultRenderer =
         Camera = defaultCamera;
         Wireframe = true;
 
-        FrustumCulling = false;
         BackfaceCulling = false;
 
         LightEnabled = false;
@@ -67,9 +65,6 @@ let inline private updateZBuffer renderer =
 
 let inline toggleWireframe renderer =
     { renderer with Wireframe = not renderer.Wireframe }
-
-let inline toggleFrustumCulling renderer =
-    { renderer with FrustumCulling = not renderer.FrustumCulling }
 
 let inline toggleBackfaceCulling renderer =
     { renderer with BackfaceCulling = not renderer.BackfaceCulling }
@@ -140,25 +135,15 @@ let private calculateLightning renderer model =
 let inline private isInView (v : Vector4) =
     v.X >= -1.0 && v.X <= 1.0 && v.Y >= -1.0 && v.Y <= 1.0 && v.Z >= -1.0 && v.Z <= 1.0
 
-let private clipModel model =
+let private cullModelToFrustum model = 
     let newTris =
         model.Triangles
         |> Array.filter(fun t ->
             let v1 = model.Vertices.[t.V1]
             let v2 = model.Vertices.[t.V2]
             let v3 = model.Vertices.[t.V3]
-            isInView v1 && isInView v2 && isInView v3
-        )
-    { model with Triangles = newTris }
-
-let private hideInvisibleFaces model = 
-    let newTris =
-        model.Triangles
-        |> Array.filter(fun t ->
-            let v1 = model.Vertices.[t.V1]
-            let v2 = model.Vertices.[t.V2]
-            let v3 = model.Vertices.[t.V3]
-            isInView v1 || isInView v2 || isInView v3
+            (isInView v1 || isInView v2 || isInView v3)
+                && (v1.Z >= -1.0 && v1.Z <= 1.0 && v2.Z >= -1.0 && v2.Z <= 1.0 && v3.Z >= -1.0 && v3.Z <= 1.0)
         )
     { model with Triangles = newTris }
 
@@ -193,5 +178,5 @@ let transformModel renderer w h model =
     |> toEyeSpace renderer
     |> if renderer.BackfaceCulling then cullBackfaces else id
     |> toClipSpace renderer
-    |> if renderer.FrustumCulling then clipModel else hideInvisibleFaces
+    |> cullModelToFrustum
     |> toScreenSpace w h
