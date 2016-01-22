@@ -13,4 +13,4 @@
 #r "../../../packages/FSharp.Collections.ParallelSeq/lib/net40/FSharp.Collections.ParallelSeq.dll"
 #r "../../../packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../../packages/WriteableBitmapEx/lib/net40/WriteableBitmapEx.Wpf.dll"
-#r "../../../FsRaster.Base/bin/Debug/FsRaster.Base.dll"
+#r "../../FsRaster.Base/bin/Debug/FsRaster.Base.dll"

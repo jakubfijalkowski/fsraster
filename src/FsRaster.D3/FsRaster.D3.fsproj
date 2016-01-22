@@ -102,7 +102,9 @@
     <Reference Include="System.Xaml" />
     <Reference Include="UIAutomationTypes" />
     <Reference Include="WindowsBase" />
-    <ProjectReference Include="..\..\FsRaster.Base\FsRaster.Base.fsproj">
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FsRaster.Base\FsRaster.Base.fsproj">
       <Name>FsRaster.Base</Name>
       <Project>{768e7e60-cc19-45ff-b43f-338f6ba5bbc0}</Project>
       <Private>True</Private>

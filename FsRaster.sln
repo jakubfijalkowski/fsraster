@@ -16,7 +16,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster.UI", "src\FsRaster
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster.D3", "src\FsRaster.D3\FsRaster.D3.fsproj", "{5820C0D5-5F6F-48C1-9916-C546081EE5D8}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster.Base", "FsRaster.Base\FsRaster.Base.fsproj", "{768E7E60-CC19-45FF-B43F-338F6BA5BBC0}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsRaster.Base", "src\FsRaster.Base\FsRaster.Base.fsproj", "{768E7E60-CC19-45FF-B43F-338F6BA5BBC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
