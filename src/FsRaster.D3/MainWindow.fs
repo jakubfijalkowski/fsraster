@@ -2,6 +2,7 @@
 
 open System
 open System.Diagnostics
+open System.Threading
 
 open System.Windows
 open System.Windows.Data
@@ -14,6 +15,7 @@ open FsXaml
 
 open FsRaster
 open FsRaster.RawRendering
+open FsRaster.DoubleBuffer
 open FsRaster.D3.Math
 open FsRaster.D3.Model
 open FsRaster.D3.Camera
@@ -24,73 +26,75 @@ type MainWindow = XAML<"MainWindow.xaml", true>
 
 type MainWindowController() =
 
-    let sharedLock = new obj()
-    
     let window = new MainWindow()
+    let mutable requestClose = false
 
     let mutable model = loadOffFromResources "mushroom"
 
     let mutable mainCanvas : WriteableBitmap = BitmapFactory.New(1, 1)
+    let doubleBuffer = makeDoubleBuffer 1 1
+    let mutable renderer = defaultRenderer
 
     let mutable savedCamera = defaultCamera
+    let mutable isLightCurrentCamera = false
     let cameraController = CameraController(window.Root)
 
-    let mutable renderer = defaultRenderer
     let mutable frames = 0
-
     let mutable lastFpsCheck = 0L
     let mutable lastFrameTime = 0L
+    let mutable lastRenderDuration = 0L
 
-    let fpsTimer = new DispatcherTimer()
-
-    let updateStats rt =
+    let updateStats () =
         let ticks = DateTime.Now.Ticks
         if ticks - lastFpsCheck > 10000000L then
             let fps = frames
             window.fpsLabel.Content <- sprintf "FPS: %d" fps
-            window.timeLabel.Content <- sprintf "Render time: %d ms" (int rt)
+            window.timeLabel.Content <- sprintf "Render time: %d ms" (int lastRenderDuration)
             frames <- 0
             lastFpsCheck <- ticks
 
     let updateCamera dt =
         if cameraController.Update dt then
             renderer <- setCameraTo cameraController.Camera renderer
-            if window.cameraSelector.SelectedIndex > 0 then
+            if isLightCurrentCamera then
                 let newLight = Light.updateLightFromCamera renderer.Light cameraController.Camera
                 renderer <- setLightTo newLight renderer
         ()
 
-    let renderLoop' () =
-        let frameTime = DateTime.Now.Ticks
-        let dt = double (frameTime - lastFrameTime) / 10000000.0
-        lastFrameTime <- frameTime
+    let renderLoop () =
+        while not requestClose do
+            let frameTime = DateTime.Now.Ticks
+            let dt = double (frameTime - lastFrameTime) / 10000000.0
+            lastFrameTime <- frameTime
 
-        updateCamera dt
+            #if DEBUG || PROFILE
+            let sw = Stopwatch()
+            sw.Start()
+            #endif
+            updateCamera dt
+            updateAndSwap doubleBuffer (fun context ->
+                clearBitmap context 0xff000000
+                drawModel renderer context model
+            )
+            #if DEBUG || PROFILE
+            sw.Stop()
+            lastRenderDuration <- sw.ElapsedMilliseconds
+            #endif
+            frames <- frames + 1
 
-        use bmpContext = mainCanvas.GetBitmapContext(ReadWriteMode.ReadWrite)
-        let context = { Width = bmpContext.Width; Height = bmpContext.Height; Pixels = bmpContext.Pixels }
-        clearBitmap context 0xff000000
-        drawModel renderer context model
-        frames <- frames + 1
-        ()
-
-    let renderLoop _ =
-    #if DEBUG || PROFILE
-        let sw = Stopwatch()
-        sw.Start()
-        renderLoop' ()
-        sw.Stop()
-        updateStats sw.ElapsedMilliseconds
-    #else
-        renderLoop' ()
-        updateStats 0
-    #endif
+    let renderThread = Thread(renderLoop)
 
     let colorizeModel model =
         match window.modelColorModeSelector.SelectedIndex with
         | 0 -> randomlyColorizeModel model
         | 1 -> makeItBlack model
         | _ -> makeItWhite model
+
+    let onCompositionTargetRenderRequest _ =
+        updateStats ()
+
+        use screenBuffer = mainCanvas.GetBitmapContext(ReadWriteMode.ReadWrite)
+        showOnScreen doubleBuffer screenBuffer.Pixels
 
     let onSizeChanged (e : SizeChangedEventArgs) =
         let oldW = int e.PreviousSize.Width
@@ -99,6 +103,7 @@ type MainWindowController() =
         let newH = int e.NewSize.Height
         if oldW <> newW || oldH <> newH then
             mainCanvas <- BitmapFactory.New(newW, newH)
+            updateBufferSize doubleBuffer newW newH
             renderer <- updateSize renderer newW newH
             window.mainImage.Source <- mainCanvas
 
@@ -118,9 +123,11 @@ type MainWindowController() =
         match window.cameraSelector.SelectedIndex with
         | 0 ->
             cameraController.Camera <- savedCamera
+            isLightCurrentCamera <- false
         | _ ->
             savedCamera <- cameraController.Camera
             cameraController.Camera <- Light.lightToCamera renderer.Light
+            isLightCurrentCamera <- true
 
     let onBackfaceCullingToggled _ =
         renderer <- toggleBackfaceCulling renderer
@@ -157,6 +164,10 @@ type MainWindowController() =
         let material = Light.makeMaterial specCoeff diffCoeff ambCoeff shininess
         model <- { model with Material = material }
 
+    let onWindowClosing _ =
+        requestClose <- true
+        renderThread.Join()
+
     do
         window.imageContainer.SizeChanged.Add onSizeChanged
         window.imageContainer.MouseDown.Add onImageClick
@@ -187,11 +198,12 @@ type MainWindowController() =
         window.specularCoefficient.ValueChanged.Add updateLightProperties
         window.shininessCoefficient.ValueChanged.Add updateLightProperties
 
+        window.Root.Closing.Add onWindowClosing
+
         model <- model |> colorizeModel
         renderer <- setCameraTo (cameraController.Camera) renderer 
 
-        CompositionTarget.Rendering.Add renderLoop
-
-        fpsTimer.Start()
+        renderThread.Start()
+        CompositionTarget.Rendering.Add onCompositionTargetRenderRequest
 
     member x.Window = window.Root

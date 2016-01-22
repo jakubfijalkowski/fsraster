@@ -8,6 +8,8 @@ open System.Runtime.InteropServices
 
 open Microsoft.FSharp.NativeInterop
 
+open FsRaster.Utils.Native
+
 #nowarn "9"
 
 type PixelBufferContext =
@@ -16,14 +18,6 @@ type PixelBufferContext =
         Width : int;
         Height : int
     }
-
-[<DllImport("kernel32.dll", EntryPoint = "CopyMemory")>]
-extern void CopyMemoryNative(void *dest, void *src, UIntPtr size);
-
-let inline copyMemory (src : 'a nativeptr) srcOffset (dst : 'a nativeptr) dstOffset (length : int) =
-    let src' = NativePtr.toNativeInt (NativePtr.add src srcOffset)
-    let dst' = NativePtr.toNativeInt (NativePtr.add dst dstOffset)
-    CopyMemoryNative(dst', src', UIntPtr(uint32 (length * 4)))
 
 // https://github.com/teichgraf/WriteableBitmapEx/blob/master/Source/WriteableBitmapEx/WriteableBitmapBaseExtensions.cs#L79-L105
 let clearBitmap ctx c =

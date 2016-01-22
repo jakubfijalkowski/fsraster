@@ -92,3 +92,16 @@ module Option =
     | None   -> def ()
     let withOpt f def o = Option.fold (fun _ s -> f s) def o
     let fromSome = function | Some o -> o | _ -> failwith "Invalid argumen - None passed"
+
+#nowarn "9"
+module Native =
+    open System.Runtime.InteropServices
+    open Microsoft.FSharp.NativeInterop
+
+    [<DllImport("kernel32.dll", EntryPoint = "CopyMemory")>]
+    extern void CopyMemoryNative(void *dest, void *src, UIntPtr size);
+
+    let inline copyMemory (src : 'a nativeptr) srcOffset (dst : 'a nativeptr) dstOffset (length : int) =
+        let src' = NativePtr.toNativeInt (NativePtr.add src srcOffset)
+        let dst' = NativePtr.toNativeInt (NativePtr.add dst dstOffset)
+        CopyMemoryNative(dst', src', UIntPtr(uint32 (length * 4)))

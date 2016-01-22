@@ -9,6 +9,7 @@ open Microsoft.FSharp.NativeInterop
 
 open FSharp.Collections.ParallelSeq
 
+open FsRaster.Utils.Native
 open FsRaster.RawRendering
 open FsRaster.Figures
 open FsRaster.FigureRendering
