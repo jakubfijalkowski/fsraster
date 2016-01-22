@@ -12,7 +12,7 @@ type Material =
         Shininess : double
     }
 
-let defaultMaterial = { SpecularCoeff = 0.0; DiffuseCoeff = 0.5; AmbientCoeff = 0.3; Shininess = 50.0 }
+let defaultMaterial = { SpecularCoeff = 0.8; DiffuseCoeff = 0.5; AmbientCoeff = 0.3; Shininess = 2.0 }
 
 type Light =
     {

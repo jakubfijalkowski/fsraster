@@ -115,16 +115,26 @@ let private calculateLightning renderer model =
         let n = model.Normals.[i]    
 
         let l = (renderer.Light.Position - v).Normalized
-        let dCoeff = max 0.0 (dot3 l n)
+        let dotLN = dot3 l n
+        let r = 2.0 * dotLN * n - l
+        let viewer = (renderer.Camera.Position - v).Normalized
+        let dotRV = dot3 r viewer
+
+        let dCoeff = max 0.0 dotLN
+        let sCoeff = System.Math.Pow(max 0.0 dotRV, model.Material.Shininess)
+
         let aR = int (model.Material.AmbientCoeff * renderer.Light.AmbientR)
         let aG = int (model.Material.AmbientCoeff * renderer.Light.AmbientG)
         let aB = int (model.Material.AmbientCoeff * renderer.Light.AmbientB)
         let dR = int (model.Material.DiffuseCoeff * renderer.Light.DiffuseR * dCoeff)
         let dG = int (model.Material.DiffuseCoeff * renderer.Light.DiffuseG * dCoeff)
         let dB = int (model.Material.DiffuseCoeff * renderer.Light.DiffuseB * dCoeff)
-        let r = Colors.clamp (aR + dR + Colors.getR c)
-        let g = Colors.clamp (aG + dG + Colors.getG c)
-        let b = Colors.clamp (aB + dB + Colors.getB c)
+        let sR = int (model.Material.SpecularCoeff * renderer.Light.SpecularR * sCoeff)
+        let sG = int (model.Material.SpecularCoeff * renderer.Light.SpecularG * sCoeff)
+        let sB = int (model.Material.SpecularCoeff * renderer.Light.SpecularB * sCoeff)
+        let r = Colors.clamp (aR + dR + sR + Colors.getR c)
+        let g = Colors.clamp (aG + dG + sG + Colors.getG c)
+        let b = Colors.clamp (aB + dB + sB + Colors.getB c)
         Colors.fromRGB r g b
 
     let newColors = model.Colors |> Array.mapi calculatePhong
