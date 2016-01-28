@@ -12,12 +12,6 @@ open FsRaster.D3.Light
 
 type Triangle = { V1 : int; V2 : int; V3: int; C1 : int; C2 : int; C3 : int }
 
-type RenderTriangle =
-    {
-        V1 : Vector4; V2 : Vector4; V3 : Vector4;
-        C1 : int; C2 : int; C3 : int
-    }
-
 type Model =
     {
         Vertices : Vector4 array;
@@ -28,9 +22,6 @@ type Model =
     }
 
 let inline triEmpty v1 v2 v3 : Triangle = { V1 = v1; V2 = v2; V3 = v3; C1 = 0; C2 = 0; C3 = 0 }
-let inline toRenderTriangle model (t : Triangle) : RenderTriangle =
-    { V1 = model.Vertices.[t.V1]; V2 = model.Vertices.[t.V2]; V3 = model.Vertices.[t.V3];
-      C1 = model.Colors.[t.C1] ; C2 = model.Colors.[t.C2] ; C3 = model.Colors.[t.C3]; }
 
 let changeOrientation model =
     let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2 })

@@ -4,15 +4,11 @@ open System.Runtime.InteropServices
 
 open Microsoft.FSharp.NativeInterop
 
+open FsRaster.PixelArray
 open FsRaster.Utils.Native
 open FsRaster.RawRendering
 
 #nowarn "9"
-
-let inline private allocPixelArray w h =
-    Marshal.AllocHGlobal(w * h * sizeof<int>) |> NativePtr.ofNativeInt
-
-let inline private freePixelArray ptr = Marshal.FreeHGlobal (NativePtr.toNativeInt ptr)
 
 type DoubleBuffer =
     {
@@ -56,10 +52,8 @@ let inline showOnScreen buffer bmp =
 
 let updateBufferSize buffer width height =
     withBothBuffers buffer (fun back front ->
-        freePixelArray front
-        freePixelArray back
         buffer.Width <- width
         buffer.Height <- height
-        buffer.BackBuffer <- allocPixelArray width height
-        buffer.FrontBuffer <- allocPixelArray width height
+        buffer.BackBuffer <- resizePixelArray back width height
+        buffer.FrontBuffer <- resizePixelArray front width height
     )

@@ -136,7 +136,11 @@ type MainWindowController() =
         renderer <- toggleWireframe renderer
 
     let onZBufferToggled _ =
-        renderer <- toggleZBuffer renderer
+        // Rendering on a separate thread may lead to deallocating native memory during rendering
+        // and result in access violation. Therefore - stop rendering, change buffer, resume.
+        withBackBuffer doubleBuffer (fun _ ->
+            renderer <- toggleZBuffer renderer
+        )
 
     let onLightToggled _ =
         renderer <- toggleLight renderer

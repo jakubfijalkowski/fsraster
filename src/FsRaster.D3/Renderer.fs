@@ -5,6 +5,7 @@ open FSharp.Collections.ParallelSeq
 
 open FsRaster
 open FsRaster.Utils
+open FsRaster.PixelArray
 open FsRaster.D3.Math
 open FsRaster.D3.Camera
 open FsRaster.D3.Light
@@ -26,7 +27,6 @@ type Renderer3D =
         ZBufferEnabled : bool;
         Width : int;
         Height : int;
-        ZBuffer : double array // using option would complicate already complicated code in low-level rendering
     }
 
 [<Literal>]
@@ -54,14 +54,7 @@ let defaultRenderer =
         ZBufferEnabled = false;
         Width = 1;
         Height = 1;
-        ZBuffer = null
     }
-
-let inline private updateZBuffer renderer =
-    if renderer.ZBufferEnabled then
-        let newBuffer = Array.zeroCreate (renderer.Width * renderer.Height)
-        { renderer with ZBuffer = newBuffer }
-    else { renderer with ZBuffer = null }
 
 let inline toggleWireframe renderer =
     { renderer with Wireframe = not renderer.Wireframe }
@@ -70,7 +63,7 @@ let inline toggleBackfaceCulling renderer =
     { renderer with BackfaceCulling = not renderer.BackfaceCulling }
 
 let inline toggleZBuffer renderer =
-    { renderer with ZBufferEnabled = not renderer.ZBufferEnabled } |> updateZBuffer
+    { renderer with ZBufferEnabled = not renderer.ZBufferEnabled }
 
 let inline toggleLight renderer =
     { renderer with LightEnabled = not renderer.LightEnabled }
@@ -85,7 +78,7 @@ let inline setLightTo light renderer =
 let updateSize renderer width height =
     let aspect = double width / double height
     let newProj = matProjection DefaultFoV aspect NearPlane FarPlane
-    { renderer with Projection = newProj; Width = width; Height = height } |> updateZBuffer
+    { renderer with Projection = newProj; Width = width; Height = height }
 
 let inline private toEyeSpace renderer model =
     let newVerts = model.Vertices |> Array.map (fun v -> renderer.Camera.View * renderer.Model * v)
@@ -168,9 +161,6 @@ let renderWireframe render model =
         render v1 v3 WireframeColor
         render v2 v3 WireframeColor
     Array.iter renderTriangle model.Triangles
-
-let renderFilled render model =
-    model.Triangles |> Array.iter (toRenderTriangle model >> render)
 
 let transformModel renderer w h model =
     model

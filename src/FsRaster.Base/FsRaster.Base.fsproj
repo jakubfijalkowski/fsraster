@@ -56,6 +56,7 @@
     <Compile Include="Colors.fs" />
     <Compile Include="RawRendering.fs" />
     <None Include="paket.references" />
+    <Compile Include="PixelArray.fs" />
     <Compile Include="DoubleBuffer.fs" />
   </ItemGroup>
   <ItemGroup>

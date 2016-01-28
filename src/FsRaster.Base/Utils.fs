@@ -101,7 +101,15 @@ module Native =
     [<DllImport("kernel32.dll", EntryPoint = "CopyMemory")>]
     extern void CopyMemoryNative(void *dest, void *src, UIntPtr size);
 
+    [<DllImport("msvcrt.dll", EntryPoint = "memset", CallingConvention = CallingConvention.Cdecl)>]
+    extern void *memsetNative(void *dest, int c, UIntPtr count);
+
     let inline copyMemory (src : 'a nativeptr) srcOffset (dst : 'a nativeptr) dstOffset (length : int) =
         let src' = NativePtr.toNativeInt (NativePtr.add src srcOffset)
         let dst' = NativePtr.toNativeInt (NativePtr.add dst dstOffset)
         CopyMemoryNative(dst', src', UIntPtr(uint32 (length * 4)))
+
+    let inline memset (dst : 'a nativeptr) (c : int) (count : int) =
+        let dst' = NativePtr.toNativeInt dst
+        let count' = count * sizeof<'a>
+        memsetNative(dst', c, UIntPtr(uint32 count')) |> ignore

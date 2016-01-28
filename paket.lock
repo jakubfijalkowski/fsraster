@@ -2,7 +2,7 @@ NUGET
   remote: https://www.nuget.org/api/v2
   specs:
     Expression.Blend.Sdk (1.0.2) - framework: >= net45
-    Extended.Wpf.Toolkit (2.5)
+    Extended.Wpf.Toolkit (2.6)
     FSharp.Collections.ParallelSeq (1.0.2)
     FSharp.Data (2.2.5)
       Zlib.Portable (>= 1.10.0) - framework: portable-net40+sl50+wp80+win80
