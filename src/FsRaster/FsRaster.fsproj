@@ -93,6 +93,8 @@
     <None Include="Scripts\load-project-debug.fsx" />
     <None Include="Scripts\load-references-release.fsx" />
     <None Include="Scripts\load-project-release.fsx" />
+    <None Include="Scripts\load-references-profilerelease.fsx" />
+    <None Include="Scripts\load-project-profilerelease.fsx" />
     <None Include="paket.references" />
     <EmbeddedResource Include="Resources.resx" />
     <Content Include="CIEXYZ_color_matching_functions.csv" />

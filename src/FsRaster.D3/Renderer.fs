@@ -38,6 +38,8 @@ let FarPlane = 100.0
 [<Literal>]
 let WireframeColor = 0xffffffff
 
+let zBufferMaxValue = double System.Int32.MaxValue - 1.0
+
 let defaultRenderer =
     {
         Model = matIdentity;
@@ -90,7 +92,8 @@ let inline private toClipSpace renderer model =
 
 let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
-        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((v.Z + 1.0) / 2.0) 1.0
+        // See renderer.c for a better explanation on z-coordinate
+        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) (zBufferMaxValue - (v.Z + 1.0) / 2.0 * zBufferMaxValue) 1.0
     )
     { model with Vertices = newVerts }
 

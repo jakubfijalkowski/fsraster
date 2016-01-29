@@ -149,7 +149,7 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
     output[3].color = t->c1;
 }
 
-void render_edges(int width, int height, int *screen, double *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
+void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
 {
     int ymin = CLAMP(ae1.ymin, height - 1);
     int ymax = CLAMP(ae1.ymax, height - 1);
@@ -167,8 +167,8 @@ void render_edges(int width, int height, int *screen, double *zBuffer, ActiveEdg
         int xmin = (int)CLAMP(ae1.x, width - 1);
         int xmax = (int)CLAMP(ae2.x, width - 1);
 
-        double mz = (ae2.z - ae1.z) / (ae2.x - ae1.x);
-        double z = ae1.z;
+        int mz = (int)((ae2.z - ae1.z) / (ae2.x - ae1.x));
+        int z = (int)ae1.z;
 
         for (int x = xmin; x <= xmax; x++)
         {
@@ -177,7 +177,7 @@ void render_edges(int width, int height, int *screen, double *zBuffer, ActiveEdg
             {
                 screen[idx] = ae1.color;
             }
-            else if (zBuffer[idx] >= z)
+            else if (zBuffer[idx] <= z)
             {
                 screen[idx] = ae1.color;
                 zBuffer[idx] = z;
@@ -192,7 +192,7 @@ void render_edges(int width, int height, int *screen, double *zBuffer, ActiveEdg
     }
 }
 
-void render_triangle(int width, int height, int *screen, double *zBuffer, RenderTriangle *triangle)
+void render_triangle(int width, int height, int *screen, int *zBuffer, RenderTriangle *triangle)
 {
     ActiveEdge edges[4];
     sort_vertices(triangle);
@@ -247,14 +247,14 @@ void render_triangles(
     int *screen,
     RenderTriangle *triangles, int count)
 {
-    double *newZBuffer = NULL;
+    int *newZBuffer = NULL;
     if (zBuffer)
     {
-        newZBuffer = malloc(width * height * sizeof(double));
-        for (int i = 0; i < width * height; i++)
-        {
-            newZBuffer[i] = 1000.0;
-        }
+        // We rely on the fact that the allocated array contains zeroes and that the z-coordinate
+        // of every pixel is in range [intmax..0] and 0 is the "far away" value. This way we don't
+        // have to memset the buffer and we don't need to use doubles, which results in monumental
+        // speed boost. That's the reason why the z-coordinate gets transformed the way it is.
+        newZBuffer = calloc(width * height, sizeof(int));
     }
 
     for (int i = 0; i < count; i++)
