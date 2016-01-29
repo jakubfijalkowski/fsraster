@@ -13,7 +13,13 @@ typedef struct
     double coeffX;
     double coeffZ;
 
-    int color;
+    double r;
+    double g;
+    double b;
+
+    double coeffR;
+    double coeffG;
+    double coeffB;
 } ActiveEdge;
 
 void sort_vertices(RenderTriangle *t)
@@ -80,7 +86,14 @@ void build_top_triangle(RenderTriangle *t, ActiveEdge *output)
     output[0].z = t->v1.z;
     output[0].coeffX = (t->v1.x - t->v3.x) / dy;
     output[0].coeffZ = (t->v1.z - t->v3.z) / dy;
-    output[0].color = t->c1;
+
+    output[0].r = GETR(t->c1);
+    output[0].g = GETG(t->c1);
+    output[0].b = GETB(t->c1);
+    output[0].coeffR = (GETR(t->c1) - GETR(t->c3)) / dy;
+    output[0].coeffG = (GETG(t->c1) - GETG(t->c3)) / dy;
+    output[0].coeffB = (GETB(t->c1) - GETB(t->c3)) / dy;
+
 
     output[1].ymin = (int)t->v1.y;
     output[1].ymax = (int)t->v3.y;
@@ -88,7 +101,13 @@ void build_top_triangle(RenderTriangle *t, ActiveEdge *output)
     output[1].z = t->v2.z;
     output[1].coeffX = (t->v2.x - t->v3.x) / dy;
     output[1].coeffZ = (t->v2.z - t->v3.z) / dy;
-    output[1].color = t->c1;
+
+    output[1].r = GETR(t->c2);
+    output[1].g = GETG(t->c2);
+    output[1].b = GETB(t->c2);
+    output[1].coeffR = (GETR(t->c2) - GETR(t->c3)) / dy;
+    output[1].coeffG = (GETG(t->c2) - GETG(t->c3)) / dy;
+    output[1].coeffB = (GETB(t->c2) - GETB(t->c3)) / dy;
 }
 
 void build_bottom_triangle(RenderTriangle *t, ActiveEdge *output)
@@ -100,7 +119,14 @@ void build_bottom_triangle(RenderTriangle *t, ActiveEdge *output)
     output[0].z = t->v1.z;
     output[0].coeffX = (t->v1.x - t->v3.x) / dy;
     output[0].coeffZ = (t->v1.z - t->v3.z) / dy;
-    output[0].color = t->c1;
+
+    output[0].r = GETR(t->c1);
+    output[0].g = GETG(t->c1);
+    output[0].b = GETB(t->c1);
+    output[0].coeffR = (GETR(t->c1) - GETR(t->c3)) / dy;
+    output[0].coeffG = (GETG(t->c1) - GETG(t->c3)) / dy;
+    output[0].coeffB = (GETB(t->c1) - GETB(t->c3)) / dy;
+
 
     output[1].ymin = (int)t->v1.y;
     output[1].ymax = (int)t->v3.y;
@@ -108,7 +134,13 @@ void build_bottom_triangle(RenderTriangle *t, ActiveEdge *output)
     output[1].z = t->v1.z;
     output[1].coeffX = (t->v1.x - t->v2.x) / dy;
     output[1].coeffZ = (t->v1.z - t->v2.z) / dy;
-    output[1].color = t->c1;
+
+    output[1].r = GETR(t->c1);
+    output[1].g = GETG(t->c1);
+    output[1].b = GETB(t->c1);
+    output[1].coeffR = (GETR(t->c1) - GETR(t->c2)) / dy;
+    output[1].coeffG = (GETG(t->c1) - GETG(t->c2)) / dy;
+    output[1].coeffB = (GETB(t->c1) - GETB(t->c2)) / dy;
 }
 
 void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
@@ -116,13 +148,21 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
     double dy12 = t->v1.y - t->v2.y;
     double dy13 = t->v1.y - t->v3.y;
     double dy23 = t->v2.y - t->v3.y;
+
     output[0].ymin = (int)t->v1.y;
     output[0].ymax = (int)t->v2.y;
     output[0].x = t->v1.x;
     output[0].z = t->v1.z;
     output[0].coeffX = (t->v1.x - t->v3.x) / dy13;
     output[0].coeffZ = (t->v1.z - t->v3.z) / dy13;
-    output[0].color = t->c1;
+
+    output[0].r = GETR(t->c1);
+    output[0].g = GETG(t->c1);
+    output[0].b = GETB(t->c1);
+    output[0].coeffR = (GETR(t->c1) - GETR(t->c3)) / dy13;
+    output[0].coeffG = (GETG(t->c1) - GETG(t->c3)) / dy13;
+    output[0].coeffB = (GETB(t->c1) - GETB(t->c3)) / dy13;
+
 
     output[1].ymin = (int)t->v1.y;
     output[1].ymax = (int)t->v2.y;
@@ -130,7 +170,14 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
     output[1].z = t->v1.z;
     output[1].coeffX = (t->v1.x - t->v2.x) / dy12;
     output[1].coeffZ = (t->v1.z - t->v2.z) / dy12;
-    output[1].color = t->c1;
+
+    output[1].r = GETR(t->c1);
+    output[1].g = GETG(t->c1);
+    output[1].b = GETB(t->c1);
+    output[1].coeffR = (GETR(t->c1) - GETR(t->c2)) / dy12;
+    output[1].coeffG = (GETG(t->c1) - GETG(t->c2)) / dy12;
+    output[1].coeffB = (GETB(t->c1) - GETB(t->c2)) / dy12;
+
 
     output[2].ymin = (int)t->v2.y;
     output[2].ymax = (int)t->v3.y;
@@ -138,7 +185,14 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
     output[2].z = t->v1.z - output[0].coeffZ * dy12;
     output[2].coeffX = output[0].coeffX;
     output[2].coeffZ = output[0].coeffZ;
-    output[2].color = t->c1;
+
+    output[2].r = GETR(t->c1) - output[0].coeffR * dy12;
+    output[2].g = GETG(t->c1) - output[0].coeffG * dy12;
+    output[2].b = GETB(t->c1) - output[0].coeffB * dy12;
+    output[2].coeffR = output[0].coeffR;
+    output[2].coeffG = output[0].coeffG;
+    output[2].coeffB = output[0].coeffB;
+
 
     output[3].ymin = (int)t->v2.y;
     output[3].ymax = (int)t->v3.y;
@@ -146,7 +200,14 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
     output[3].z = t->v2.z;
     output[3].coeffX = (t->v2.x - t->v3.x) / dy23;
     output[3].coeffZ = (t->v2.z - t->v3.z) / dy23;
-    output[3].color = t->c1;
+
+    output[3].r = GETR(t->c2);
+    output[3].g = GETG(t->c2);
+    output[3].b = GETB(t->c2);
+    output[3].coeffR = (GETR(t->c2) - GETR(t->c3)) / dy23;
+    output[3].coeffG = (GETG(t->c2) - GETG(t->c3)) / dy23;
+    output[3].coeffB = (GETB(t->c2) - GETB(t->c3)) / dy23;
+
 }
 
 void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
@@ -158,8 +219,15 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
         int diff = ymin - ae1.ymin;
         ae1.x += ae1.coeffX * diff;
         ae1.z += ae1.coeffZ * diff;
+        ae1.r += ae1.coeffR * diff;
+        ae1.g += ae1.coeffG * diff;
+        ae1.b += ae1.coeffB * diff;
+
         ae2.x += ae2.coeffX * diff;
         ae2.z += ae2.coeffZ * diff;
+        ae2.r += ae2.coeffR * diff;
+        ae2.g += ae2.coeffG * diff;
+        ae2.b += ae2.coeffB * diff;
     }
 
     for (int y = ymin; y < ymax; y++)
@@ -167,28 +235,49 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
         int xmin = (int)CLAMP(ae1.x, width - 1);
         int xmax = (int)CLAMP(ae2.x, width - 1);
 
-        int mz = (int)((ae2.z - ae1.z) / (ae2.x - ae1.x));
-        int z = (int)ae1.z;
+        int xoffset = (int)(xmin - ae1.x);
+        double xdiff = max(1.0, ae2.x - ae1.x);
+
+        int mz = (int)((ae2.z - ae1.z) / xdiff);
+        int z = (int)ae1.z + xoffset * mz;
+
+        double mr = (ae2.r - ae1.r) / xdiff;
+        double mg = (ae2.g - ae1.g) / xdiff;
+        double mb = (ae2.b - ae1.b) / xdiff;
+
+        double r = ae1.r + mr * xoffset,
+               g = ae1.g + mg * xoffset,
+               b = ae1.b + mb * xoffset;
 
         for (int x = xmin; x <= xmax; x++)
         {
             int idx = y * width + x;
             if (zBuffer == NULL)
             {
-                screen[idx] = ae1.color;
+                screen[idx] = TORGBD(r, g, b);
             }
             else if (zBuffer[idx] <= z)
             {
-                screen[idx] = ae1.color;
+                screen[idx] = TORGBD(r, g, b);
                 zBuffer[idx] = z;
             }
             z += mz;
+            r += mr;
+            g += mg;
+            b += mb;
         }
 
         ae1.x += ae1.coeffX;
         ae1.z += ae1.coeffZ;
+        ae1.r += ae1.coeffR;
+        ae1.g += ae1.coeffG;
+        ae1.b += ae1.coeffB;
+
         ae2.x += ae2.coeffX;
         ae2.z += ae2.coeffZ;
+        ae2.r += ae2.coeffR;
+        ae2.g += ae2.coeffG;
+        ae2.b += ae2.coeffB;
     }
 }
 
@@ -251,7 +340,7 @@ void render_triangles(
     if (zBuffer)
     {
         // We rely on the fact that the allocated array contains zeroes and that the z-coordinate
-        // of every pixel is in range [intmax..0] and 0 is the "far away" value. This way we don't
+        // of every pixel is in range [0..intmax - 1] and 0 is the "far away" value. This way we don't
         // have to memset the buffer and we don't need to use doubles, which results in monumental
         // speed boost. That's the reason why the z-coordinate gets transformed the way it is.
         newZBuffer = calloc(width * height, sizeof(int));
