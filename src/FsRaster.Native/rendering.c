@@ -8,9 +8,9 @@
 typedef struct
 {
     float z;
-    float r;
-    float g;
     float b;
+    float g;
+    float r;
 } AEVector;
 
 typedef struct
@@ -215,6 +215,7 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
 
 void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
 {
+    __m128i pixelData;
     __m128 coords1 = _mm_load_ps((float*)&ae1.coord), coords2 = _mm_load_ps((float*)&ae2.coord);
     const __m128 coeffs1 = _mm_load_ps((float*)&ae1.coeff), coeffs2 = _mm_load_ps((float*)&ae2.coeff);
 
@@ -236,7 +237,7 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
         int xmin = (int)CLAMP(ae1.x, width - 1);
         int xmax = (int)CLAMP(ae2.x, width - 1);
 
-        __m128 xdiff = _mm_set_ps1(max(1.0, ae2.x - ae1.x));
+        __m128 xdiff = _mm_set_ps1(max(1.0f, ae2.x - ae1.x));
         __m128 coeffsLocal = _mm_div_ps(_mm_sub_ps(coords2, coords1), xdiff);
 
         float xoffset = (float)(int)(xmin - ae1.x);
@@ -244,17 +245,21 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
 
         for (int x = xmin; x <= xmax; x++)
         {
-            __declspec(align(16)) int data[4];
-            _mm_store_si128((__m128i*)&data, _mm_cvtps_epi32(coordsLocal));
+            __m128i clconv = _mm_cvtps_epi32(coordsLocal);
+            clconv = _mm_blend_epi32(_mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6))), clconv, 1);
+            _mm_storel_epi64(&pixelData, clconv);
+
+            int z = pixelData.m128i_i32[0];
+            int color = pixelData.m128i_i32[1];
             int idx = y * width + x;
             if (zBuffer == NULL)
             {
-                screen[idx] = TORGB(data[1], data[2], data[3]);
+                screen[idx] = color;
             }
-            else if (zBuffer[idx] <= data[0])
+            else if (zBuffer[idx] <= z)
             {
-                screen[idx] = TORGB(data[1], data[2], data[3]);
-                zBuffer[idx] = data[0];
+                screen[idx] = color;
+                zBuffer[idx] = z;
             }
             coordsLocal = _mm_add_ps(coordsLocal, coeffsLocal);
         }
