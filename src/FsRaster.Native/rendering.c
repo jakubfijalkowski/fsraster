@@ -250,15 +250,14 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
             _mm_storel_epi64(&pixelData, clconv);
 
             int z = pixelData.m128i_i32[0];
-            int color = pixelData.m128i_i32[1];
             int idx = y * width + x;
             if (zBuffer == NULL)
             {
-                screen[idx] = color;
+                screen[idx] = pixelData.m128i_i32[1] | 0xff000000;
             }
             else if (zBuffer[idx] <= z)
             {
-                screen[idx] = color;
+                screen[idx] = pixelData.m128i_i32[1] | 0xff000000;
                 zBuffer[idx] = z;
             }
             coordsLocal = _mm_add_ps(coordsLocal, coeffsLocal);
