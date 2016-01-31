@@ -14,13 +14,13 @@ module Native =
     [<StructLayout(LayoutKind.Sequential)>]
     type Vector3Native =
         struct
-            val X : double
-            val Y : double
-            val Z : double
-            new(x : double, y : double, z : double) = { X = x; Y = y; Z = z }
+            val X : single
+            val Y : single
+            val Z : single
+            new(x : single, y : single, z : single) = { X = x; Y = y; Z = z }
         end
 
-    let inline toVecNative (v : Vector4) = Vector3Native(v.X, v.Y, v.Z)
+    let inline toVecNative (v : Vector4) = Vector3Native(single v.X, single v.Y, single v.Z)
 
     [<StructLayout(LayoutKind.Sequential)>]
     type RenderTriangle =

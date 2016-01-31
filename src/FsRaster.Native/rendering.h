@@ -5,9 +5,9 @@
 
 typedef struct
 {
-    double x;
-    double y;
-    double z;
+    float x;
+    float y;
+    float z;
 } Vector3;
 
 typedef struct
@@ -20,9 +20,9 @@ typedef struct
     int c3;
 } RenderTriangle;
 
-#define GETR(c) ((c >> 16) & 0xff)
-#define GETG(c) ((c >> 8) & 0xff)
-#define GETB(c) (c & 0xff)
+#define GETRF(c) ((float)((c >> 16) & 0xff))
+#define GETGF(c) ((float)((c >> 8) & 0xff))
+#define GETBF(c) ((float)(c & 0xff))
 #define TORGB(r, g, b) (0xff000000 | (r << 16) | (g << 8) | b)
 #define TORGBD(r, g, b) TORGB((int)r, (int)g, (int)b)
 #define CLAMP(v, m) (min(max(0, v), m))
