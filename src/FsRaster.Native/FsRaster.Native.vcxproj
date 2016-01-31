@@ -137,7 +137,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(TargetedSDKConfiguration)\" /Y</Command>
+      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(Configuration)\" /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -149,7 +149,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(TargetedSDKConfiguration)\" /Y</Command>
+      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(Configuration)\" /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -206,7 +206,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(TargetedSDKConfiguration)\" /Y</Command>
+      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(Configuration)\" /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ProfileRelease|x64'">
@@ -225,7 +225,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(TargetedSDKConfiguration)\" /Y</Command>
+      <Command>xcopy "$(TargetDir)$(TargetName).dll" "$(SolutionDir)src\FsRaster.D3\bin\$(Configuration)\" /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
