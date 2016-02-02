@@ -213,6 +213,13 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
 
 }
 
+__forceinline unsigned calculateColor(__m128 data)
+{
+    __m128i clconv = _mm_cvtps_epi32(data);
+    clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
+    return clconv.m128i_u32[1] | 0xff000000;
+}
+
 void render_edges(int width, int height, int *screen, float *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
 {
     __m128 coords1 = _mm_load_ps((float*)&ae1.coord), coords2 = _mm_load_ps((float*)&ae2.coord);
@@ -248,16 +255,11 @@ void render_edges(int width, int height, int *screen, float *zBuffer, ActiveEdge
             int idx = y * width + x;
             if (zBuffer == NULL)
             {
-                __m128i clconv = _mm_cvtps_epi32(coordsLocal);
-                clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
-                screen[idx] = clconv.m128i_u32[1] | 0xff000000;
+                screen[idx] = calculateColor(coordsLocal);
             }
             else if (zBuffer[idx] <= z)
             {
-                __m128i clconv = _mm_cvtps_epi32(coordsLocal);
-                clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
-
-                screen[idx] = clconv.m128i_u32[1] | 0xff000000;
+                screen[idx] = calculateColor(coordsLocal);
                 zBuffer[idx] = z;
             }
             coordsLocal = _mm_add_ps(coordsLocal, coeffsLocal);
