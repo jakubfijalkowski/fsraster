@@ -76,7 +76,7 @@
     <None Include="App.config" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Resources.fs" />
-    <Compile Include="OctTree.fs" />
+    <Compile Include="Octree.fs" />
     <Compile Include="FigureColor.fs" />
     <Compile Include="Figures.fs" />
     <Compile Include="FigureRendering.fs" />

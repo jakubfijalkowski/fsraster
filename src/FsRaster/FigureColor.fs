@@ -5,7 +5,7 @@ open System
 open System.Windows.Media.Imaging
 
 open FsRaster.Utils
-open FsRaster.OctTree
+open FsRaster.Octree
 
 type Texture = { Width : int; Height: int; Colors: Colors.ColorList }
 type ReducedTexture = { Base: Texture; Colors: int; Reduced: Colors.ColorList; CachedTree : RGBTree }

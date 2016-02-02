@@ -1,4 +1,4 @@
-﻿module FsRaster.OctTree
+﻿module FsRaster.Octree
 
 open FsRaster.Utils
 
