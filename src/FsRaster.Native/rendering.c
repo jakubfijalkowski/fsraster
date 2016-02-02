@@ -234,9 +234,9 @@ void render_edges(int width, int height, int *screen, float *zBuffer, ActiveEdge
     for (int y = ymin; y < ymax; y++)
     {
         int xmin = (int)CLAMP(ae1.x, width - 1);
-        int xmax = (int)CLAMP(ae2.x, width - 1);
+        int xmax = (int)ceilf(CLAMP(ae2.x, width - 1));
 
-        const __m128 xdiff = _mm_set_ps1(max(1.0f, ae2.x - ae1.x));
+        const __m128 xdiff = _mm_set_ps1(max(1.0f, ae2.x - ae1.x + 2.0f));
         const __m128 coeffsLocal = _mm_div_ps(_mm_sub_ps(coords2, coords1), xdiff);
 
         float xoffset = (float)(int)(xmin - ae1.x);
@@ -250,15 +250,14 @@ void render_edges(int width, int height, int *screen, float *zBuffer, ActiveEdge
             {
                 __m128i clconv = _mm_cvtps_epi32(coordsLocal);
                 clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
-
-                screen[idx] = clconv.m128i_i32[1] | 0xff000000;
+                screen[idx] = clconv.m128i_u32[1] | 0xff000000;
             }
             else if (zBuffer[idx] <= z)
             {
                 __m128i clconv = _mm_cvtps_epi32(coordsLocal);
                 clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
 
-                screen[idx] = clconv.m128i_i32[1] | 0xff000000;
+                screen[idx] = clconv.m128i_u32[1] | 0xff000000;
                 zBuffer[idx] = z;
             }
             coordsLocal = _mm_add_ps(coordsLocal, coeffsLocal);
