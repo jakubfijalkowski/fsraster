@@ -27,15 +27,15 @@ let private getSomething getter name (managers : ResourceManager array) =
 let getObject = getSomething (fun m n -> m.GetObject(n) :?> byte [])
 let getString = getSomething (fun m n -> m.GetString(n))
 
-let loadCursorFile name =
-    match cursorCache.TryGetValue name with
-    | true, c -> c
-    | _ ->
-        let data = getObject name getResourceManagers
-        use stream = new MemoryStream(data)
-        let c = new Cursor(stream)
-        cursorCache.[name] <- c
-        c
+//let loadCursorFile name =
+//    match cursorCache.TryGetValue name with
+//    | true, c -> c
+//    | _ ->
+//        let data = getObject name getResourceManagers
+//        use stream = new MemoryStream(data)
+//        let c = new Cursor(stream)
+//        cursorCache.[name] <- c
+//        c
 
 let inline loadString name = getString name getResourceManagers
 let inline loadStream name = new MemoryStream(getObject name getResourceManagers)

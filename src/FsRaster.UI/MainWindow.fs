@@ -257,10 +257,9 @@ type MainWindowController() =
 
     let updateMouseCursor (e : Input.MouseEventArgs option) =
         let pos = Option.withOpt getPosition (-999, -999) e
-        let r1 = Option.map (fun _ -> loadCursorFile "bucket_cursor") fillAction
         let r2 = Option.map (fun _ -> Input.Cursors.Hand) figureBuilder
         let r3 = Option.map (fun _ -> Input.Cursors.SizeAll) moveData
-        window.imageContainer.Cursor <- List.choose id [r1; r2; r3; Some Input.Cursors.Arrow] |> List.head
+        window.imageContainer.Cursor <- List.choose id [r2; r3; Some Input.Cursors.Arrow] |> List.head
 
     // EVENTS
 
