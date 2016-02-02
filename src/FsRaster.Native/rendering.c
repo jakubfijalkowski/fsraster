@@ -213,7 +213,7 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
 
 }
 
-void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
+void render_edges(int width, int height, int *screen, unsigned *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
 {
     __m128i pixelData;
     __m128 coords1 = _mm_load_ps((float*)&ae1.coord), coords2 = _mm_load_ps((float*)&ae2.coord);
@@ -246,17 +246,22 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
         for (int x = xmin; x <= xmax; x++)
         {
             __m128i clconv = _mm_cvtps_epi32(coordsLocal);
-            clconv = _mm_blend_epi32(_mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6))), clconv, 1);
             _mm_storel_epi64(&pixelData, clconv);
 
-            int z = pixelData.m128i_u32[0];
+            unsigned z = pixelData.m128i_u32[0];
             int idx = y * width + x;
             if (zBuffer == NULL)
             {
+                clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
+                _mm_storel_epi64(&pixelData, clconv);
+
                 screen[idx] = pixelData.m128i_i32[1] | 0xff000000;
             }
             else if (zBuffer[idx] <= z)
             {
+                clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
+                _mm_storel_epi64(&pixelData, clconv);
+
                 screen[idx] = pixelData.m128i_i32[1] | 0xff000000;
                 zBuffer[idx] = z;
             }
@@ -271,7 +276,7 @@ void render_edges(int width, int height, int *screen, int *zBuffer, ActiveEdge a
     }
 }
 
-void render_triangle(int width, int height, int *screen, int *zBuffer, RenderTriangle *triangle)
+void render_triangle(int width, int height, int *screen, unsigned *zBuffer, RenderTriangle *triangle)
 {
     ActiveEdge edges[4];
     sort_vertices(triangle);
@@ -339,10 +344,10 @@ void render_triangles(
     int *screen,
     RenderTriangle *triangles, int count)
 {
-    int *newZBuffer = NULL;
+    unsigned *newZBuffer = NULL;
     if (zBuffer)
     {
-        newZBuffer = calloc(width * height, sizeof(unsigned int));
+        newZBuffer = calloc(width * height, sizeof(unsigned));
     }
 
     for (int i = 0; i < count; i++)
