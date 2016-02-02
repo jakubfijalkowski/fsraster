@@ -44,16 +44,18 @@ type MainWindowController() =
     let mutable frames = 0
     let mutable lastFpsCheck = 0L
     let mutable lastFrameTime = 0L
-    let mutable lastRenderDuration = 0L
+    let mutable renderDuration = 0L
 
     let updateStats () =
         let ticks = DateTime.Now.Ticks
         if ticks - lastFpsCheck > 10000000L then
             let fps = frames
+            let frameTime = double renderDuration / double Stopwatch.Frequency * 1000.0 / double frames
             window.fpsLabel.Content <- sprintf "FPS: %d" fps
-            window.timeLabel.Content <- sprintf "Render time: %d ms" (int lastRenderDuration)
+            window.timeLabel.Content <- sprintf "Render time: %.3f ms" frameTime
             frames <- 0
             lastFpsCheck <- ticks
+            renderDuration <- 0L
 
     let updateCamera dt =
         if cameraController.Update dt then
@@ -80,7 +82,7 @@ type MainWindowController() =
             )
             #if DEBUG || PROFILE
             sw.Stop()
-            lastRenderDuration <- sw.ElapsedMilliseconds
+            renderDuration <- renderDuration + sw.ElapsedTicks
             #endif
             frames <- frames + 1
 
@@ -126,11 +128,7 @@ type MainWindowController() =
         renderer <- toggleWireframe renderer
 
     let onZBufferToggled _ =
-        // Rendering on a separate thread may lead to deallocating native memory during rendering
-        // and result in access violation. Therefore - stop rendering, change buffer, resume.
-        withBackBuffer doubleBuffer (fun _ ->
-            renderer <- toggleZBuffer renderer
-        )
+        renderer <- toggleZBuffer renderer
 
     let onLightToggled _ =
         renderer <- toggleLight renderer
