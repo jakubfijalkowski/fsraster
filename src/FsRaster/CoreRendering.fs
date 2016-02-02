@@ -27,11 +27,11 @@ let putSolidLine ctx x1' y x2' c =
         let pixels = ctx.Pixels
         for i in [ 0..min w (initialBlockSize - 1) ] do
             NativeInterop.NativePtr.set pixels (startIdx + i) c
-        // But here, we must switch to bytes, as BlockCopy operates on bytes, not on ints
-        let startIdx' = startIdx * 4
-        let endIndex = (y * ctx.Width + x2) * 4
-        let mutable index = (startIdx + initialBlockSize) * 4
-        let mutable block = initialBlockSize * 4
+
+        let startIdx' = startIdx
+        let endIndex = (y * ctx.Width + x2)
+        let mutable index = startIdx + initialBlockSize
+        let mutable block = initialBlockSize
         while index <= endIndex do
             copyMemory ctx.Pixels startIdx' ctx.Pixels index (min block (endIndex - index + 4))
             index <- index + block
@@ -61,6 +61,7 @@ let putPrimitive ctx =
     | PrimLine(x1, y, x2, c) -> putSolidLine ctx x1 y x2 c
     | PrimTexLine t -> putTexLine ctx t
 
+// This should be somewhere else...
 type YUVPlane = 
     | PlaneY
     | PlaneU
