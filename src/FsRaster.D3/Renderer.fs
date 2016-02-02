@@ -91,8 +91,8 @@ let inline private toClipSpace renderer model =
 
 let inline private toScreenSpace w h model =
     let newVerts = model.Vertices |> Array.map (fun v ->
-        // See renderer.c for a better explanation on z-coordinate
-        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((v.Z + 1.0) / 2.0) 1.0
+        // We use z = 0 as far plane and z = 1 as near plane in renderer.c, so we invert z variable
+        vec4 ((v.X + 1.0) / 2.0 * w) ((-v.Y + 1.0) / 2.0 * h) ((-v.Z + 1.0) / 2.0) 1.0
     )
     { model with Vertices = newVerts }
 

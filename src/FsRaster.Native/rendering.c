@@ -213,9 +213,8 @@ void build_proper_triangle(RenderTriangle *t, ActiveEdge *output)
 
 }
 
-void render_edges(int width, int height, int *screen, unsigned *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
+void render_edges(int width, int height, int *screen, float *zBuffer, ActiveEdge ae1, ActiveEdge ae2)
 {
-    __m128i pixelData;
     __m128 coords1 = _mm_load_ps((float*)&ae1.coord), coords2 = _mm_load_ps((float*)&ae2.coord);
     const __m128 coeffs1 = _mm_load_ps((float*)&ae1.coeff), coeffs2 = _mm_load_ps((float*)&ae2.coeff);
 
@@ -237,32 +236,29 @@ void render_edges(int width, int height, int *screen, unsigned *zBuffer, ActiveE
         int xmin = (int)CLAMP(ae1.x, width - 1);
         int xmax = (int)CLAMP(ae2.x, width - 1);
 
-        __m128 xdiff = _mm_set_ps1(max(1.0f, ae2.x - ae1.x));
-        __m128 coeffsLocal = _mm_div_ps(_mm_sub_ps(coords2, coords1), xdiff);
+        const __m128 xdiff = _mm_set_ps1(max(1.0f, ae2.x - ae1.x));
+        const __m128 coeffsLocal = _mm_div_ps(_mm_sub_ps(coords2, coords1), xdiff);
 
         float xoffset = (float)(int)(xmin - ae1.x);
         __m128 coordsLocal = _mm_add_ps(coords1, _mm_mul_ps(coeffsLocal, _mm_set_ps1(xoffset)));
 
         for (int x = xmin; x <= xmax; x++)
         {
-            __m128i clconv = _mm_cvtps_epi32(coordsLocal);
-            _mm_storel_epi64(&pixelData, clconv);
-
-            unsigned z = pixelData.m128i_u32[0];
+            float z = coordsLocal.m128_f32[0];
             int idx = y * width + x;
             if (zBuffer == NULL)
             {
+                __m128i clconv = _mm_cvtps_epi32(coordsLocal);
                 clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
-                _mm_storel_epi64(&pixelData, clconv);
 
-                screen[idx] = pixelData.m128i_i32[1] | 0xff000000;
+                screen[idx] = clconv.m128i_i32[1] | 0xff000000;
             }
             else if (zBuffer[idx] <= z)
             {
+                __m128i clconv = _mm_cvtps_epi32(coordsLocal);
                 clconv = _mm_or_si128(clconv, _mm_or_si128(_mm_srli_si128(clconv, 3), _mm_srli_si128(clconv, 6)));
-                _mm_storel_epi64(&pixelData, clconv);
 
-                screen[idx] = pixelData.m128i_i32[1] | 0xff000000;
+                screen[idx] = clconv.m128i_i32[1] | 0xff000000;
                 zBuffer[idx] = z;
             }
             coordsLocal = _mm_add_ps(coordsLocal, coeffsLocal);
@@ -276,7 +272,7 @@ void render_edges(int width, int height, int *screen, unsigned *zBuffer, ActiveE
     }
 }
 
-void render_triangle(int width, int height, int *screen, unsigned *zBuffer, RenderTriangle *triangle)
+void render_triangle(int width, int height, int *screen, float *zBuffer, RenderTriangle *triangle)
 {
     ActiveEdge edges[4];
     sort_vertices(triangle);
@@ -326,33 +322,19 @@ void render_triangle(int width, int height, int *screen, unsigned *zBuffer, Rend
     }
 }
 
-// Z-coordinate gets transformed to [0 .. uintmax - 1] because of optimizations.
-// calloc is able to allocate pages with all zeros which is much, much more efficient
-// than calling memset (even with shared z buffer). Additionally, we interpolate z
-// coordinate along with RGB (using SSE) values that are interpreted as bytes, so we
-// don't need it to be treated separately. 
-// Because of this, we invert z coordinate and rescale it.
-__forceinline void transform_z_coord(RenderTriangle *triangle)
-{
-    triangle->v1.z = (1.0f - triangle->v1.z) * ZBUFFER_MAX_VALUE;
-    triangle->v2.z = (1.0f - triangle->v2.z) * ZBUFFER_MAX_VALUE;
-    triangle->v3.z = (1.0f - triangle->v3.z) * ZBUFFER_MAX_VALUE;
-}
-
 void render_triangles(
     int width, int height, bool zBuffer,
     int *screen,
     RenderTriangle *triangles, int count)
 {
-    unsigned *newZBuffer = NULL;
+    float *newZBuffer = NULL;
     if (zBuffer)
     {
-        newZBuffer = calloc(width * height, sizeof(unsigned));
+        newZBuffer = calloc(width * height, sizeof(float));
     }
 
     for (int i = 0; i < count; i++)
     {
-        transform_z_coord(triangles + i);
         render_triangle(width, height, screen, newZBuffer, triangles + i);
     }
 
