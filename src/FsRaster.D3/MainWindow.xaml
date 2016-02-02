@@ -30,10 +30,8 @@
             <CheckBox x:Name="backfaceCullingCheckbox" Content="Backface culling" IsChecked="False" />
             <CheckBox x:Name="zBufferCheckbox" Content="Z Buffer" IsChecked="False" />
             <CheckBox x:Name="lightCheckbox" Content="Light" IsChecked="False" />
-            <ComboBox x:Name="modelSelector" SelectedIndex="0">
-                <ComboBoxItem Tag="mushroom" Content="Mushroom" />
-                <ComboBoxItem Tag="teapot" Content="Teapot" />
-            </ComboBox>
+            <Button x:Name="loadModelButton" Content="Load model" Margin="3" />
+            <Button x:Name="changeOrientationButton" Content="Change orientation" Margin="3" />
             <ComboBox x:Name="modelColorModeSelector" SelectedIndex="1">
                 <ComboBoxItem Content="Random colors" />
                 <ComboBoxItem Content="Black" />

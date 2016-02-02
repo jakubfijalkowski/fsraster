@@ -23,10 +23,6 @@ type Model =
 
 let inline triEmpty v1 v2 v3 : Triangle = { V1 = v1; V2 = v2; V3 = v3; C1 = 0; C2 = 0; C3 = 0 }
 
-let changeOrientation model =
-    let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2 })
-    { model with Triangles = newTriangles }
-
 let randomlyColorizeModel model =
     let rnd = System.Random(0xDEADBEFF)
     let genColor _ =
@@ -63,6 +59,10 @@ let private performNormalMapping model =
         |> Array.fold updateNormals (Array.create model.Vertices.Length vec4Zero)
         |> Array.map (fun v -> (toVec3 v).Normalized)
     { model with Normals = normals }
+
+let changeOrientation model =
+    let newTriangles = model.Triangles |> Array.map (fun t -> { t with V2 = t.V3; V3 = t.V2; C2 = t.C3; C3 = t.C2 })
+    { model with Triangles = newTriangles } |> performNormalMapping
 
 let private readAllLines (stream : Stream) =
     let lines = new List<string>()

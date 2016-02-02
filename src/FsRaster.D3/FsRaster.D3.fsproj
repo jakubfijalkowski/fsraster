@@ -157,7 +157,6 @@
     <None Include="paket.references" />
     <Content Include="mushroom.off" />
     <EmbeddedResource Include="Resources.resx" />
-    <Content Include="teapot.off" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

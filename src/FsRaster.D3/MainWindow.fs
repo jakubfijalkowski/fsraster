@@ -11,6 +11,8 @@ open System.Windows.Media
 open System.Windows.Media.Imaging
 open System.Windows.Threading
 
+open Microsoft.Win32
+
 open FsXaml
 
 open FsRaster
@@ -107,18 +109,6 @@ type MainWindowController() =
             renderer <- updateSize renderer newW newH
             window.mainImage.Source <- mainCanvas
 
-    let onModelChanged _ =
-        try
-            let name = (window.modelSelector.SelectedItem :?> ComboBoxItem).Tag :?> string
-            let newModel = loadOffFromResources name
-            if name = "teapot" then
-                model <- newModel |> changeOrientation |> colorizeModel
-            else
-                model <- newModel |> colorizeModel
-        with
-            | e -> MessageBox.Show(window.Root, "Cannot load model: " + e.Message, "Error") |> ignore
-        ()
-
     let onCameraChanged _ =
         match window.cameraSelector.SelectedIndex with
         | 0 ->
@@ -169,10 +159,28 @@ type MainWindowController() =
         requestClose <- true
         renderThread.Join()
 
+    let onLoadModelClicked _ =
+        let ofd = OpenFileDialog()
+        ofd.Filter <- "OFF file (*.off)|*.off"
+        ofd.CheckFileExists <- true
+        ofd.CheckPathExists <- true
+        ofd.ValidateNames <- true
+        if ofd.ShowDialog().GetValueOrDefault(false) then
+            use stream = ofd.OpenFile()
+            try
+                model <- loadOffFromStream stream |> colorizeModel
+            with
+                | e -> MessageBox.Show(window.Root, "Error", "Cannot load OFF file") |> ignore
+        ()
+
+    let onChangeOrientationClicked _ =
+        model <- changeOrientation model
+
     do
         window.imageContainer.SizeChanged.Add onSizeChanged
         window.imageContainer.MouseDown.Add onImageClick
-        window.modelSelector.SelectionChanged.Add onModelChanged
+        window.loadModelButton.Click.Add onLoadModelClicked
+        window.changeOrientationButton.Click.Add onChangeOrientationClicked
         window.modelColorModeSelector.SelectionChanged.Add onColorModeChanged
         window.cameraSelector.SelectionChanged.Add onCameraChanged
 
